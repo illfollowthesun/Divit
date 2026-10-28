@@ -29,6 +29,16 @@ pub fn fingerprint(data: &Value) -> String {
     format!("{:x}", hash.finish())
 }
 fn revision(mut value: Value) -> Value { value["revision"] = json!(fingerprint(&value)); value }
+fn copy_directory(source: &Path, target: &Path) -> Result<()> {
+    if !source.exists() { return Ok(()); }
+    fs::create_dir_all(target).map_err(err)?;
+    for item in fs::read_dir(source).map_err(err)? {
+        let item = item.map_err(err)?;
+        if item.file_type().map_err(err)?.is_dir() { copy_directory(&item.path(), &target.join(item.file_name()))?; }
+        else if item.file_type().map_err(err)?.is_file() { fs::copy(item.path(), target.join(item.file_name())).map_err(err)?; }
+    }
+    Ok(())
+}
 
 #[derive(Clone)]
 pub struct Store { pub root: PathBuf }
@@ -55,6 +65,8 @@ impl Store {
                 fs::create_dir_all(&backup).map_err(err)?;
                 if body_path.exists() { fs::copy(&body_path, backup.join("draft.md")).map_err(err)?; }
                 if folder.join("project.json").exists() { fs::copy(folder.join("project.json"), backup.join("project.json")).map_err(err)?; }
+                copy_directory(&folder.join("sections"), &backup.join("sections"))?;
+                copy_directory(&folder.join("cards"), &backup.join("cards"))?;
             }
             self.finish_project(folder, &data)?;
         }
@@ -66,6 +78,16 @@ impl Store {
         let mut meta = data.clone();
         meta.as_object_mut().ok_or("Invalid project")?.remove("body");
         meta.as_object_mut().unwrap().remove("revision");
+        if let Some(sections) = meta.get_mut("sections").and_then(Value::as_array_mut) {
+            for section in sections {
+                let key = section["id"].as_str().ok_or("Missing section identifier")?;
+                let target = self.part_path(folder, "sections", key, "md", section["trashedAt"].is_string())?;
+                let other = self.part_path(folder, "sections", key, "md", !section["trashedAt"].is_string())?;
+                self.move_part(&other, &target, folder)?;
+                atomic(&target, section["body"].as_str().ok_or("Missing scene text")?.as_bytes())?;
+                section.as_object_mut().ok_or("Invalid section")?.remove("body");
+            }
+        }
         write_json(&folder.join("project.json"), &meta)?;
         fs::rename(folder.join(".recovery.json"), folder.join(".last-save.json")).map_err(err)
     }
@@ -74,7 +96,30 @@ impl Store {
         self.recover(&folder)?;
         let mut data = json_file(&folder.join("project.json"))?;
         data["body"] = json!(read(&folder.join("draft.md"))?);
+        if let Some(sections) = data.get_mut("sections").and_then(Value::as_array_mut) {
+            for section in sections {
+                let key = section["id"].as_str().ok_or("Missing section identifier")?;
+                section["body"] = json!(read(&self.part_path(&folder, "sections", key, "md", section["trashedAt"].is_string())?)?);
+            }
+        }
         Ok(revision(data))
+    }
+    fn part_path(&self, folder: &Path, collection: &str, key: &str, ext: &str, trashed: bool) -> Result<PathBuf> {
+        let key = id(key)?;
+        let base = if trashed { self.root.join("_trash").join(format!("project-{}", folder.file_name().ok_or("Missing project folder")?.to_string_lossy())) } else { folder.to_path_buf() };
+        let parent = base.join(collection);
+        fs::create_dir_all(&parent).map_err(err)?;
+        Ok(parent.join(format!("{key}.{ext}")))
+    }
+    fn move_part(&self, source: &Path, target: &Path, folder: &Path) -> Result<()> {
+        if source.exists() {
+            if target.exists() {
+                let backup = folder.join(".recovered").join(stamp());
+                fs::create_dir_all(&backup).map_err(err)?;
+                fs::rename(source, backup.join(source.file_name().ok_or("Missing record name")?)).map_err(err)?;
+            } else { fs::rename(source, target).map_err(err)?; }
+        }
+        Ok(())
     }
     pub fn save_project(&self, mut data: Value, expected: Option<String>) -> Result<Value> {
         let key = data["id"].as_str().ok_or("Missing project id")?.to_string();
