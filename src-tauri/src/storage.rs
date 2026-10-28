@@ -67,6 +67,7 @@ impl Store {
                 if folder.join("project.json").exists() { fs::copy(folder.join("project.json"), backup.join("project.json")).map_err(err)?; }
                 copy_directory(&folder.join("sections"), &backup.join("sections"))?;
                 copy_directory(&folder.join("cards"), &backup.join("cards"))?;
+                copy_directory(&folder.join("notes"), &backup.join("notes"))?;
             }
             self.finish_project(folder, &data)?;
         }
@@ -121,6 +122,16 @@ impl Store {
                 snapshot.as_object_mut().unwrap().remove("sections");
             }
         }
+        if let Some(notes) = meta.get_mut("notes").and_then(Value::as_array_mut) {
+            for note in notes {
+                let key = note["id"].as_str().ok_or("Missing note identifier")?;
+                let target = self.part_path(folder, "notes", key, "json", note["trashedAt"].is_string())?;
+                let other = self.part_path(folder, "notes", key, "json", !note["trashedAt"].is_string())?;
+                self.move_part(&other, &target, folder)?;
+                write_json(&target, note)?;
+                note.as_object_mut().ok_or("Invalid note")?.remove("body");
+            }
+        }
         write_json(&folder.join("project.json"), &meta)?;
         fs::rename(folder.join(".recovery.json"), folder.join(".last-save.json")).map_err(err)
     }
@@ -145,6 +156,12 @@ impl Store {
             for snapshot in snapshots {
                 let key = id(snapshot["id"].as_str().ok_or("Missing snapshot identifier")?)?;
                 *snapshot = json_file(&folder.join("snapshots").join(format!("{key}.json")))?;
+            }
+        }
+        if let Some(notes) = data.get_mut("notes").and_then(Value::as_array_mut) {
+            for note in notes {
+                let key = note["id"].as_str().ok_or("Missing note identifier")?;
+                *note = json_file(&self.part_path(&folder, "notes", key, "json", note["trashedAt"].is_string())?)?;
             }
         }
         Ok(revision(data))

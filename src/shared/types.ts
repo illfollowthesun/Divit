@@ -3,11 +3,14 @@ export type ProjectType = 'blog' | 'story' | 'book'
 export type Section = { id: string; kind: 'chapter' | 'scene'; parentId?: string; title: string; body: string; trashedAt?: string }
 export type ProjectCard = { id: string; kind: 'character' | 'place'; name: string; summary: string; details: string; age: string; aliases: string[]; trashedAt?: string }
 export type Snapshot = { id: string; scopeId: string | null; title: string; label: string; createdAt: string; body: string; sections: Section[] }
+export type ProjectNote = { id: string; kind: 'research' | 'timeline'; title: string; body: string; when: string; trashedAt?: string }
+export type WritingDay = { date: string; added: number; removed: number }
 export type Project = {
   schemaVersion: 1; id: string; type: ProjectType; title: string; slug: string; date: string; place: string;
   tags: string[]; excerpt: string; standfirst: string; body: string; createdAt: string; updatedAt: string;
   ideaId?: string; revision?: string; published?: PublishResult
   sections?: Section[]; cards?: ProjectCard[]; snapshots?: Snapshot[];
+  notes?: ProjectNote[]; dailyGoal?: number; writingLog?: WritingDay[];
 }
 export type Idea = { schemaVersion: 1; id: string; title: string; tags: string[]; status: Stage; createdAt: string; projectId?: string; revision?: string }
 export type ImageRecord = { id: string; file: string; name: string; addedAt: string; dataUrl?: string }
