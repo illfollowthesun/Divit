@@ -30,6 +30,7 @@ async fn site_action(app: tauri::AppHandle, state: tauri::State<'_, AppState>, a
         let store = state.0.lock().map_err(|e| e.to_string())?;
         let library = store.library()?;
         let project = store.project(&project_id)?;
+        if project["type"] != "blog" { return Err("Stories and books use Export. Only blog posts are sent to the site.".into()); }
         if expected_revision.as_deref() != project["revision"].as_str() { return Err("This draft changed on disk after you opened it. Reload and review the current text before sending.".into()); }
         if project["published"].is_object() { return Err("This draft has already been sent. Review its branch in the site repository.".into()); }
         json!({"action":action,"repo":library["settings"]["siteRepo"],"project":project,"images":library["images"],"dataRoot":store.root.to_string_lossy()})
@@ -59,10 +60,10 @@ async fn call_bridge(app: &tauri::AppHandle, script_name: &str, request: Value) 
         let mut cmd = Command::new("node");
         cmd.arg(script).stdin(Stdio::piped()).stdout(Stdio::piped()).stderr(Stdio::piped());
         #[cfg(windows)] { use std::os::windows::process::CommandExt; cmd.creation_flags(0x08000000); }
-        let mut child = cmd.spawn().map_err(|e| format!("Could not start Node.js. Install Node 22 to send posts. {e}"))?;
+        let mut child = cmd.spawn().map_err(|e| format!("Could not start Node.js. Install Node 22 for local exports and site transfer. {e}"))?;
         child.stdin.take().ok_or("Could not open bridge input")?.write_all(request.to_string().as_bytes()).map_err(|e| e.to_string())?;
         let output = child.wait_with_output().map_err(|e| e.to_string())?;
-        let result: Value = serde_json::from_slice(&output.stdout).map_err(|_| format!("Site bridge failed: {}", String::from_utf8_lossy(&output.stderr)))?;
+        let result: Value = serde_json::from_slice(&output.stdout).map_err(|_| format!("Local helper failed: {}", String::from_utf8_lossy(&output.stderr)))?;
         if result["ok"] != true { return Err(result["error"].as_str().unwrap_or("Site operation failed").to_string()); }
         Ok(result["result"].clone())
     }).await.map_err(|e| e.to_string())?

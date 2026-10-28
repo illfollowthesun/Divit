@@ -14,13 +14,13 @@ export function snapshotText(snapshot: Snapshot): string {
 export function restoreSnapshot(project: Project, snapshot: Snapshot): Project {
   // Restoring itself always creates a safeguard: both versions remain recoverable.
   const safeguard = takeSnapshot(project, snapshot.scopeId, `Before restoring: ${snapshot.label}`)
-  const captured = structuredClone(snapshot.sections).map(n => ({ ...n, trashedAt: undefined }))
+  const captured = structuredClone(snapshot.sections)
   const capturedIds = new Set(captured.map(n => n.id))
   const current = project.sections ?? [], at = snapshot.scopeId ? Math.max(0, current.findIndex(n => n.id === snapshot.scopeId)) : 0
   const inScope = (n: Section) => snapshot.scopeId === null || n.id === snapshot.scopeId || n.parentId === snapshot.scopeId || capturedIds.has(n.id)
   const removed = current.filter(n => inScope(n) && !capturedIds.has(n.id)).map(n => ({ ...n, trashedAt: n.trashedAt ?? new Date().toISOString() }))
   const before = current.slice(0, at).filter(n => !inScope(n)), after = current.slice(at).filter(n => !inScope(n))
-  const parents = new Set(captured.map(n => n.parentId).filter(Boolean))
+  const parents = new Set(captured.filter(n => !n.trashedAt).map(n => n.parentId).filter(Boolean))
   const sections = [...before, ...captured, ...removed, ...after].map(n => parents.has(n.id) ? { ...n, trashedAt: undefined } : n)
   return { ...project, body: snapshot.scopeId ? project.body : snapshot.body, sections, snapshots: [...(project.snapshots ?? []), safeguard] }
 }

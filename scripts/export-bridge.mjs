@@ -22,7 +22,10 @@ export async function exportTools() {
   let version = ''
   try { version = (await execute('pandoc', ['--version'], '', undefined, 5000)).split('\n')[0] } catch {}
   let pdfEngine = null
-  if (version) for (const name of Object.keys(engines)) { try { await execute(name, ['--version'], '', undefined, 5000); pdfEngine = name; break } catch {} }
+  if (version) for (const name of Object.keys(engines)) {
+    if (name === 'typst' && Number(/pandoc (\d+)/.exec(version)?.[1] ?? 0) < 3) continue
+    try { await execute(name, ['--version'], '', undefined, 5000); pdfEngine = name; break } catch {}
+  }
   return { pandoc: !!version, version, pdfEngine }
 }
 export function compileMarkdown(project, imageSources = {}) {

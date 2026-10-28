@@ -21,3 +21,9 @@ test('restoring a whole manuscript recovers text and order without deleting late
   const restored=restoreSnapshot(p,snapshot);assert.equal(restored.body,'Opening');assert.ok(restored.sections.find(n=>n.id==='extra').trashedAt)
   assert.equal(restored.snapshots[0].body,'New opening')
 })
+test('restoring a chapter does not revive scenes that were already set aside in that version',()=>{
+  const p=project();p.sections[1].trashedAt='2026-10-29';const snapshot=takeSnapshot(p,'c','Kept without that scene')
+  p.sections[0].body='Rewritten';const restored=restoreSnapshot(p,snapshot)
+  assert.equal(restored.sections.find(n=>n.id==='s').trashedAt,'2026-10-29')
+  assert.equal(restored.sections.find(n=>n.id==='s').body,'Old scene')
+})

@@ -68,6 +68,7 @@ impl Store {
                 copy_directory(&folder.join("sections"), &backup.join("sections"))?;
                 copy_directory(&folder.join("cards"), &backup.join("cards"))?;
                 copy_directory(&folder.join("notes"), &backup.join("notes"))?;
+                copy_directory(&self.root.join("_trash").join(format!("project-{}", folder.file_name().ok_or("Missing project folder")?.to_string_lossy())), &backup.join("set-aside"))?;
             }
             self.finish_project(folder, &data)?;
         }
@@ -191,6 +192,15 @@ impl Store {
             if expected.as_deref() != current["revision"].as_str() { return Err("This draft changed outside Yazı. Your unsaved text is still in the editor. Copy it before reloading.".into()); }
         } else if expected.is_some() { return Err("The draft was moved. Your unsaved text is still in the editor.".into()); }
         if !data["body"].is_string() || !data["title"].is_string() { return Err("Invalid project data".into()); }
+        // Reject changed snapshot IDs before making a recovery journal, so a bad
+        // update cannot leave a permanently failing transaction behind.
+        if let Some(snapshots) = data.get("snapshots").and_then(Value::as_array) {
+            for snapshot in snapshots {
+                let key = id(snapshot["id"].as_str().ok_or("Missing snapshot identifier")?)?;
+                let path = folder.join("snapshots").join(format!("{key}.json"));
+                if path.exists() && json_file(&path)? != *snapshot { return Err("Snapshots are immutable. Keep a new snapshot instead.".into()); }
+            }
+        }
         data.as_object_mut().ok_or("Invalid project data")?.remove("revision");
         fs::create_dir_all(&folder).map_err(err)?;
         write_json(&folder.join(".recovery.json"), &data)?;
@@ -261,6 +271,9 @@ impl Store {
     }
     pub fn trash(&self, kind: &str, key: &str, title: &str) -> Result<()> {
         let mut source = self.path(kind, key)?;
+        if kind == "images" && self.library()?["projects"].as_array().ok_or("Invalid library")?.iter().any(|p| p.to_string().contains(&format!("yazi-image:{key}"))) {
+            return Err("This image is used by writing or a kept snapshot. Keep it in the library.".into());
+        }
         if kind == "ideas" { source.set_extension("json"); }
         let trash_key = format!("{}-{}", stamp(), &key[..key.len().min(36)]);
         let destination = self.root.join("_trash").join(&trash_key);
@@ -312,4 +325,32 @@ mod tests {
         assert!(store.restore(key).is_err());
     }
     #[test] fn rejects_paths_outside_library() { assert!(id("../outside").is_err()); assert!(id("C:\\outside").is_err()); assert!(id("").is_err()); }
+    #[test] fn structured_writing_uses_markdown_and_moves_parts_to_trash_and_back() {
+        let dir = tempfile::tempdir().unwrap(); let store = Store::new(dir.path().into()).unwrap();
+        let project = json!({"id":"book-1","type":"book","title":"Ferry","body":"Opening", "sections":[{"id":"chapter-1","kind":"chapter","title":"Dawn","body":"Chapter text"}],"cards":[{"id":"card-1","kind":"character","name":"Derya","summary":"Keeper","details":"A ticket","age":"32","aliases":[]}],"notes":[{"id":"note-1","kind":"research","title":"Routes","body":"Keep source","when":""}],"snapshots":[]});
+        let mut saved = store.save_project(project, None).unwrap();
+        assert_eq!(fs::read_to_string(dir.path().join("projects/book-1/sections/chapter-1.md")).unwrap(), "Chapter text");
+        assert!(json_file(&dir.path().join("projects/book-1/project.json")).unwrap()["sections"][0].get("body").is_none());
+        saved["sections"][0]["trashedAt"] = json!("today"); saved["cards"][0]["trashedAt"] = json!("today"); saved["notes"][0]["trashedAt"] = json!("today");
+        let expected = saved["revision"].as_str().map(String::from);
+        let mut saved = store.save_project(saved, expected).unwrap();
+        assert!(!dir.path().join("projects/book-1/sections/chapter-1.md").exists());
+        assert_eq!(fs::read_to_string(dir.path().join("_trash/project-book-1/sections/chapter-1.md")).unwrap(), "Chapter text");
+        assert_eq!(saved["cards"][0]["details"], "A ticket"); assert_eq!(saved["notes"][0]["body"], "Keep source");
+        saved["sections"][0].as_object_mut().unwrap().remove("trashedAt");
+        let expected = saved["revision"].as_str().map(String::from);
+        store.save_project(saved, expected).unwrap();
+        assert_eq!(store.project("book-1").unwrap()["sections"][0]["body"], "Chapter text");
+    }
+    #[test] fn immutable_snapshots_reject_changes_before_writing_a_recovery_journal() {
+        let dir = tempfile::tempdir().unwrap(); let store = Store::new(dir.path().into()).unwrap();
+        let mut project = draft();
+        project["snapshots"] = json!([{"id":"snapshot-1","scopeId":null,"title":"Original","label":"Before rewrite","createdAt":"2026-10-29","body":"Kept text","sections":[]}]);
+        let mut saved = store.save_project(project, None).unwrap();
+        saved["snapshots"][0]["body"] = json!("Wrong replacement");
+        let expected = saved["revision"].as_str().map(String::from);
+        assert!(store.save_project(saved, expected).is_err());
+        assert!(!dir.path().join("projects/test-1/.recovery.json").exists());
+        assert_eq!(store.project("test-1").unwrap()["snapshots"][0]["body"], "Kept text");
+    }
 }

@@ -17,6 +17,7 @@ import type { Idea, ImageRecord, Library, Project, PublishPlan, Settings, Projec
 
 type Room = 'write' | 'ideas' | 'images' | 'trash'
 type DialogName = 'help' | 'settings' | 'publish' | 'new-project' | 'snapshots' | 'export' | null
+const imageText = (p: Project) => [p.body, ...(p.sections ?? []).map(n => n.body), ...(p.snapshots ?? []).flatMap(s => [s.body, ...s.sections.map(n => n.body)])].join('\n')
 const message = (e: unknown) => e instanceof Error ? e.message : String(e)
 
 function Modal({ title, children, close, error }: { title: string; children: ReactNode; close: () => void; error?: string }) {
@@ -146,7 +147,7 @@ export function App() {
     else editText((draft.sections?.find(n => n.id === sectionId)?.body ?? draft.body) + text)
   }
   function openSettings() { if (lib) { setSettings({ ...lib.settings }); setDialog('settings') } }
-  async function openPublish() { await flush(); setPlan(null); setAcknowledged(false); setDialog('publish') }
+  async function openPublish() { await flush(); if (session.current!.project?.type !== 'blog') { setExportResult(null); setDialog('export'); return } setPlan(null); setAcknowledged(false); setDialog('publish') }
   const shortcuts = useRef({ create: () => {}, save: () => {}, idea: () => {}, publish: () => {}, settings: () => {}, help: () => {} })
   shortcuts.current = {
     create: () => { if (!busy) void perform(() => create()) }, save: () => { void flush().catch(() => {}) },
@@ -180,7 +181,7 @@ export function App() {
   const projects = [...lib.projects].filter(p => (filter === 'all' || (filter === 'published' ? !!p.published : !p.published)) && p.title.toLowerCase().includes(search.toLowerCase())).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
   const tags = [...new Set(lib.ideas.flatMap(i => i.tags))].sort()
   const canPublish = draft && draft.type === 'blog' && !draft.published && draft.title.trim() && draft.body.trim() && draft.slug && draft.date
-  const imageInUse = (id: string) => lib.projects.some(p => [p.body, ...(p.sections ?? []).map(n => n.body)].join('\n').includes(`yazi-image:${id}`)) || !!draft && [draft.body, ...(draft.sections ?? []).map(n => n.body)].join('\n').includes(`yazi-image:${id}`)
+  const imageInUse = (id: string) => lib.projects.some(p => imageText(p).includes(`yazi-image:${id}`)) || !!draft && imageText(draft).includes(`yazi-image:${id}`)
 
   return <div className={`app ${focus ? 'focus-mode' : ''} ${typewriter ? 'typewriter-mode' : ''}`}>
     <header className="topbar"><button className="brand" onClick={() => { setFocus(false); setRoom('write') }} aria-label="Yazı writing desk">Yazı<span>·</span></button><span className="top-caption">A little room for your words.</span><nav aria-label="Main navigation"><button className={room === 'write' ? 'active' : ''} onClick={() => setRoom('write')}>Write</button><button className={room === 'ideas' ? 'active' : ''} onClick={() => { setRoom('ideas'); setFocus(false) }}>Idea box <span className="nav-count">{lib.ideas.length}</span></button></nav><div className="top-actions"><button aria-pressed={typewriter} title="Typewriter mode (Ctrl+Alt+T)" onClick={() => setTypewriter(value => !value)}>Typewriter</button><button onClick={() => { setRoom('write'); setFocus(f => !f) }} title="Focus mode (Ctrl+.)">{focus ? 'Leave focus' : 'Focus'}</button><button onClick={openSettings} aria-label="Open settings" title="Settings (Ctrl+,)">Settings</button></div></header>
