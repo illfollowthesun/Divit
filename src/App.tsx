@@ -5,6 +5,7 @@ import { Editor } from './editor/Editor'
 import { Preview } from './editor/Preview'
 import { api, desktop } from './shared/api'
 import { Notebook } from './projects/Notebook'
+import { addSection } from './projects/manuscript'
 import { recordWriting, localDay } from './projects/writing-log'
 import { ExportPanel } from './projects/ExportPanel'
 import { Snapshots } from './projects/SnapshotDialog'
@@ -148,8 +149,18 @@ export function App() {
   }
   function openSettings() { if (lib) { setSettings({ ...lib.settings }); setDialog('settings') } }
   async function openPublish() { await flush(); if (session.current!.project?.type !== 'blog') { setExportResult(null); setDialog('export'); return } setPlan(null); setAcknowledged(false); setDialog('publish') }
-  const shortcuts = useRef({ create: () => {}, save: () => {}, idea: () => {}, publish: () => {}, settings: () => {}, help: () => {} })
+  const shortcuts = useRef({ newProject: () => {}, export: () => {}, snapshots: () => {}, chapter: () => {}, scene: () => {}, cards: () => {}, notes: () => {}, create: () => {}, save: () => {}, idea: () => {}, publish: () => {}, settings: () => {}, help: () => {} })
+  function addFromKeyboard(kind: 'chapter' | 'scene') {
+    const project = session.current!.project
+    if (busy || !project || project.type === 'blog' || kind === 'chapter' && project.type !== 'book') return
+    try { const result = addSection(project, kind, sectionId); edit({ sections: result.sections }); setSectionId(result.id); setRoom('write') } catch (error) { setError(message(error)) }
+  }
   shortcuts.current = {
+    newProject: () => { if (!busy) { setProjectTitle(''); setDialog('new-project') } },
+    export: () => { if (!busy && draft && draft.type !== 'blog') void perform(openPublish) },
+    snapshots: () => { if (!busy && draft && draft.type !== 'blog') setDialog('snapshots') },
+    chapter: () => addFromKeyboard('chapter'), scene: () => addFromKeyboard('scene'),
+    cards: () => { if (draft && draft.type !== 'blog') setTab('Cards') }, notes: () => { if (draft && draft.type !== 'blog') setTab('Notes') },
     create: () => { if (!busy) void perform(() => create()) }, save: () => { void flush().catch(() => {}) },
     idea: () => { setFocus(false); setRoom('ideas'); setTimeout(() => captureInput.current?.focus(), 0) },
     publish: () => { if (!busy && draft) void perform(openPublish) }, settings: openSettings, help: () => setDialog('help'),
@@ -161,7 +172,14 @@ export function App() {
       if (dialog) return
       if (event.ctrlKey || event.metaKey) {
         const key = event.key.toLowerCase()
-        if (key === 's') { event.preventDefault(); shortcuts.current.save() }
+        if (key === 'n' && event.shiftKey) { event.preventDefault(); shortcuts.current.newProject() }
+        else if (key === 'e' && event.shiftKey) { event.preventDefault(); shortcuts.current.export() }
+        else if (key === 'v' && event.altKey) { event.preventDefault(); shortcuts.current.snapshots() }
+        else if (event.code === 'Digit1' && event.altKey) { event.preventDefault(); shortcuts.current.chapter() }
+        else if (event.code === 'Digit2' && event.altKey) { event.preventDefault(); shortcuts.current.scene() }
+        else if (key === 'k' && event.altKey) { event.preventDefault(); shortcuts.current.cards() }
+        else if (key === 'n' && event.altKey) { event.preventDefault(); shortcuts.current.notes() }
+        else if (key === 's') { event.preventDefault(); shortcuts.current.save() }
         else if (key === 'n') { event.preventDefault(); shortcuts.current.create() }
         else if (key === 'i' && event.shiftKey) { event.preventDefault(); shortcuts.current.idea() }
         else if (key === 'enter' && event.shiftKey) { event.preventDefault(); shortcuts.current.publish() }
@@ -208,7 +226,7 @@ export function App() {
     {dialog === 'snapshots' && draft && <Modal error={error} title="A few versions of the same thought" close={() => { if (!busy) setDialog(null) }}><Snapshots project={draft} scopeId={sectionId} disabled={busy} keep={label => void perform(() => keepSnapshot(label))} restore={snapshot => void perform(async () => { edit(restoreSnapshot(session.current!.project!, snapshot)); setSectionId(snapshot.scopeId); setEditorEpoch(n => n + 1); await flush(); setDialog(null) })}/></Modal>}
 
     {dialog === 'export' && draft && <Modal error={error} title="A finished copy" close={() => { if (!busy) setDialog(null) }}><ExportPanel project={draft} disabled={busy} result={exportResult} run={format => void perform(async () => { await flush(); setExportResult(await api.exportProject(session.current!.project!, format, lib.images)) })}/></Modal>}
-    {dialog === 'help' && <Modal error={error} title="A few familiar keys" close={() => setDialog(null)}><dl className="shortcut-list">{[['New writing', 'Ctrl N'], ['Save now', 'Ctrl S'], ['Catch an idea', 'Ctrl Shift I'], ['Send to site', 'Ctrl Shift Enter'], ['Typewriter mode', 'Ctrl Alt T'], ['Focus mode', 'Ctrl .'], ['Settings', 'Ctrl ,'], ['Keyboard help', 'F1'], ['Leave focus / close dialog', 'Esc'], ['Undo / redo', 'Ctrl Z / Ctrl Shift Z']].map(([label, key]) => <div key={label}><dt>{label}</dt><dd><kbd>{key}</kbd></dd></div>)}</dl><p className="quiet">Use Tab and Shift Tab to reach every control. Text saves automatically while you write.</p></Modal>}
+    {dialog === 'help' && <Modal error={error} title="A few familiar keys" close={() => setDialog(null)}><dl className="shortcut-list">{[['New writing', 'Ctrl N'], ['New story or book', 'Ctrl Shift N'], ['Add chapter / scene', 'Ctrl Alt 1 / 2'], ['Character/place cards', 'Ctrl Alt K'], ['Project notebook', 'Ctrl Alt N'], ['Snapshots', 'Ctrl Alt V'], ['Export story or book', 'Ctrl Shift E'], ['Save now', 'Ctrl S'], ['Catch an idea', 'Ctrl Shift I'], ['Send to site', 'Ctrl Shift Enter'], ['Typewriter mode', 'Ctrl Alt T'], ['Focus mode', 'Ctrl .'], ['Settings', 'Ctrl ,'], ['Keyboard help', 'F1'], ['Leave focus / close dialog', 'Esc'], ['Undo / redo', 'Ctrl Z / Ctrl Shift Z']].map(([label, key]) => <div key={label}><dt>{label}</dt><dd><kbd>{key}</kbd></dd></div>)}</dl><p className="quiet">Use Tab and Shift Tab to reach every control. Text saves automatically while you write.</p></Modal>}
     {dialog === 'settings' && settings && <Modal error={error} title="Make yourself at home" close={() => setDialog(null)}><form onSubmit={e => { e.preventDefault(); void perform(async () => { await api.settings(settings); await refresh(); setDialog(null) }) }}><label className="field">Appearance<select value={settings.theme} onChange={e => setSettings({ ...settings, theme: e.target.value as Settings['theme'] })}><option value="light">Warm paper</option><option value="dark">After hours</option></select></label><label className="field">Site repository<input value={settings.siteRepo} onChange={e => setSettings({ ...settings, siteRepo: e.target.value })}/><small>The local duruduygu.com repository. Node.js 22 and its npm dependencies are needed for sending.</small></label><div className="settings-info"><span className="section-label">YOUR FILES</span><p>{lib.dataRoot}</p><small>Plain Markdown and JSON. No account or cloud sync.</small></div><p className="quiet">AI checks will arrive in phase 3, using Claude Code by default.</p><button className="accent-button" disabled={busy}>Save settings</button></form></Modal>}
     {dialog === 'publish' && draft && <Modal error={error} title="Send these words out" close={() => { if (!busy) setDialog(null) }}><p className="quiet">Prepare a local site branch for <strong>{draft.title || 'Untitled'}</strong>.</p><label className="field">Address<input value={draft.slug} disabled={busy} onChange={e => edit({ slug: e.target.value })}/><small>duruduygu.com/blog/{draft.slug || 'your-address'}</small></label><label className="field">Excerpt<input placeholder="One line for the journal list" value={draft.excerpt} disabled={busy} onChange={e => edit({ excerpt: e.target.value })}/></label><label className="field">Standfirst<textarea placeholder="The opening lines, set a little larger" value={draft.standfirst} disabled={busy} onChange={e => edit({ standfirst: e.target.value })}/></label><ul className="checklist"><li>{draft.title.trim() ? '✓' : '○'} A title of your own</li><li>{draft.body.trim() ? '✓' : '○'} Text ready to read</li><li>{draft.date ? '✓' : '○'} A date for the journal</li><li>✓ Originals kept; site images resized and privacy checked</li><li>{draft.ideaId ? '✓ Linked idea moves to Published after commit' : '— No linked idea card'}</li></ul>{!desktop && <p className="inline-notice">Site transfer needs the desktop app.</p>}{plan && <div className="publish-plan"><div className="section-label">FILES TO WRITE</div>{plan.files.map(file => <code key={file}>{file}</code>)}<p>Branch <code>{plan.branch}</code></p><p className="quiet">Run the content check, then commit these files locally.</p><label className="acknowledge"><input type="checkbox" checked={acknowledged} onChange={e => setAcknowledged(e.target.checked)}/> I’ve reviewed the files and branch.</label></div>}<div className="dialog-actions"><button className="outline-button" disabled={busy || !desktop || !canPublish} onClick={() => void perform(async () => { await flush(); setPlan(await api.plan(session.current!.project!)); setAcknowledged(false) })}>{busy ? 'Working…' : 'Check repository'}</button><button className="accent-button" disabled={busy || !plan || !acknowledged} onClick={() => void perform(async () => { await flush(); const result = await api.publish(session.current!.project!); const data = await refresh(); select(data.projects.find(p => p.id === draft.id) ?? null); setDialog(null); setStatus(`Committed on ${result.branch} · ${result.commit.slice(0, 7)}`) })}>Create local commit ↗</button></div><small className="quiet">Push is a separate step that requires your approval.</small></Modal>}
   </div>

@@ -143,3 +143,16 @@ test('research, timeline and daily writing goals persist without counting metada
   await expect(page.locator('.project-notes')).toContainText('Ferry routes')
   await page.getByRole('button', { name: 'Timeline', exact: true }).click(); await expect(page.locator('.project-notes')).toContainText('Day 1, 06:10')
 })
+
+test('fiction shortcuts create projects, chapters and scenes and open companion tools', async ({ page }) => {
+  await page.keyboard.press('Control+Shift+n')
+  await page.getByLabel('Project type').selectOption('book'); await page.getByLabel('Project title').fill('Keyboard book')
+  await page.getByRole('button', { name: 'Create project', exact: true }).click()
+  await page.keyboard.press('Control+Alt+1'); await expect(page.getByLabel('Section title')).toHaveValue('Chapter 1')
+  await page.keyboard.press('Control+Alt+2'); await expect(page.getByLabel('Section title')).toHaveValue('Scene 1')
+  await page.keyboard.press('Control+Alt+k'); await expect(page.getByRole('tab', { name: 'Cards', exact: true })).toHaveAttribute('aria-selected', 'true')
+  await page.keyboard.press('Control+Alt+n'); await expect(page.getByRole('tab', { name: 'Notes', exact: true })).toHaveAttribute('aria-selected', 'true')
+  await page.keyboard.press('Control+Alt+v'); await expect(page.getByRole('dialog')).toContainText('Keep a version before rewriting')
+  await page.keyboard.press('Escape'); await page.keyboard.press('Control+Shift+e')
+  await expect(page.getByRole('dialog')).toContainText('A finished copy')
+})

@@ -84,12 +84,33 @@ After a successful commit the linked idea becomes Published. The site remains on
 | Help | F1 |
 | Leave focus / close dialog | Esc |
 
-All controls are reachable with Tab / Shift+Tab. Markdown undo/redo uses Ctrl+Z / Ctrl+Shift+Z. Native spellcheck is enabled; dedicated English/Turkish style suggestions are not implemented yet. Playwright browser tests cover persistence, idea-to-draft, archive/restore, focus/theme and preview sanitization; these still need execution after installing packages and a Playwright browser.
+All controls are reachable with Tab / Shift+Tab. Markdown undo/redo uses Ctrl+Z / Ctrl+Shift+Z. Native spellcheck is enabled; dedicated English/Turkish style suggestions are not implemented yet. Playwright browser tests cover persistence, idea-to-draft, archive/restore, focus/theme and preview sanitization; the complete browser suite passed using the installed Chrome during phase 2.
+
+## Stories and books
+
+Choose **New story or book** in the library. Blog posts keep their existing single-text/site workflow. Stories can use one text, scenes, or both. Books have an Opening and chapters with scenes. Every section has its own text and editor undo history.
+
+- **Outline:** add chapters/scenes, rename the selected section above its text, drag to reorder or move a scene to another chapter. Up/down buttons provide keyboard-accessible ordering. **Set aside** preserves a section and its descendants; Restore brings them back.
+- **Cards:** character/place cards with age, aliases, impressions and details. Set-aside cards remain recoverable within the project.
+- **Notes:** research notes, a timeline with free-form event times, daily word goals and a local writing log. The log counts increases/decreases in manuscript word count; metadata and snapshot restoration do not earn writing credit. No AI or cloud service is involved.
+- **Typewriter:** keeps the current line near the middle of the writing pane. Toggle with the toolbar or Ctrl+Alt+T. It works with Focus mode.
+- **Start a rewrite:** keeps a snapshot of the selected chapter/scene (or the whole manuscript when Opening/Single text is selected) before returning to the editor. **Snapshots** compares a kept version with current text side by side. Restoring first preserves the current version as another snapshot. Kept versions cannot be edited or deleted through the app.
+- **Export:** copies the whole manuscript in reading order; cards, notes and set-aside writing are excluded. Markdown can be downloaded without extra tools. Installed Pandoc enables DOCX/EPUB and normalized Markdown; PDF additionally needs Typst, XeLaTeX, LuaLaTeX, Tectonic or WeasyPrint on PATH. Typst requires Pandoc 3+. Each export uses a new filename and never overwrites an earlier copy.
+
+In the desktop app, scene/chapter text lives in `projects/<id>/sections/<section-id>.md`. Cards and notes have their own JSON files. Snapshots keep immutable JSON plus readable Markdown under `snapshots/`. Set-aside parts move to `_trash/project-<id>/sections`, `cards`, or `notes`, and are restored from their project UI. Whole-project Trash still works as before. Desktop exports go to `Documents/Yazi/exports/`.
+
+The development browser preview provides the same export dialog through a loopback-only local bridge, returning a browser download. It uses only that isolated preview's project data and images. The static production website build is not a browser-hosted app: use the desktop shell or the development preview for the local export bridge.
+
+![Book outline and character cards](docs/screenshots/phase2-book.png)
+
+[Snapshot comparison](docs/screenshots/phase2-snapshots.png) · [Typewriter](docs/screenshots/phase2-typewriter.png) · [Export](docs/screenshots/phase2-export.png) · [Compact layout](docs/screenshots/phase2-compact.png) · [Exported sample Markdown](docs/examples/the-last-ferry.md)
 
 ## Status
 
-Phase 1 source is implemented: editor, preview, autosave, focus, idea board, image library, trash/restore, settings, and local site transfer. Story/book tools, AI checks, exports, automatic Git history and Notion are later phases.
+Phase 1 and phase 2 source are implemented. The production frontend build, 27 Node tests and 12 browser tests pass. The screenshots and sample Markdown above come from actual browser-preview interactions in an isolated test profile.
 
-At the initial implementation checkpoint, the publishing tests pass, including real sharp + site EXIF integration. Full dependency installation, React production build, Rust tests, Windows packaging and visual/scaling checks remain unverified: the development environment has no Rust/C++ toolchain and denies network downloads. See [verification](docs/verification.md). The phase-1 acceptance milestone still requires writing a real post end to end in the built desktop app.
+Rust/MSVC and Pandoc/PDF engines are not installed in the agent environment. Native storage tests and Windows packaging remain unexecuted. Real DOCX/EPUB/PDF rendering remains unverified; process-contract tests are explicitly distinguished from rendering tests. The browser preview's real Markdown download works. See [verification](docs/verification.md). Phase 2's acceptance milestone still requires Emir to finish a story and export a PDF with the actual tools.
+
+The main `.git` directory is read-only in this session. Separate commits for each feature are preserved in the copied local repository `.tools/phase2-history`, with a portable `.tools/yazi-phase2.bundle`. No commits were written into the protected main `.git`, and nothing was pushed. See [portable history](docs/phase2-history.md).
 
 MIT. Font packages include their own open font licenses.

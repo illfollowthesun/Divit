@@ -1,42 +1,40 @@
-# Verification checkpoint
+# Verification checkpoint: Phase 2
 
-## Passed locally
+## Passed in this session
 
-`npm.cmd test`: 14 tests, 14 passed, no skips. Runs Node with TypeScript stripping so the production draft-session code is exercised directly.
+- `npm.cmd run build -- --logLevel error`: complete strict TypeScript check and Vite production build.
+- `npm.cmd test`: 27 tests passed, no skips.
+- `npm.cmd run test:ui`: 12 tests passed in installed Google Chrome, with isolated browser storage.
 
-- Turkish slug transliteration and invalid/path traversal addresses.
-- Unicode and escaped frontmatter; essay type; required title/text/date.
-- Read-only transfer planning.
-- Dirty tree, existing address/branch and missing image rejection.
-- Branch creation, successful content check, only expected paths in the local commit; no remote or push.
-- Failed content check: original HEAD retained and new files left for review.
-- Real site's sharp and `scripts/lib/exif.mjs`: 3100 px image with orientation/GPS/serials; output ≤2560 px, upright, camera/lens fields kept, GPS/serials removed, source buffer unchanged.
-- Actual Keystatic posts reader and configuration read exported frontmatter successfully, preserving the Turkish title, place, tags and standfirst.
-- Draft-session tests: edits during an in-flight save, failure and retry without losing text, refusing to switch unsaved drafts, stable state across backend property ordering, serial concurrent flushes.
-- Changed content-check commands and occupied image paths stop before branch creation; Windows device-name addresses are rejected.
-- Full local image transfer with the actual sharp/EXIF tools: exact image-reference replacement, privacy checks on emitted files, and byte-identical originals retained.
+Node coverage includes draft save serialization, failure/retry without text loss, Turkish slug/frontmatter and the real Keystatic reader, real sharp/site EXIF privacy processing, isolated site branch/commit checks, full image transfer without changing originals, chapter/scene order and cross-chapter movement, recoverable section removal, immutable snapshots and safeguarded restoration, word-count writing logs, Markdown export, and converter process arguments.
 
-Git integration tests run only in `.tmp/publish-*` fixtures, never in the real site repository. Fixtures are intentionally retained for inspection. The actual site was only read for schema, sample frontmatter and EXIF implementation.
+Browser coverage includes the original blog/idea/trash/theme flows plus persistent story/book types, independent chapter/scene text, section set-aside/restore, character/place cards, actual caret centering in Typewriter mode, side-by-side snapshot comparison and restoration, research/timeline/word goals, and a real Markdown download through the local export bridge. No uncaught page error occurred in the screenshot workflow.
 
-## Blocked by environment
+## Actual preview artifacts
 
-`npm.cmd install` could not access the registry; the available cache lacks CodeMirror/Tauri and other required packages. Offline installation reports `ENOTCACHED`. The environment explicitly disables shell network access. No sandbox escalation or permission bypass was attempted.
+- [Book outline and character cards](screenshots/phase2-book.png)
+- [Chapter snapshot comparison](screenshots/phase2-snapshots.png)
+- [Typewriter and focus](screenshots/phase2-typewriter.png)
+- [Export with a completed Markdown download](screenshots/phase2-export.png)
+- [Compact 960 x 633 viewport](screenshots/phase2-compact.png)
+- [Actual exported Markdown](examples/the-last-ferry.md)
 
-Rust/cargo are absent from PATH and the usual cargo location. Visual Studio's tool inventory did not find the MSVC C++ component. A workspace-local Rust download failed because the network is unavailable.
+Screenshots were captured through real UI actions with synthetic fiction in an isolated browser profile. Existing user preview drafts were not read, replaced or cleared. The compact viewport exercises the logical space of a 1440 x 950 display at 150% scaling and has no page-level horizontal overflow. This is browser layout evidence, not a claim that native Windows DPI behavior was tested.
 
-The site's existing TypeScript compiler and React declarations were used for a partial source check. Missing packages prevent a full type check; this is not a successful production build. Rust tests, installer creation and runtime behavior cannot be claimed without the missing tools.
+## Pending native and converter verification
 
-All seven application TypeScript/TSX files parse without syntax errors. The shared types and production draft-session module pass a full strict TypeScript check with the locally available compiler. The partial React type check reports only unavailable dependency modules. This does not verify those dependencies' actual API types. Four browser integration tests are present under `tests/ui`; they were not run because Playwright and the app packages cannot be installed.
+Rust/cargo and the Microsoft C++ build component are absent. Five native storage tests are present, including structured Markdown/card/note storage and physical trash/restore, interrupted-write recovery, outside-edit conflicts, immutable snapshots and invalid paths. These tests have not run; native IPC, file moves, Windows packaging and installer shortcuts remain unverified.
 
-The prerequisite checker was executed and confirms Node/npm/Git are available while app packages, Cargo, rustc and the MSVC C++ component are missing. `preview.cmd` is prepared for the user's normal Windows session: install packages, verify the frontend build, then open Vite. Its end-to-end behavior is pending the same initial downloads. The desktop revision check and native recovery-backup changes also remain unverified until Rust tests can run.
+Pandoc and PDF engines are absent from PATH and common local installation paths. DOCX/EPUB/PDF process-contract tests use an explicitly labelled test converter to verify Unicode stdin, format flags, output paths and non-overwriting copies. They do not prove that actual Word/EPUB/PDF files render correctly. Markdown was exported with the plain-Markdown fallback and its real downloaded content was checked. Install Pandoc and a supported PDF engine, then verify real outputs before calling the Phase 2 acceptance milestone complete.
 
-## Required next verification
+## Repository history
 
-1. Install Node dependencies and generate/review `package-lock.json` in a network-enabled environment.
-2. `npm.cmd run build`; `cargo test --manifest-path src-tauri/Cargo.toml`.
-3. Run the desktop app: create two drafts, type while autosave runs, switch and restart; edit a draft externally and confirm conflict handling; archive/restore both writing and ideas.
-4. Add real JPEG/PNG/WebP/AVIF images, insert at the cursor and check preview; confirm originals remain untouched.
-5. Check light/dark themes, keyboard controls and 125–150% Windows scaling.
-6. In a separate site checkout, send a post with images; run the real content check, inspect exact commit paths and image metadata. Only then use the live site working tree.
-7. Build/install/uninstall the NSIS package; verify desktop/start-menu shortcuts, installer size and preservation of Documents data.
-8. Emir completes a real post in Yazı. This remains the first-phase acceptance gate.
+The main `.git/index.lock` write was denied by the environment. No attempt was made to change or bypass the protected metadata. Feature commits were created in a separate copied worktree with its own repository under `.tools/phase2-history`; `.tools/yazi-phase2.bundle` preserves that history. No main-repository commit or push is claimed. See [history and review](phase2-history.md).
+
+## Remaining acceptance steps
+
+1. Run `cargo test --manifest-path src-tauri/Cargo.toml` with Rust/MSVC installed, then start the desktop app and exercise the same flows against Documents/Yazi.
+2. Verify physical scene/card/note trash moves and restore, snapshot immutability, outside-edit conflicts and interrupted-save recovery in a disposable data folder.
+3. Install Pandoc plus Typst or another supported PDF engine. Render and inspect real DOCX/EPUB/PDF files, including Turkish text and images.
+4. Check native Windows 125% and 150% scaling and build/install the NSIS package.
+5. Emir finishes a story in Yazi and exports a PDF. This is the Phase 2 acceptance gate.
