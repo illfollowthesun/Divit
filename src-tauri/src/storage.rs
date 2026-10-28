@@ -88,6 +88,16 @@ impl Store {
                 section.as_object_mut().ok_or("Invalid section")?.remove("body");
             }
         }
+        if let Some(cards) = meta.get_mut("cards").and_then(Value::as_array_mut) {
+            for card in cards {
+                let key = card["id"].as_str().ok_or("Missing card identifier")?;
+                let target = self.part_path(folder, "cards", key, "json", card["trashedAt"].is_string())?;
+                let other = self.part_path(folder, "cards", key, "json", !card["trashedAt"].is_string())?;
+                self.move_part(&other, &target, folder)?;
+                write_json(&target, card)?;
+                for field in ["details", "summary", "age", "aliases"] { card.as_object_mut().ok_or("Invalid card")?.remove(field); }
+            }
+        }
         write_json(&folder.join("project.json"), &meta)?;
         fs::rename(folder.join(".recovery.json"), folder.join(".last-save.json")).map_err(err)
     }
@@ -100,6 +110,12 @@ impl Store {
             for section in sections {
                 let key = section["id"].as_str().ok_or("Missing section identifier")?;
                 section["body"] = json!(read(&self.part_path(&folder, "sections", key, "md", section["trashedAt"].is_string())?)?);
+            }
+        }
+        if let Some(cards) = data.get_mut("cards").and_then(Value::as_array_mut) {
+            for card in cards {
+                let key = card["id"].as_str().ok_or("Missing card identifier")?;
+                *card = json_file(&self.part_path(&folder, "cards", key, "json", card["trashedAt"].is_string())?)?;
             }
         }
         Ok(revision(data))
