@@ -67,3 +67,22 @@ test('character and place cards retain details through editing, set-aside and re
   await page.getByRole('button', { name: 'Places', exact: true }).click()
   await expect(page.locator('.project-card')).toContainText('Karaköy')
 })
+
+test('typewriter mode centers the current line without changing the text', async ({ page }) => {
+  await page.getByRole('button', { name: /New writing/ }).click()
+  const editor = page.getByRole('textbox', { name: 'Markdown text' })
+  const text = Array.from({ length: 35 }, (_, i) => `Paragraph ${i + 1}. A little more of the story.`).join('\n\n')
+  await editor.fill(text); await editor.press('Control+End')
+  await page.getByRole('button', { name: 'Typewriter', exact: true }).click()
+  await expect(page.getByRole('button', { name: 'Typewriter', exact: true })).toHaveAttribute('aria-pressed', 'true')
+  await expect.poll(async () => page.evaluate(() => {
+    const paper = document.querySelector('.paper')!, selection = window.getSelection()
+    if (!selection?.rangeCount) return Number.POSITIVE_INFINITY
+    const caret = selection.getRangeAt(0).getBoundingClientRect()
+    return Math.abs(caret.top - paper.getBoundingClientRect().top - paper.clientHeight * 0.45)
+  })).toBeLessThan(35)
+  await page.keyboard.press('Control+s')
+  await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem('yazi-browser-preview-v1')!).projects[0].body)).toBe(text)
+  await page.keyboard.press('Control+Alt+t')
+  await expect(page.getByRole('button', { name: 'Typewriter', exact: true })).toHaveAttribute('aria-pressed', 'false')
+})
