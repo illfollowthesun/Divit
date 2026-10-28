@@ -1,0 +1,9 @@
+node_modules/
+dist/
+src-tauri/target/
+.tools/
+.tmp/
+test-results/
+playwright-report/
+*.log
+*.tsbuildinfo

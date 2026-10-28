@@ -1,0 +1,177 @@
+import { useCallback, useEffect, useRef, useState } from 'react'
+import type { ReactNode } from 'react'
+import type { EditorView } from '@codemirror/view'
+import { Editor } from './editor/Editor'
+import { Preview } from './editor/Preview'
+import { api, desktop } from './shared/api'
+import { DraftSession } from './shared/draft-session'
+import { newProject, slugify, stages, words } from './shared/types'
+import type { Idea, ImageRecord, Library, Project, PublishPlan, Settings } from './shared/types'
+
+type Room = 'write' | 'ideas' | 'images' | 'trash'
+type DialogName = 'help' | 'settings' | 'publish' | null
+const message = (e: unknown) => e instanceof Error ? e.message : String(e)
+
+function Modal({ title, children, close, error }: { title: string; children: ReactNode; close: () => void; error?: string }) {
+  const dialog = useRef<HTMLDialogElement>(null)
+  useEffect(() => {
+    const element = dialog.current!; const previous = document.activeElement as HTMLElement | null
+    element.showModal(); return () => { element.close(); previous?.focus() }
+  }, [])
+  return <dialog ref={dialog} onCancel={e => { e.preventDefault(); close() }} onClick={e => { if (e.target === e.currentTarget) close() }} aria-labelledby="dialog-title"><div className="dialog-head"><h2 id="dialog-title">{title}</h2><button onClick={close} aria-label="Close dialog">×</button></div>{error && <p className="modal-error" role="alert">{error}</p>}{children}</dialog>
+}
+function ImageTile({ image, insert, remove }: { image: ImageRecord; insert?: () => void; remove?: () => void }) {
+  const [src, setSrc] = useState('')
+  useEffect(() => { let active = true; void api.imageData(image).then(src => { if (active) setSrc(src) }).catch(() => {}); return () => { active = false } }, [image])
+  return <div className="image-tile">{src ? <img src={src} alt={image.name} /> : <div className="image-placeholder">Loading image…</div>}<span title={image.name}>{image.name}</span><div className="image-actions">{insert && <button onClick={insert}>Insert in text</button>}{remove && <button onClick={remove} aria-label={`Move ${image.name} to trash`}>Move to trash</button>}</div></div>
+}
+
+export function App() {
+  const [lib, setLib] = useState<Library | null>(null)
+  const [draft, setDraft] = useState<Project | null>(null)
+  const [room, setRoom] = useState<Room>('write')
+  const [filter, setFilter] = useState<'all' | 'draft' | 'published'>('all')
+  const [tab, setTab] = useState<'Preview' | 'Check' | 'Images'>('Preview')
+  const [dialog, setDialog] = useState<DialogName>(null)
+  const [focus, setFocus] = useState(false)
+  const [error, setError] = useState('')
+  const [status, setStatus] = useState('All changes saved')
+  const [busy, setBusy] = useState(false)
+  const [capture, setCapture] = useState('')
+  const [search, setSearch] = useState('')
+  const [tag, setTag] = useState('')
+  const [plan, setPlan] = useState<PublishPlan | null>(null)
+  const [settings, setSettings] = useState<Settings | null>(null)
+  const [acknowledged, setAcknowledged] = useState(false)
+  const [tagText, setTagText] = useState('')
+  const session = useRef<DraftSession | null>(null)
+  if (!session.current) session.current = new DraftSession(api.saveProject, {
+    changed: (project, status) => { setDraft(project); setStatus(status) },
+    saved: project => setLib(old => old ? { ...old, projects: [...old.projects.filter(p => p.id !== project.id), project] } : old),
+    failed: error => setError(message(error)),
+  })
+  const view = useRef<EditorView | null>(null)
+  const mounted = useRef(true)
+  const captureInput = useRef<HTMLInputElement>(null)
+
+  const select = useCallback((project: Project | null) => {
+    session.current!.select(project); setTagText(project?.tags.join(', ') ?? '')
+  }, [])
+  const refresh = useCallback(async () => { const library = await api.library(); setLib(library); return library }, [])
+  useEffect(() => {
+    mounted.current = true
+    void refresh().then(data => { if (mounted.current) { const sorted = [...data.projects].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)); select(sorted[0] ?? null) } }).catch(e => setError(message(e)))
+    return () => { mounted.current = false }
+  }, [refresh, select])
+  useEffect(() => { document.documentElement.dataset.theme = lib?.settings.theme ?? 'light' }, [lib?.settings.theme])
+
+  const flush = useCallback(() => session.current!.flush(), [])
+  useEffect(() => {
+    if (!draft || !session.current!.dirty) return
+    const timer = window.setTimeout(() => { void flush().catch(() => {}) }, 800)
+    return () => clearTimeout(timer)
+  }, [draft, flush])
+  useEffect(() => {
+    const warn = (event: BeforeUnloadEvent) => { if (session.current!.dirty) { event.preventDefault(); event.returnValue = '' } }
+    window.addEventListener('beforeunload', warn)
+    return () => window.removeEventListener('beforeunload', warn)
+  }, [])
+  useEffect(() => {
+    if (!desktop) return
+    let disposed = false; let unlisten: (() => void) | undefined; let closing = false
+    void import('@tauri-apps/api/window').then(async ({ getCurrentWindow }) => {
+      const window = getCurrentWindow()
+      const stop = await window.onCloseRequested(async (event: { preventDefault: () => void }) => {
+        if (closing) return
+        event.preventDefault()
+        try { await flush(); closing = true; await window.close() } catch { closing = false }
+      })
+      if (disposed) stop(); else unlisten = stop
+    })
+    return () => { disposed = true; unlisten?.() }
+  }, [flush])
+
+  function edit(patch: Partial<Project>) { session.current!.edit(patch); setPlan(null) }
+  async function perform(action: () => Promise<void>) {
+    if (busy) return
+    setBusy(true); setError('')
+    try { await action() } catch (e) { setError(message(e)) } finally { setBusy(false) }
+  }
+  async function create(title = '', idea?: Idea) {
+    await flush()
+    const project = await api.saveProject(newProject(title, idea?.id))
+    if (idea) await api.saveIdea({ ...idea, status: 'Draft', projectId: project.id })
+    await refresh(); select(project); setRoom('write'); setFocus(false)
+  }
+  async function openProject(project: Project) { await flush(); const data = await refresh(); const latest = data.projects.find(p => p.id === project.id); if (!latest) throw new Error('This writing was moved. Reload the library.'); select(latest); setRoom('write') }
+  async function addIdea() {
+    if (!capture.trim()) return
+    await api.saveIdea({ schemaVersion: 1, id: crypto.randomUUID(), title: capture.trim(), tags: tag ? [tag] : [], status: 'Idea', createdAt: new Date().toISOString() })
+    setCapture(''); await refresh(); captureInput.current?.focus()
+  }
+  async function importImages() { await api.importImages(); await refresh() }
+  function insert(image: ImageRecord) {
+    if (!draft) return
+    const editor = view.current
+    const alt = image.name.replace(/\.[^.]+$/, '').replace(/[\[\]\\\r\n]/g, '')
+    const text = `\n\n![${alt}](yazi-image:${image.id})\n\n`
+    if (editor) { const range = editor.state.selection.main; editor.dispatch({ changes: { from: range.from, to: range.to, insert: text }, selection: { anchor: range.from + text.length } }); editor.focus() }
+    else edit({ body: draft.body + text })
+  }
+  function openSettings() { if (lib) { setSettings({ ...lib.settings }); setDialog('settings') } }
+  async function openPublish() { await flush(); setPlan(null); setAcknowledged(false); setDialog('publish') }
+  const shortcuts = useRef({ create: () => {}, save: () => {}, idea: () => {}, publish: () => {}, settings: () => {}, help: () => {} })
+  shortcuts.current = {
+    create: () => { if (!busy) void perform(() => create()) }, save: () => { void flush().catch(() => {}) },
+    idea: () => { setFocus(false); setRoom('ideas'); setTimeout(() => captureInput.current?.focus(), 0) },
+    publish: () => { if (!busy && draft) void perform(openPublish) }, settings: openSettings, help: () => setDialog('help'),
+  }
+  useEffect(() => {
+    const keydown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') { if (!dialog) setFocus(false); return }
+      if (event.key === 'F1') { event.preventDefault(); shortcuts.current.help(); return }
+      if (dialog) return
+      if (event.ctrlKey || event.metaKey) {
+        const key = event.key.toLowerCase()
+        if (key === 's') { event.preventDefault(); shortcuts.current.save() }
+        else if (key === 'n') { event.preventDefault(); shortcuts.current.create() }
+        else if (key === 'i' && event.shiftKey) { event.preventDefault(); shortcuts.current.idea() }
+        else if (key === 'enter' && event.shiftKey) { event.preventDefault(); shortcuts.current.publish() }
+        else if (key === '.') { event.preventDefault(); setFocus(f => !f); setRoom('write') }
+        else if (key === ',') { event.preventDefault(); shortcuts.current.settings() }
+      }
+    }
+    document.addEventListener('keydown', keydown); return () => document.removeEventListener('keydown', keydown)
+  }, [dialog])
+
+  if (!lib) return <main className="startup"><span className="brand">Yazı<span>·</span></span>{error ? <><p role="alert">{error}</p><button onClick={() => location.reload()}>Try again</button></> : <p>Opening your writing desk…</p>}</main>
+  const count = words(draft?.body ?? '')
+  const projects = [...lib.projects].filter(p => (filter === 'all' || (filter === 'published' ? !!p.published : !p.published)) && p.title.toLowerCase().includes(search.toLowerCase())).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
+  const tags = [...new Set(lib.ideas.flatMap(i => i.tags))].sort()
+  const canPublish = draft && !draft.published && draft.title.trim() && draft.body.trim() && draft.slug && draft.date
+  const imageInUse = (id: string) => lib.projects.some(p => p.body.includes(`yazi-image:${id}`)) || !!draft?.body.includes(`yazi-image:${id}`)
+
+  return <div className={`app ${focus ? 'focus-mode' : ''}`}>
+    <header className="topbar"><button className="brand" onClick={() => { setFocus(false); setRoom('write') }} aria-label="Yazı writing desk">Yazı<span>·</span></button><span className="top-caption">A little room for your words.</span><nav aria-label="Main navigation"><button className={room === 'write' ? 'active' : ''} onClick={() => setRoom('write')}>Write</button><button className={room === 'ideas' ? 'active' : ''} onClick={() => { setRoom('ideas'); setFocus(false) }}>Idea box <span className="nav-count">{lib.ideas.length}</span></button></nav><div className="top-actions"><button onClick={() => { setRoom('write'); setFocus(f => !f) }} title="Focus mode (Ctrl+.)">{focus ? 'Leave focus' : 'Focus'}</button><button onClick={openSettings} aria-label="Open settings" title="Settings (Ctrl+,)">Settings</button></div></header>
+    {!desktop && <div className="preview-notice">Browser preview <span>Writing is saved in this browser. Open the desktop app for Documents files and site transfer.</span></div>}
+    {error && !dialog && <div className="error-banner" role="alert"><span>{error}</span><button onClick={() => setError('')} aria-label="Dismiss error">×</button></div>}
+    <div className="workspace">
+      <aside className="library" aria-label="Writing library"><div className="section-label">YOUR DESK <span>01</span></div><button className="new-button" onClick={() => void perform(() => create())} disabled={busy}>＋ New writing <kbd>Ctrl N</kbd></button><div className="library-filters"><button className={room === 'write' && filter === 'all' ? 'selected' : ''} onClick={() => { setRoom('write'); setFilter('all') }}>All writing <span>{lib.projects.length}</span></button><button className={room === 'write' && filter === 'draft' ? 'selected' : ''} onClick={() => { setRoom('write'); setFilter('draft') }}>Drafts <span>{lib.projects.filter(p => !p.published).length}</span></button><button className={room === 'write' && filter === 'published' ? 'selected' : ''} onClick={() => { setRoom('write'); setFilter('published') }}>Published <span>{lib.projects.filter(p => p.published).length}</span></button><button className={room === 'images' ? 'selected' : ''} onClick={() => { setRoom('images'); setFocus(false) }}>Images <span>{lib.images.length}</span></button></div><div className="library-divider"/><label className="search-label"><span className="sr-only">Search writing</span><input placeholder="Find a piece…" value={search} onChange={e => setSearch(e.target.value)} /></label><div className="document-list">{projects.map(p => <button key={p.id} className={`document ${draft?.id === p.id ? 'selected' : ''}`} onClick={() => void perform(() => openProject(p))} disabled={busy}><span>{p.title || 'Untitled'}</span><small>{p.date} <i>·</i> {p.published ? 'Published' : 'Draft'}</small></button>)}{projects.length === 0 && <p className="quiet library-empty">{search ? 'No matching writing.' : 'A blank page is a good place to start.'}</p>}</div><div className="library-bottom"><button onClick={() => { setRoom('trash'); setFocus(false) }}>Trash <span>{lib.trash.length}</span></button><button onClick={() => setDialog('help')}>Keyboard shortcuts <kbd>F1</kbd></button><small>LOCAL FILES. YOUR WORDS.</small></div></aside>
+
+      {room === 'write' && <>
+        <main className="writing-area">{draft ? <><div className="document-toolbar"><div><span className="status-dot"/> {draft.published ? 'SENT TO SITE' : 'BLOG POST'} <span className="toolbar-divider">/</span> <span>{draft.published ? 'Published' : 'Draft'}</span></div><div><button onClick={() => void perform(async () => { await flush(); await api.trash('projects', draft.id, draft.title || 'Untitled'); const next = await refresh(); select(next.projects[0] ?? null) })} disabled={busy} title="Move writing to trash">Archive</button><button className="accent-button" onClick={() => void perform(openPublish)} disabled={busy || !canPublish}>{draft.published ? 'Sent to site' : 'Send to site'} <span>↗</span></button></div></div><div className="paper" inert={busy}><div className="eyebrow">MAKE A LITTLE SPACE. WRITE.</div><input className="title-input" aria-label="Title" placeholder="Untitled" value={draft.title} onChange={e => { const title = e.target.value; edit({ title, ...(!draft.slug || draft.slug === slugify(draft.title) ? { slug: slugify(title) } : {}) }) }} /><div className="metadata"><label>PLACE<input placeholder="Somewhere" value={draft.place} onChange={e => edit({ place: e.target.value })}/></label><label>DATE<input type="date" value={draft.date} onChange={e => edit({ date: e.target.value })}/></label><label>TAGS<input placeholder="Add tags, separated by commas" value={tagText} onChange={e => { setTagText(e.target.value); edit({ tags: e.target.value.split(',').map(x => x.trim()).filter(Boolean) }) }}/></label></div><div className="paper-rule"/><Editor id={draft.id} body={draft.body} onChange={body => edit({ body })} onReady={v => { view.current = v }} /></div><footer className="editor-footer"><span>{count.toLocaleString()} words <i>·</i> {Math.max(1, Math.ceil(count / 200))} min read</span><span className={status.startsWith('Not') ? 'save-error' : ''} role="status">{status}</span><button onClick={() => { setRoom('write'); setFocus(f => !f) }} title="Ctrl+.">{focus ? 'Leave focus' : 'Focus mode'} <kbd>Ctrl .</kbd></button></footer></> : <div className="blank-desk"><div className="eyebrow">YOUR WRITING DESK</div><h1>There’s a story<br/>in there somewhere.</h1><p>A thought, a place, a sentence you don’t want to lose.<br/>Give it a page.</p><button className="accent-button" onClick={() => void perform(() => create())} disabled={busy}>Start writing <span>＋</span></button><button className="text-link" onClick={() => setRoom('ideas')}>Or catch an idea first →</button></div>}</main>
+        <aside className="side-panel" aria-label="Writing companion"><div className="panel-tabs" role="tablist" aria-label="Companion tabs">{(['Preview', 'Check', 'Images'] as const).map(t => <button role="tab" aria-selected={tab === t} className={tab === t ? 'active' : ''} key={t} onClick={() => setTab(t)} id={`tab-${t}`} aria-controls="companion-content">{t}</button>)}</div><div className="panel-content" role="tabpanel" id="companion-content" aria-labelledby={`tab-${tab}`}>{tab === 'Preview' ? <><div className="section-label">THE READING VIEW</div>{draft?.title && <h2 className="preview-title">{draft.title}</h2>}{draft?.standfirst && <p className="standfirst">{draft.standfirst}</p>}<Preview text={draft?.body ?? ''} images={lib.images}/></> : tab === 'Images' ? <><div className="section-label">A PLACE FOR IMAGES</div><p className="quiet">Keep the originals. Prepare a lighter, private copy when sending to your site.</p><button className="outline-button" onClick={() => void perform(importImages)} disabled={busy}>＋ Add images</button><div className="image-grid compact">{lib.images.map(image => <ImageTile key={image.id} image={image} insert={draft ? () => insert(image) : undefined}/>)}</div></> : <><div className="section-label">A SECOND PAIR OF EYES</div><h3>Your voice stays yours.</h3><p className="quiet">Fact checks, sources and similar writing will arrive in phase 3. Suggestions will appear here, without changing your text.</p><div className="note-card">For now, a small pause:<br/><br/>Is the opening yours?<br/>Is there a detail only you noticed?<br/>Does the ending need to explain?</div><small className="quiet">No AI request is made.</small></>}</div><div className="panel-footnote">Take your time. It’s your page.</div></aside>
+      </>}
+
+      {room === 'ideas' && <main className="room idea-room"><div className="room-heading"><div><div className="eyebrow">BEFORE THE FIRST DRAFT</div><h1>Somewhere to begin.</h1><p className="quiet">Catch a thought. Let it become something.</p></div><span className="room-number">02 / IDEA BOX</span></div><form className="capture" onSubmit={e => { e.preventDefault(); void perform(addIdea) }}><input ref={captureInput} aria-label="New idea" placeholder="A sentence, a question, a place…" value={capture} onChange={e => setCapture(e.target.value)}/><button className="accent-button" disabled={busy || !capture.trim()}>Catch idea <span>＋</span></button></form><div className="tag-filters"><button className={!tag ? 'selected' : ''} onClick={() => setTag('')}>All ideas</button>{tags.map(t => <button key={t} className={tag === t ? 'selected' : ''} onClick={() => setTag(t)}>#{t}</button>)}<label className="tag-filter-input"><span className="sr-only">Filter or add a tag</span><input placeholder="Filter / add tag" value={tag} onChange={e => setTag(e.target.value)}/></label></div><div className="idea-board">{stages.map((stage, index) => { const ideas = lib.ideas.filter(i => i.status === stage && (!tag || i.tags.includes(tag))); return <section className="idea-column" key={stage} aria-label={stage}><div className="column-heading"><span><small>0{index + 1}</small> {stage}</span><span>{ideas.length}</span></div>{ideas.map(idea => <article className="idea-card" key={idea.id}><small>{new Date(idea.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</small><h3>{idea.title}</h3><div className="idea-tags">{idea.tags.map(t => <span key={t}>#{t}</span>)}</div><label className="sr-only" htmlFor={`stage-${idea.id}`}>Stage for {idea.title}</label><select id={`stage-${idea.id}`} value={idea.status} disabled={busy} onChange={e => void perform(async () => { await api.saveIdea({ ...idea, status: e.target.value as Idea['status'] }); await refresh() })}>{stages.map(s => <option key={s}>{s}</option>)}</select><label className="idea-tag-edit">Tags<input aria-label={`Tags for ${idea.title}`} defaultValue={idea.tags.join(', ')} onBlur={e => { const tags = e.target.value.split(',').map(t => t.trim()).filter(Boolean); if (JSON.stringify(tags) !== JSON.stringify(idea.tags)) void perform(async () => { await api.saveIdea({ ...idea, tags }); await refresh() }) }}/></label><div className="card-actions"><button disabled={busy} onClick={() => void perform(async () => { const project = lib.projects.find(p => p.id === idea.projectId); if (project) await openProject(project); else await create(idea.title, idea) })}>{idea.projectId ? 'Open draft' : 'Start writing'} ↗</button><button disabled={busy} aria-label={`Move idea ${idea.title} to trash`} onClick={() => void perform(async () => { await api.trash('ideas', idea.id, idea.title); await refresh() })}>×</button></div></article>)}{ideas.length === 0 && <p className="column-empty">{stage === 'Idea' ? 'Small thoughts welcome.' : stage === 'Research' ? 'Follow your curiosity.' : stage === 'Draft' ? 'Room for a first version.' : 'Words out in the world.'}</p>}</section> })}</div></main>}
+
+      {room === 'images' && <main className="room"><div className="room-heading"><div><div className="eyebrow">THE VISUAL NOTEBOOK</div><h1>A detail worth keeping.</h1><p className="quiet">Originals stay here. Site copies lose GPS and serial numbers.</p></div><button className="accent-button" disabled={busy} onClick={() => void perform(importImages)}>＋ Add images</button></div><div className="image-grid">{lib.images.map(image => <ImageTile key={image.id} image={image} insert={draft ? () => { setRoom('write'); setTab('Images'); setTimeout(() => insert(image), 0) } : undefined} remove={!imageInUse(image.id) ? () => void perform(async () => { await api.trash('images', image.id, image.name); await refresh() }) : undefined}/>)}</div>{!lib.images.length && <div className="empty-room">Bring a photograph. Give the words some company.</div>}<p className="quiet">Images used in a draft stay in the library. Remove their references before moving them to trash.</p></main>}
+
+      {room === 'trash' && <main className="room"><div className="eyebrow">NOTHING LOST</div><h1>Set aside, kept safe.</h1><p className="quiet">Removed writing, ideas and images can always come back.</p><div className="trash-list">{lib.trash.map(entry => <div key={entry.key}><div><strong>{entry.title}</strong><small>{entry.kind}</small></div><button className="outline-button" disabled={busy} onClick={() => void perform(async () => { await api.restore(entry); await refresh() })}>Restore</button></div>)}</div>{!lib.trash.length && <div className="empty-room">Nothing set aside yet.</div>}</main>}
+    </div>
+
+    {dialog === 'help' && <Modal error={error} title="A few familiar keys" close={() => setDialog(null)}><dl className="shortcut-list">{[['New writing', 'Ctrl N'], ['Save now', 'Ctrl S'], ['Catch an idea', 'Ctrl Shift I'], ['Send to site', 'Ctrl Shift Enter'], ['Focus mode', 'Ctrl .'], ['Settings', 'Ctrl ,'], ['Keyboard help', 'F1'], ['Leave focus / close dialog', 'Esc'], ['Undo / redo', 'Ctrl Z / Ctrl Shift Z']].map(([label, key]) => <div key={label}><dt>{label}</dt><dd><kbd>{key}</kbd></dd></div>)}</dl><p className="quiet">Use Tab and Shift Tab to reach every control. Text saves automatically while you write.</p></Modal>}
+    {dialog === 'settings' && settings && <Modal error={error} title="Make yourself at home" close={() => setDialog(null)}><form onSubmit={e => { e.preventDefault(); void perform(async () => { await api.settings(settings); await refresh(); setDialog(null) }) }}><label className="field">Appearance<select value={settings.theme} onChange={e => setSettings({ ...settings, theme: e.target.value as Settings['theme'] })}><option value="light">Warm paper</option><option value="dark">After hours</option></select></label><label className="field">Site repository<input value={settings.siteRepo} onChange={e => setSettings({ ...settings, siteRepo: e.target.value })}/><small>The local duruduygu.com repository. Node.js 22 and its npm dependencies are needed for sending.</small></label><div className="settings-info"><span className="section-label">YOUR FILES</span><p>{lib.dataRoot}</p><small>Plain Markdown and JSON. No account or cloud sync.</small></div><p className="quiet">AI checks will arrive in phase 3, using Claude Code by default.</p><button className="accent-button" disabled={busy}>Save settings</button></form></Modal>}
+    {dialog === 'publish' && draft && <Modal error={error} title="Send these words out" close={() => { if (!busy) setDialog(null) }}><p className="quiet">Prepare a local site branch for <strong>{draft.title || 'Untitled'}</strong>.</p><label className="field">Address<input value={draft.slug} disabled={busy} onChange={e => edit({ slug: e.target.value })}/><small>duruduygu.com/blog/{draft.slug || 'your-address'}</small></label><label className="field">Excerpt<input placeholder="One line for the journal list" value={draft.excerpt} disabled={busy} onChange={e => edit({ excerpt: e.target.value })}/></label><label className="field">Standfirst<textarea placeholder="The opening lines, set a little larger" value={draft.standfirst} disabled={busy} onChange={e => edit({ standfirst: e.target.value })}/></label><ul className="checklist"><li>{draft.title.trim() ? '✓' : '○'} A title of your own</li><li>{draft.body.trim() ? '✓' : '○'} Text ready to read</li><li>{draft.date ? '✓' : '○'} A date for the journal</li><li>✓ Originals kept; site images resized and privacy checked</li><li>{draft.ideaId ? '✓ Linked idea moves to Published after commit' : '— No linked idea card'}</li></ul>{!desktop && <p className="inline-notice">Site transfer needs the desktop app.</p>}{plan && <div className="publish-plan"><div className="section-label">FILES TO WRITE</div>{plan.files.map(file => <code key={file}>{file}</code>)}<p>Branch <code>{plan.branch}</code></p><p className="quiet">Run the content check, then commit these files locally.</p><label className="acknowledge"><input type="checkbox" checked={acknowledged} onChange={e => setAcknowledged(e.target.checked)}/> I’ve reviewed the files and branch.</label></div>}<div className="dialog-actions"><button className="outline-button" disabled={busy || !desktop || !canPublish} onClick={() => void perform(async () => { await flush(); setPlan(await api.plan(session.current!.project!)); setAcknowledged(false) })}>{busy ? 'Working…' : 'Check repository'}</button><button className="accent-button" disabled={busy || !plan || !acknowledged} onClick={() => void perform(async () => { await flush(); const result = await api.publish(session.current!.project!); const data = await refresh(); select(data.projects.find(p => p.id === draft.id) ?? null); setDialog(null); setStatus(`Committed on ${result.branch} · ${result.commit.slice(0, 7)}`) })}>Create local commit ↗</button></div><small className="quiet">Push is a separate step that requires your approval.</small></Modal>}
+  </div>
+}

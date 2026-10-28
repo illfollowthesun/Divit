@@ -1,0 +1,87 @@
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+mod storage;
+use serde_json::{json, Value};
+use std::{io::Write, path::PathBuf, process::{Command, Stdio}, sync::Mutex};
+use tauri::Manager;
+use storage::{Result, Store};
+struct AppState(Mutex<Store>);
+
+#[tauri::command]
+fn library(state: tauri::State<AppState>) -> Result<Value> { state.0.lock().map_err(|e| e.to_string())?.library() }
+#[tauri::command]
+fn save_project(state: tauri::State<AppState>, data: Value, expected: Option<String>) -> Result<Value> { state.0.lock().map_err(|e| e.to_string())?.save_project(data, expected) }
+#[tauri::command]
+fn save_idea(state: tauri::State<AppState>, data: Value, expected: Option<String>) -> Result<Value> { state.0.lock().map_err(|e| e.to_string())?.save_idea(data, expected) }
+#[tauri::command]
+fn save_settings(state: tauri::State<AppState>, data: Value) -> Result<()> { state.0.lock().map_err(|e| e.to_string())?.save_settings(data) }
+#[tauri::command]
+fn import_image(state: tauri::State<AppState>, source: String, key: String) -> Result<Value> { state.0.lock().map_err(|e| e.to_string())?.import_image(&PathBuf::from(source), &key) }
+#[tauri::command]
+fn image_data(state: tauri::State<AppState>, key: String) -> Result<String> { state.0.lock().map_err(|e| e.to_string())?.image_data(&key) }
+#[tauri::command]
+fn trash(state: tauri::State<AppState>, kind: String, key: String, title: String) -> Result<()> { state.0.lock().map_err(|e| e.to_string())?.trash(&kind, &key, &title) }
+#[tauri::command]
+fn restore(state: tauri::State<AppState>, key: String) -> Result<()> { state.0.lock().map_err(|e| e.to_string())?.restore(&key) }
+
+#[tauri::command]
+async fn site_action(app: tauri::AppHandle, state: tauri::State<'_, AppState>, action: String, project_id: String, expected_revision: Option<String>) -> Result<Value> {
+    if action != "plan" && action != "publish" { return Err("Invalid site action".into()); }
+    let request = {
+        let store = state.0.lock().map_err(|e| e.to_string())?;
+        let library = store.library()?;
+        let project = store.project(&project_id)?;
+        if expected_revision.as_deref() != project["revision"].as_str() { return Err("This draft changed on disk after you opened it. Reload and review the current text before sending.".into()); }
+        if project["published"].is_object() { return Err("This draft has already been sent. Review its branch in the site repository.".into()); }
+        json!({"action":action,"repo":library["settings"]["siteRepo"],"project":project,"images":library["images"],"dataRoot":store.root.to_string_lossy()})
+    };
+    let source_revision = request["project"]["revision"].clone();
+    let script = if cfg!(debug_assertions) { PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../scripts/site-bridge.mjs") } else { app.path().resource_dir().map_err(|e| e.to_string())?.join("site-bridge.mjs") };
+    let output = tauri::async_runtime::spawn_blocking(move || -> Result<Value> {
+        let mut cmd = Command::new("node");
+        cmd.arg(script).stdin(Stdio::piped()).stdout(Stdio::piped()).stderr(Stdio::piped());
+        #[cfg(windows)] { use std::os::windows::process::CommandExt; cmd.creation_flags(0x08000000); }
+        let mut child = cmd.spawn().map_err(|e| format!("Could not start Node.js. Install Node 22 to send posts. {e}"))?;
+        child.stdin.take().ok_or("Could not open bridge input")?.write_all(request.to_string().as_bytes()).map_err(|e| e.to_string())?;
+        let output = child.wait_with_output().map_err(|e| e.to_string())?;
+        let result: Value = serde_json::from_slice(&output.stdout).map_err(|_| format!("Site bridge failed: {}", String::from_utf8_lossy(&output.stderr)))?;
+        if result["ok"] != true { return Err(result["error"].as_str().unwrap_or("Site operation failed").to_string()); }
+        Ok(result["result"].clone())
+    }).await.map_err(|e| e.to_string())??;
+    if action == "publish" {
+        let store = state.0.lock().map_err(|e| e.to_string())?;
+        let mut project = store.project(&project_id)?;
+        if project["revision"] != source_revision { return Err(format!("The site commit succeeded on {}, but the local draft changed during transfer. Your newer draft is kept and was not marked Published.", output["branch"].as_str().unwrap_or("the post branch"))); }
+        let expected = project["revision"].as_str().map(String::from);
+        project["published"] = output.clone();
+        store.save_project(project.clone(), expected).map_err(|e| format!("The site commit succeeded, but the local status could not be saved: {e}"))?;
+        if let Some(idea_id) = project["ideaId"].as_str() {
+            let library = store.library()?;
+            if let Some(idea) = library["ideas"].as_array().and_then(|a| a.iter().find(|i| i["id"] == idea_id)) {
+                let mut idea = idea.clone(); let expected = idea["revision"].as_str().map(String::from);
+                idea["status"] = json!("Published"); store.save_idea(idea, expected)?;
+            }
+        }
+    }
+    Ok(output)
+}
+fn main() {
+    tauri::Builder::default()
+        .plugin(tauri_plugin_single_instance::init(|app, _, _| { if let Some(window) = app.get_webview_window("main") { let _ = window.set_focus(); } }))
+        .plugin(tauri_plugin_dialog::init())
+        .setup(|app| {
+            let root = dirs::document_dir().ok_or("Could not locate your Documents folder")?.join("Yazi");
+            app.manage(AppState(Mutex::new(Store::new(root).map_err(std::io::Error::other)?)));
+            if let Some(window) = app.get_webview_window("main") {
+                if let Ok(Some(monitor)) = window.current_monitor() {
+                    let scale = monitor.scale_factor();
+                    let width = (monitor.size().width as f64 / scale - 64.0).clamp(760.0, 1440.0);
+                    let height = (monitor.size().height as f64 / scale - 100.0).clamp(580.0, 950.0);
+                    let _ = window.set_size(tauri::LogicalSize::new(width, height));
+                    let _ = window.center();
+                }
+            }
+            Ok(())
+        })
+        .invoke_handler(tauri::generate_handler![library, save_project, save_idea, save_settings, import_image, image_data, trash, restore, site_action])
+        .run(tauri::generate_context!()).expect("Could not start Yazı");
+}
