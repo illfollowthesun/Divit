@@ -1,0 +1,15 @@
+import { test, expect } from '@playwright/test'
+test('outline has readable targets, live chapter counts and persistent scene status',async({page})=>{
+  await page.goto('/');await page.evaluate(()=>localStorage.clear());await page.reload()
+  await page.getByRole('button',{name:/New story or book/}).click();await page.getByLabel('Project type').selectOption('book')
+  await page.getByRole('button',{name:'Create project',exact:true}).click();await page.getByRole('button',{name:'+ Chapter',exact:true}).click()
+  await page.getByRole('textbox',{name:'Markdown text'}).fill('One two');await page.getByRole('button',{name:'+ Scene',exact:true}).click()
+  await page.getByRole('textbox',{name:'Markdown text'}).fill('Three four five')
+  await expect(page.locator('.outline-word-count')).toHaveText('5')
+  const row=page.locator('.outline-row').first();expect((await row.boundingBox())!.height).toBeGreaterThanOrEqual(32)
+  expect(await row.locator('.outline-node').evaluate(el=>getComputedStyle(el).fontSize)).toBe('13px')
+  await page.locator('.scene-status').click();await expect(page.locator('.scene-status')).toHaveAttribute('data-status','to-fix')
+  await page.locator('.scene-status').press('Enter');await expect(page.locator('.scene-status')).toHaveAttribute('data-status','done')
+  await page.keyboard.press('Control+s');await expect(page.getByRole('status')).toHaveText('All changes saved')
+  await page.reload();await expect(page.locator('.scene-status')).toHaveAttribute('data-status','done')
+})

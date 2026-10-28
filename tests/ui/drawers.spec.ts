@@ -1,0 +1,15 @@
+import { test, expect } from '@playwright/test'
+test('narrow drawers preserve a 560px writing column and support Escape and focus return',async({page})=>{
+  await page.setViewportSize({width:960,height:800});await page.goto('/');await page.evaluate(()=>localStorage.clear());await page.reload()
+  await page.getByRole('button',{name:/New writing/}).click()
+  await expect(page.getByRole('complementary',{name:'Writing companion'})).toBeHidden()
+  expect((await page.locator('.writing-area').boundingBox())!.width).toBeGreaterThanOrEqual(560)
+  await page.getByRole('button',{name:'Toggle companion',exact:true}).click();await expect(page.getByRole('complementary',{name:'Writing companion'})).toBeVisible()
+  await page.keyboard.press('Escape');await expect(page.getByRole('button',{name:'Toggle companion',exact:true})).toBeFocused()
+  await page.setViewportSize({width:800,height:700});await expect(page.getByRole('complementary',{name:'Writing library'})).toBeHidden()
+  expect((await page.locator('.writing-area').boundingBox())!.width).toBeGreaterThanOrEqual(560)
+  await page.getByRole('button',{name:'Toggle library',exact:true}).click();await expect(page.getByRole('complementary',{name:'Writing library'})).toBeVisible()
+  await page.getByRole('button',{name:'Close library',exact:true}).click()
+  await expect(page.getByRole('button',{name:'Toggle library',exact:true})).toBeFocused()
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true)
+})

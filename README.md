@@ -111,6 +111,24 @@ The development browser preview provides the same export dialog through a loopba
 
 [Snapshot comparison](docs/screenshots/phase2-snapshots.png) · [Typewriter](docs/screenshots/phase2-typewriter.png) · [Export](docs/screenshots/phase2-export.png) · [Compact layout](docs/screenshots/phase2-compact.png) · [Exported sample Markdown](docs/examples/the-last-ferry.md)
 
+## Automatic backups and manual restore
+
+The editor's LANGUAGE setting selects English or Turkish for the project and is saved with it. CodeMirror's editable surface sets `spellcheck=true` and the matching `lang`, with `autocorrect=off` and capitalization disabled. The app never replaces a misspelled word automatically. Actual squiggles and suggestions depend on the English/Turkish dictionaries available to Windows/WebView2; browser tests verify the attributes, persistence and unchanged text, while native underline rendering remains a manual check.
+
+In the desktop app, open Settings and choose a backup folder outside `Documents/Yazi`, such as a USB drive or a folder already managed by OneDrive. Save settings to enable the daily check, or use **Back up now**. Backups run once per local day while the app is open, and again on close after writing has been saved. They use the installed Node.js 22 runtime. The native storage lock serializes the full ZIP against application writes. Settings shows the last successful backup time; a failed backup does not replace that record.
+
+The newest 14 app-owned ZIPs remain in the selected folder. Older copies move to its `_trash` subfolder, preserving the app's never-delete rule; this does not reclaim their disk space. Unrelated ZIP files are untouched. Archives include the full Yazi folder, including ideas, projects, images, snapshots, recovery files and trash. Unicode filenames/content use standard UTF-8 ZIP entries. Archives over 4 GB or 65535 entries are rejected without replacing an earlier backup. If the backup drive is unavailable on close, writing is saved first and you can reconnect it or explicitly close without a new backup.
+
+To restore:
+
+1. Close Yazı. Copy the current `Documents/Yazi` folder to a separate safe location first.
+2. Extract the selected ZIP into a **new, empty folder** using Windows Extract All. It contains a `Yazi` folder.
+3. Inspect its Markdown/JSON files, images and snapshots before using them. Keep the current and extracted copies separate until verified.
+4. With Yazı closed, rename the current data folder to a dated recovery name, then copy the extracted `Yazi` folder into Documents. Do not merge or overwrite the current copy automatically.
+5. Reopen Yazı and verify the library and backup destination in Settings. Keep the displaced data folder until you have checked everything.
+
+The browser preview cannot select or back up the desktop Documents folder. ZIP construction, independent Windows ZIP extraction, daily skipping, forced close copies and 14-copy rotation are tested with disposable fixtures. Native Tauri scheduling/close integration still requires Rust/WebView2 runtime verification.
+
 ## Status
 
 Phase 1 and phase 2 source are implemented. The production frontend build, 27 Node tests and 13 browser tests pass. The screenshots and sample Markdown above come from actual browser-preview interactions in an isolated test profile.

@@ -1,6 +1,6 @@
 import { invoke, isTauri } from '@tauri-apps/api/core'
 import { open } from '@tauri-apps/plugin-dialog'
-import type { Idea, ImageRecord, Library, Project, PublishPlan, PublishResult, Settings, TrashEntry, ExportFormat, ExportTools, ExportResult } from './types'
+import type { Idea, ImageRecord, Library, Project, PublishPlan, PublishResult, Settings, TrashEntry, ExportFormat, ExportTools, ExportResult, BackupInfo } from './types'
 
 export const desktop = isTauri()
 const key = 'yazi-browser-preview-v1'
@@ -17,6 +17,16 @@ function savePreview<T extends Project | Idea>(collection: 'projects' | 'ideas',
   persist(lib); return result
 }
 export const api = {
+  backup: async (reason: 'status' | 'daily' | 'close' | 'manual'): Promise<BackupInfo> => {
+    if (desktop) return invoke('backup_action', { reason })
+    if (reason === 'manual') throw new Error('Backups use the Documents folder in the desktop app.')
+    return { enabled: false, lastBackupAt: null }
+  },
+  chooseBackupFolder: async (): Promise<string | null> => {
+    if (!desktop) return null
+    const folder = await open({ directory: true, multiple: false, title: 'Choose a backup folder outside Yazi' })
+    return typeof folder === 'string' ? folder : null
+  },
   exportStatus: async (): Promise<ExportTools> => {
     if (desktop) return invoke('export_action', { action: 'status', projectId: null, expectedRevision: null, format: null })
     const response = await fetch('/__yazi/export')

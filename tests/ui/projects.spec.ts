@@ -138,7 +138,7 @@ test('research, timeline and daily writing goals persist without counting metada
   await page.getByRole('button', { name: 'Timeline', exact: true }).click(); await page.getByRole('button', { name: '+ Event', exact: true }).click()
   await page.getByLabel('Note title').fill('Departure'); await page.getByLabel('When', { exact: true }).fill('Day 1, 06:10')
   await page.getByLabel('Note text').fill('Derya takes the first ferry.'); await page.getByRole('button', { name: 'Save note', exact: true }).click()
-  await page.keyboard.press('Control+s'); await expect(page.locator('.today-count')).toContainText('Today 3 / 10')
+  await page.keyboard.press('Control+s'); await expect(page.locator('.daily-goal-line')).toHaveAttribute('value', '3'); await expect(page.locator('.daily-goal-line')).toHaveAttribute('max', '10')
   await page.reload(); await page.getByRole('tab', { name: 'Notes', exact: true }).click()
   await expect(page.locator('.project-notes')).toContainText('Ferry routes')
   await page.getByRole('button', { name: 'Timeline', exact: true }).click(); await expect(page.locator('.project-notes')).toContainText('Day 1, 06:10')

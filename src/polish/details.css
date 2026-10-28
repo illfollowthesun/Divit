@@ -1,0 +1,8 @@
+.metadata input[type=text]{appearance:none;font-family:'IBM Plex Sans',sans-serif;font-size:11px;line-height:1.5}
+.metadata input[aria-invalid=true]{color:var(--error)}
+.editor-footer .daily-goal-line{width:65px;height:3px;border:0;appearance:none;background:var(--line);accent-color:var(--accent);border-radius:2px;overflow:hidden}
+.daily-goal-line::-webkit-progress-bar{background:var(--line)}
+.daily-goal-line::-webkit-progress-value{background:var(--accent)}
+.new-button kbd,.editor-footer kbd{display:inline-block;background:var(--paper);border:1px solid var(--line);padding:2px 5px;border-radius:3px;font-size:10px;line-height:1.2;white-space:nowrap}
+.editor-footer button{display:flex;align-items:center;gap:7px}
+.editor-footer kbd{margin-left:0}

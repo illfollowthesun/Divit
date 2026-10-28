@@ -1,3 +1,4 @@
+import { SnapshotDiff } from './SnapshotDiff'
 import { useState } from 'react'
 import type { Project, Snapshot } from '../shared/types'
 import { snapshotText, takeSnapshot } from './snapshots'
@@ -8,6 +9,6 @@ export function Snapshots({ project, scopeId, keep, restore, disabled }: { proje
   const selected = snapshots.find(s => s.id === chosen) ?? snapshots.find(s => s.scopeId === scopeId) ?? snapshots[0]
   const current = selected ? takeSnapshot(project, selected.scopeId, 'Current writing') : null
   return <div className="snapshots-dialog"><p className="quiet">Keep a version before rewriting. Restoring also keeps a snapshot of your current writing.</p><form className="snapshot-capture" onSubmit={e => { e.preventDefault(); keep(label); setLabel('') }}><input aria-label="Snapshot label" value={label} onChange={e => setLabel(e.target.value)} placeholder="Before a rewrite, a different ending…"/><button className="accent-button" disabled={disabled}>Keep snapshot</button></form>
-    {selected && current ? <><label className="field">Snapshot to compare<select value={selected.id} onChange={e => setChosen(e.target.value)}>{snapshots.map(s => <option key={s.id} value={s.id}>{s.title} · {s.label} · {new Date(s.createdAt).toLocaleString('en-GB')}</option>)}</select></label><div className="snapshot-comparison"><section><div className="section-label">KEPT VERSION</div><h3>{selected.title}</h3><pre>{snapshotText(selected) || 'An empty page.'}</pre></section><section><div className="section-label">CURRENT WRITING</div><h3>{current.title}</h3><pre>{snapshotText(current) || 'An empty page.'}</pre></section></div><button className="outline-button" disabled={disabled} onClick={() => restore(selected)}>Restore this version</button></> : <div className="empty-room">A version worth keeping starts here.</div>}
+    {selected && current ? <><label className="field">Snapshot to compare<select value={selected.id} onChange={e => setChosen(e.target.value)}>{snapshots.map(s => <option key={s.id} value={s.id}>{s.title} · {s.label} · {new Date(s.createdAt).toLocaleString('en-GB')}</option>)}</select></label><SnapshotDiff before={snapshotText(selected)} after={snapshotText(current)} beforeTitle={selected.title} afterTitle={current.title}/><button className="outline-button" disabled={disabled} onClick={() => restore(selected)}>Restore this version</button></> : <div className="empty-room">A version worth keeping starts here.</div>}
   </div>
 }

@@ -3,10 +3,48 @@
   "productName": "Yazı",
   "version": "0.1.0",
   "identifier": "com.firextream.yazi",
-  "build": {"beforeDevCommand": "npm.cmd run dev", "devUrl": "http://localhost:1420", "beforeBuildCommand": "npm.cmd run build", "frontendDist": "../dist"},
-  "app": {
-    "windows": [{"title": "Yazı", "width": 1440, "height": 950, "minWidth": 760, "minHeight": 580}],
-    "security": {"csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src ipc: http://ipc.localhost"}
+  "build": {
+    "beforeDevCommand": "npm.cmd run dev",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "npm.cmd run build",
+    "frontendDist": "../dist"
   },
-  "bundle": {"active": true, "targets": ["nsis"], "icon": ["icons/icon.ico"], "resources": {"../scripts/site-bridge.mjs": "site-bridge.mjs", "../scripts/export-bridge.mjs": "export-bridge.mjs"}, "windows": {"nsis": {"displayLanguageSelector": false, "languages": ["English"], "installMode": "currentUser", "startMenuFolder": "Yazı"}}}
+  "app": {
+    "windows": [
+      {
+        "title": "Yazı",
+        "width": 1440,
+        "height": 950,
+        "minWidth": 760,
+        "minHeight": 580
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src ipc: http://ipc.localhost"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": [
+      "nsis"
+    ],
+    "icon": [
+      "icons/icon.ico"
+    ],
+    "resources": {
+      "../scripts/site-bridge.mjs": "site-bridge.mjs",
+      "../scripts/export-bridge.mjs": "export-bridge.mjs",
+      "../scripts/backup-bridge.mjs": "backup-bridge.mjs"
+    },
+    "windows": {
+      "nsis": {
+        "displayLanguageSelector": false,
+        "languages": [
+          "English"
+        ],
+        "installMode": "currentUser",
+        "startMenuFolder": "Yazı"
+      }
+    }
+  }
 }

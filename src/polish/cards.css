@@ -1,0 +1,9 @@
+.cards-panel .project-card{padding:15px;margin-bottom:12px}
+.cards-panel .project-card h3{font-family:Newsreader,Georgia,serif;font-size:26px;margin:9px 0}
+.cards-panel .project-card p,.cards-panel .project-card .card-details{font-family:'IBM Plex Sans',sans-serif;font-size:14px;line-height:1.5;margin:7px 0;white-space:pre-wrap}
+.cards-panel .project-card>div{padding-top:6px;margin-top:10px}
+.project-card.card-selected{border-color:var(--accent)}
+.card-more{padding:2px 0;color:var(--accent);font-size:11px}
+.card-mention{cursor:pointer;text-decoration:underline dotted var(--accent);text-underline-offset:4px}
+.card-mention:hover,.card-mention:focus-visible{background:var(--hover)}
+.cards-panel .card-form input,.cards-panel .card-form textarea{font-size:14px}

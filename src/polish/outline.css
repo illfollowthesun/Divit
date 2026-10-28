@@ -1,0 +1,11 @@
+.outline-tree .outline-row{display:flex;align-items:center;min-height:32px;gap:2px}
+.outline-tree .outline-node,.outline>.outline-node{font-size:13px;min-height:32px;padding:6px 4px;flex:1;min-width:0}
+.outline-tree .outline-node>span{flex:1;min-width:0}
+.outline-drag{opacity:0;width:10px;flex-shrink:0;color:var(--muted);font-size:12px;cursor:grab;user-select:none}
+.outline-row:hover .outline-drag,.outline-row:focus-within .outline-drag{opacity:.7}
+.outline-word-count{font:9px 'IBM Plex Mono';color:var(--muted);padding-right:5px;white-space:nowrap}
+.scene-status{width:32px;min-height:32px;padding:0;display:grid;place-items:center;flex-shrink:0}
+.scene-status:before{content:'';width:6px;height:6px;border-radius:50%;background:var(--muted);opacity:.65}
+.scene-status[data-status=to-fix]:before{background:var(--accent);opacity:1}
+.scene-status[data-status=done]:before{background:#73805c;opacity:1}
+.outline-tools button{min-width:32px;min-height:32px}

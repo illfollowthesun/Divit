@@ -1,0 +1,14 @@
+.snapshot-document{font:18px/1.65 Newsreader,Georgia,serif;overflow-wrap:anywhere}
+.snapshot-document p{margin:0 0 1em;line-height:1.65}
+.snapshot-document h1{font-size:28px;letter-spacing:-.3px;margin:1em 0 .5em}
+.snapshot-document h2{font-size:24px;margin:1em 0 .5em}
+.snapshot-document h3{font-size:21px;margin:1em 0 .5em}
+.snapshot-document pre{font:13px/1.5 'IBM Plex Mono';white-space:pre-wrap}
+.diff-removed{background:#f1dbd5;color:#773e37;text-decoration:line-through;text-decoration-thickness:1px;border-radius:2px}
+.diff-added{background:#dfe9d8;color:#36503b;text-decoration:none;border-radius:2px}
+:root[data-theme=dark] .diff-removed{background:#533a35;color:#f0c3b8}
+:root[data-theme=dark] .diff-added{background:#344b35;color:#d3e5cc}
+.diff-options{display:flex;justify-content:space-between;align-items:center;gap:15px;font-size:11px;color:var(--muted);margin-top:20px}
+.diff-options label{display:flex;align-items:center;gap:8px}
+.diff-options input{accent-color:var(--accent)}
+.diff-options del,.diff-options ins{padding:2px 6px;margin-left:6px}

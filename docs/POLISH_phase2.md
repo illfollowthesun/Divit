@@ -34,3 +34,7 @@ Before/after screenshots at 1440 and 960 wide, tests + Playwright pass, everythi
 ## 7. Two additions (Emir, 29 Oct)
 - Automatic backup: once a day (and on app close) zip Documents\Yazi into a backup folder Emir picks (e.g. OneDrive or USB), keep the last 14 zips, show "Last backup: today 01:12" in Settings. Restore = unzip guide in README, never automatic overwrite.
 - Spell check in the editor for English and Turkish (WebView2 spellcheck via CodeMirror contentAttributes spellcheck=true; language follows project setting). Squiggles only, no auto-correct.
+
+## 8. Emir's notes (29 Oct, 02:41)
+- Spell check UX: clicking a red-underlined word shows a small popover just above it: "Did you mean: tickets · ticket's" (max 3, click to replace, Esc closes). Right-click on the word opens a context menu with the same suggestions + "Add to dictionary" + "Ignore in this project", then the normal Cut/Copy/Paste. Dictionary per language, stored in Documents\Yazi\settings.json. Never auto-correct.
+- Fewer lines: remove decorative dividers and borders wherever spacing alone separates things (under the title, around the meta row, between sidebar groups, the vertical rules beside panels, card borders in the right panel). Keep a line only where it carries meaning (e.g. the active tab underline). Use whitespace and soft background tints instead.

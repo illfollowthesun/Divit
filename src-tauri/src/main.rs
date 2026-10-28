@@ -1,10 +1,10 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 mod storage;
 use serde_json::{json, Value};
-use std::{io::Write, path::PathBuf, process::{Command, Stdio}, sync::Mutex};
+use std::{io::Write, path::PathBuf, process::{Command, Stdio}, sync::{Arc, Mutex}};
 use tauri::Manager;
 use storage::{Result, Store};
-struct AppState(Mutex<Store>);
+struct AppState(Arc<Mutex<Store>>);
 
 #[tauri::command]
 fn library(state: tauri::State<AppState>) -> Result<Value> { state.0.lock().map_err(|e| e.to_string())?.library() }
@@ -54,9 +54,10 @@ async fn site_action(app: tauri::AppHandle, state: tauri::State<'_, AppState>, a
     }
     Ok(output)
 }
-async fn call_bridge(app: &tauri::AppHandle, script_name: &str, request: Value) -> Result<Value> {
-    let script = if cfg!(debug_assertions) { PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../scripts").join(script_name) } else { app.path().resource_dir().map_err(|e| e.to_string())?.join(script_name) };
-    tauri::async_runtime::spawn_blocking(move || -> Result<Value> {
+fn bridge_path(app: &tauri::AppHandle, name: &str) -> Result<PathBuf> {
+    Ok(if cfg!(debug_assertions) { PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../scripts").join(name) } else { app.path().resource_dir().map_err(|e| e.to_string())?.join(name) })
+}
+fn run_bridge(script: PathBuf, request: Value) -> Result<Value> {
         let mut cmd = Command::new("node");
         cmd.arg(script).stdin(Stdio::piped()).stdout(Stdio::piped()).stderr(Stdio::piped());
         #[cfg(windows)] { use std::os::windows::process::CommandExt; cmd.creation_flags(0x08000000); }
@@ -66,6 +67,25 @@ async fn call_bridge(app: &tauri::AppHandle, script_name: &str, request: Value) 
         let result: Value = serde_json::from_slice(&output.stdout).map_err(|_| format!("Local helper failed: {}", String::from_utf8_lossy(&output.stderr)))?;
         if result["ok"] != true { return Err(result["error"].as_str().unwrap_or("Site operation failed").to_string()); }
         Ok(result["result"].clone())
+}
+async fn call_bridge(app: &tauri::AppHandle, script_name: &str, request: Value) -> Result<Value> {
+    let script = bridge_path(app, script_name)?;
+    tauri::async_runtime::spawn_blocking(move || run_bridge(script, request)).await.map_err(|e| e.to_string())?
+}
+
+#[tauri::command]
+async fn backup_action(app: tauri::AppHandle, state: tauri::State<'_, AppState>, reason: String) -> Result<Value> {
+    if !["status","daily","close","manual"].contains(&reason.as_str()) { return Err("Invalid backup reason".into()); }
+    let shared = state.0.clone();
+    let script = bridge_path(&app, "backup-bridge.mjs")?;
+    tauri::async_runtime::spawn_blocking(move || -> Result<Value> {
+        let store = shared.lock().map_err(|e| e.to_string())?;
+        let library = store.library()?;
+        let folder = library["settings"]["backupFolder"].as_str().unwrap_or("");
+        if folder.is_empty() { return Ok(json!({"enabled":false,"lastBackupAt":null})); }
+        let result = run_bridge(script, json!({"dataRoot":store.root.to_string_lossy(),"folder":folder,"reason":reason}));
+        drop(store); // Serialize the complete ZIP against all application file writes.
+        result
     }).await.map_err(|e| e.to_string())?
 }
 
@@ -88,7 +108,7 @@ fn main() {
         .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
             let root = dirs::document_dir().ok_or("Could not locate your Documents folder")?.join("Yazi");
-            app.manage(AppState(Mutex::new(Store::new(root).map_err(std::io::Error::other)?)));
+            app.manage(AppState(Arc::new(Mutex::new(Store::new(root).map_err(std::io::Error::other)?))));
             if let Some(window) = app.get_webview_window("main") {
                 if let Ok(Some(monitor)) = window.current_monitor() {
                     let scale = monitor.scale_factor();
@@ -100,6 +120,6 @@ fn main() {
             }
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![library, save_project, save_idea, save_settings, import_image, image_data, trash, restore, site_action, export_action])
+        .invoke_handler(tauri::generate_handler![library, save_project, save_idea, save_settings, import_image, image_data, trash, restore, site_action, export_action, backup_action])
         .run(tauri::generate_context!()).expect("Could not start Yazı");
 }
