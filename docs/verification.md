@@ -4,7 +4,7 @@
 
 - `npm.cmd run build -- --logLevel error`: complete strict TypeScript check and Vite production build.
 - `npm.cmd test`: 27 tests passed, no skips.
-- `npm.cmd run test:ui`: 12 tests passed in installed Google Chrome, with isolated browser storage.
+- `npm.cmd run test:ui`: 13 tests passed in installed Google Chrome, with isolated browser storage.
 
 Node coverage includes draft save serialization, failure/retry without text loss, Turkish slug/frontmatter and the real Keystatic reader, real sharp/site EXIF privacy processing, isolated site branch/commit checks, full image transfer without changing originals, chapter/scene order and cross-chapter movement, recoverable section removal, immutable snapshots and safeguarded restoration, word-count writing logs, Markdown export, and converter process arguments.
 

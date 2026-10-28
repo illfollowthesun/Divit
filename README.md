@@ -76,6 +76,12 @@ After a successful commit the linked idea becomes Published. The site remains on
 | Action | Shortcut |
 |---|---|
 | New writing | Ctrl+N |
+| New story or book | Ctrl+Shift+N |
+| Add chapter / scene | Ctrl+Alt+1 / Ctrl+Alt+2 |
+| Character/place cards | Ctrl+Alt+K |
+| Project notebook | Ctrl+Alt+N |
+| Snapshots | Ctrl+Alt+V |
+| Export story/book | Ctrl+Shift+E |
 | Save now | Ctrl+S |
 | Idea capture | Ctrl+Shift+I |
 | Send to site | Ctrl+Shift+Enter |
@@ -107,7 +113,7 @@ The development browser preview provides the same export dialog through a loopba
 
 ## Status
 
-Phase 1 and phase 2 source are implemented. The production frontend build, 27 Node tests and 12 browser tests pass. The screenshots and sample Markdown above come from actual browser-preview interactions in an isolated test profile.
+Phase 1 and phase 2 source are implemented. The production frontend build, 27 Node tests and 13 browser tests pass. The screenshots and sample Markdown above come from actual browser-preview interactions in an isolated test profile.
 
 Rust/MSVC and Pandoc/PDF engines are not installed in the agent environment. Native storage tests and Windows packaging remain unexecuted. Real DOCX/EPUB/PDF rendering remains unverified; process-contract tests are explicitly distinguished from rendering tests. The browser preview's real Markdown download works. See [verification](docs/verification.md). Phase 2's acceptance milestone still requires Emir to finish a story and export a PDF with the actual tools.
 

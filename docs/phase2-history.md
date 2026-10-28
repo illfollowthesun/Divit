@@ -24,6 +24,7 @@ The independent history uses the user's existing Git identity. No global configu
 | `dff809e` | Pandoc bridge and portable Markdown export |
 | `8bd2dcd` | Research, timeline, writing log and word goals |
 | `78fc751` | Recovery safeguards, browser evidence and regression checks |
+| `a5493ac` | Fiction keyboard shortcuts |
 
 A final documentation commit follows these feature commits. The entire series is stored in `.tools/yazi-phase2.bundle`.
 
