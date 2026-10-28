@@ -1,6 +1,6 @@
 import { invoke, isTauri } from '@tauri-apps/api/core'
 import { open } from '@tauri-apps/plugin-dialog'
-import type { Idea, ImageRecord, Library, Project, PublishPlan, PublishResult, Settings, TrashEntry } from './types'
+import type { Idea, ImageRecord, Library, Project, PublishPlan, PublishResult, Settings, TrashEntry, ExportFormat, ExportTools, ExportResult } from './types'
 
 export const desktop = isTauri()
 const key = 'yazi-browser-preview-v1'
@@ -17,6 +17,21 @@ function savePreview<T extends Project | Idea>(collection: 'projects' | 'ideas',
   persist(lib); return result
 }
 export const api = {
+  exportStatus: async (): Promise<ExportTools> => {
+    if (desktop) return invoke('export_action', { action: 'status', projectId: null, expectedRevision: null, format: null })
+    const response = await fetch('/__yazi/export')
+    if (!response.ok) throw new Error('Restart the preview server to enable local exports.')
+    return response.json()
+  },
+  exportProject: async (project: Project, format: ExportFormat, images: ImageRecord[]): Promise<ExportResult> => {
+    if (desktop) return invoke('export_action', { action: 'export', projectId: project.id, expectedRevision: project.revision ?? null, format })
+    const response = await fetch('/__yazi/export', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Yazi-Preview': '1' }, body: JSON.stringify({ project, format, images }) })
+    if (!response.ok) throw new Error((await response.json()).error ?? 'Export failed.')
+    const filename = /filename="([^"]+)"/.exec(response.headers.get('Content-Disposition') ?? '')?.[1] ?? `manuscript.${format === 'markdown' ? 'md' : format}`
+    const url = URL.createObjectURL(await response.blob()), link = document.createElement('a')
+    link.href = url; link.download = filename; link.click(); setTimeout(() => URL.revokeObjectURL(url), 10000)
+    return { path: 'Browser download', filename, format }
+  },
   library: async (): Promise<Library> => desktop ? invoke('library') : preview(),
   saveProject: async (data: Project): Promise<Project> => desktop ? invoke('save_project', { data, expected: data.revision ?? null }) : savePreview('projects', data),
   saveIdea: async (data: Idea): Promise<Idea> => desktop ? invoke('save_idea', { data, expected: data.revision ?? null }) : savePreview('ideas', data),

@@ -8,5 +8,5 @@
     "windows": [{"title": "Yazı", "width": 1440, "height": 950, "minWidth": 760, "minHeight": 580}],
     "security": {"csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src ipc: http://ipc.localhost"}
   },
-  "bundle": {"active": true, "targets": ["nsis"], "icon": ["icons/icon.ico"], "resources": {"../scripts/site-bridge.mjs": "site-bridge.mjs"}, "windows": {"nsis": {"displayLanguageSelector": false, "languages": ["English"], "installMode": "currentUser", "startMenuFolder": "Yazı"}}}
+  "bundle": {"active": true, "targets": ["nsis"], "icon": ["icons/icon.ico"], "resources": {"../scripts/site-bridge.mjs": "site-bridge.mjs", "../scripts/export-bridge.mjs": "export-bridge.mjs"}, "windows": {"nsis": {"displayLanguageSelector": false, "languages": ["English"], "installMode": "currentUser", "startMenuFolder": "Yazı"}}}
 }

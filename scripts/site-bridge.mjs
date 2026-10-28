@@ -32,8 +32,8 @@ export function run(command, args, cwd, timeout = 120000) {
   })
 }
 export async function imageTools(repo) {
-  const { default: sharp } = await import(pathToFileURL(join(repo, 'node_modules/sharp/lib/index.js')).href)
-  const { readExif, exifProblems } = await import(pathToFileURL(join(repo, 'scripts/lib/exif.mjs')).href)
+  const { default: sharp } = await import(/* @vite-ignore */ pathToFileURL(join(repo, 'node_modules/sharp/lib/index.js')).href)
+  const { readExif, exifProblems } = await import(/* @vite-ignore */ pathToFileURL(join(repo, 'scripts/lib/exif.mjs')).href)
   return { sharp, readExif, exifProblems }
 }
 export async function prepareImage(input, tools) {

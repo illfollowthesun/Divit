@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test'
+import { readFile } from 'node:fs/promises'
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/'); await page.evaluate(() => localStorage.clear()); await page.reload()
@@ -105,4 +106,21 @@ test('snapshots compare side by side and restoring keeps the rewrite too', async
   await page.getByRole('button', { name: 'Snapshots', exact: true }).click()
   await expect(page.getByLabel('Snapshot to compare').locator('option')).toHaveCount(2)
   await expect(page.locator('.snapshot-comparison section').nth(0)).toContainText('The sea remembered every departure.')
+})
+
+test('browser preview exports a real Markdown download through the local converter bridge', async ({ page }) => {
+  await page.getByRole('button', { name: /New story or book/ }).click()
+  await page.getByLabel('Project title').fill('İstanbul at dawn')
+  await page.getByRole('button', { name: 'Create project', exact: true }).click()
+  await page.getByRole('button', { name: '+ Scene', exact: true }).click()
+  await page.getByLabel('Section title').fill('The crossing')
+  await page.getByRole('textbox', { name: 'Markdown text' }).fill('The ferry left before the city woke.')
+  await page.getByRole('button', { name: 'Export', exact: true }).click()
+  const pending = page.waitForEvent('download')
+  await page.getByRole('button', { name: 'Export manuscript', exact: true }).click()
+  const download = await pending, content = await readFile((await download.path())!, 'utf8')
+  expect(content).toContain('İstanbul at dawn'); expect(content).toContain('# The crossing')
+  expect(content).toContain('The ferry left before the city woke.')
+  expect(download.suggestedFilename()).toMatch(/\.md$/)
+  await expect(page.locator('.export-result')).toContainText('Copy ready')
 })

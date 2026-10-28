@@ -35,18 +35,7 @@ async fn site_action(app: tauri::AppHandle, state: tauri::State<'_, AppState>, a
         json!({"action":action,"repo":library["settings"]["siteRepo"],"project":project,"images":library["images"],"dataRoot":store.root.to_string_lossy()})
     };
     let source_revision = request["project"]["revision"].clone();
-    let script = if cfg!(debug_assertions) { PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../scripts/site-bridge.mjs") } else { app.path().resource_dir().map_err(|e| e.to_string())?.join("site-bridge.mjs") };
-    let output = tauri::async_runtime::spawn_blocking(move || -> Result<Value> {
-        let mut cmd = Command::new("node");
-        cmd.arg(script).stdin(Stdio::piped()).stdout(Stdio::piped()).stderr(Stdio::piped());
-        #[cfg(windows)] { use std::os::windows::process::CommandExt; cmd.creation_flags(0x08000000); }
-        let mut child = cmd.spawn().map_err(|e| format!("Could not start Node.js. Install Node 22 to send posts. {e}"))?;
-        child.stdin.take().ok_or("Could not open bridge input")?.write_all(request.to_string().as_bytes()).map_err(|e| e.to_string())?;
-        let output = child.wait_with_output().map_err(|e| e.to_string())?;
-        let result: Value = serde_json::from_slice(&output.stdout).map_err(|_| format!("Site bridge failed: {}", String::from_utf8_lossy(&output.stderr)))?;
-        if result["ok"] != true { return Err(result["error"].as_str().unwrap_or("Site operation failed").to_string()); }
-        Ok(result["result"].clone())
-    }).await.map_err(|e| e.to_string())??;
+    let output = call_bridge(&app, "site-bridge.mjs", request).await?;
     if action == "publish" {
         let store = state.0.lock().map_err(|e| e.to_string())?;
         let mut project = store.project(&project_id)?;
@@ -64,6 +53,34 @@ async fn site_action(app: tauri::AppHandle, state: tauri::State<'_, AppState>, a
     }
     Ok(output)
 }
+async fn call_bridge(app: &tauri::AppHandle, script_name: &str, request: Value) -> Result<Value> {
+    let script = if cfg!(debug_assertions) { PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../scripts").join(script_name) } else { app.path().resource_dir().map_err(|e| e.to_string())?.join(script_name) };
+    tauri::async_runtime::spawn_blocking(move || -> Result<Value> {
+        let mut cmd = Command::new("node");
+        cmd.arg(script).stdin(Stdio::piped()).stdout(Stdio::piped()).stderr(Stdio::piped());
+        #[cfg(windows)] { use std::os::windows::process::CommandExt; cmd.creation_flags(0x08000000); }
+        let mut child = cmd.spawn().map_err(|e| format!("Could not start Node.js. Install Node 22 to send posts. {e}"))?;
+        child.stdin.take().ok_or("Could not open bridge input")?.write_all(request.to_string().as_bytes()).map_err(|e| e.to_string())?;
+        let output = child.wait_with_output().map_err(|e| e.to_string())?;
+        let result: Value = serde_json::from_slice(&output.stdout).map_err(|_| format!("Site bridge failed: {}", String::from_utf8_lossy(&output.stderr)))?;
+        if result["ok"] != true { return Err(result["error"].as_str().unwrap_or("Site operation failed").to_string()); }
+        Ok(result["result"].clone())
+    }).await.map_err(|e| e.to_string())?
+}
+
+#[tauri::command]
+async fn export_action(app: tauri::AppHandle, state: tauri::State<'_, AppState>, action: String, project_id: Option<String>, expected_revision: Option<String>, format: Option<String>) -> Result<Value> {
+    if action != "status" && action != "export" { return Err("Invalid export action".into()); }
+    let request = if action == "status" { json!({"action":"status"}) } else {
+        let store = state.0.lock().map_err(|e| e.to_string())?;
+        let project = store.project(project_id.as_deref().ok_or("Choose a project")?)?;
+        if expected_revision.as_deref() != project["revision"].as_str() { return Err("This project changed on disk. Review the current version before exporting.".into()); }
+        let library = store.library()?;
+        json!({"action":"export","format":format.ok_or("Choose an export format")?,"project":project,"images":library["images"],"dataRoot":store.root.to_string_lossy(),"outputRoot":store.root.join("exports").to_string_lossy()})
+    };
+    call_bridge(&app, "export-bridge.mjs", request).await
+}
+
 fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_single_instance::init(|app, _, _| { if let Some(window) = app.get_webview_window("main") { let _ = window.set_focus(); } }))
@@ -82,6 +99,6 @@ fn main() {
             }
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![library, save_project, save_idea, save_settings, import_image, image_data, trash, restore, site_action])
+        .invoke_handler(tauri::generate_handler![library, save_project, save_idea, save_settings, import_image, image_data, trash, restore, site_action, export_action])
         .run(tauri::generate_context!()).expect("Could not start Yazı");
 }

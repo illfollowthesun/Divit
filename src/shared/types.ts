@@ -16,6 +16,9 @@ export type TrashEntry = { key: string; kind: 'projects' | 'ideas' | 'images'; i
 export type Library = { projects: Project[]; ideas: Idea[]; images: ImageRecord[]; settings: Settings; trash: TrashEntry[]; dataRoot: string }
 export type PublishPlan = { branch: string; files: string[]; used: string[] }
 export type PublishResult = PublishPlan & { commit: string; check: string; digest: string }
+export type ExportFormat = 'markdown' | 'pdf' | 'docx' | 'epub'
+export type ExportTools = { pandoc: boolean; version: string; pdfEngine: string | null }
+export type ExportResult = { path: string; filename: string; format: ExportFormat; engine?: string }
 export const stages: Stage[] = ['Idea', 'Research', 'Draft', 'Published']
 export function slugify(value: string) {
   const chars: Record<string, string> = { ı: 'i', İ: 'i', ş: 's', Ş: 's', ğ: 'g', Ğ: 'g', ü: 'u', Ü: 'u', ö: 'o', Ö: 'o', ç: 'c', Ç: 'c' }
