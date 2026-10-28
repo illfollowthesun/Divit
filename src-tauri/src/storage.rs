@@ -98,6 +98,29 @@ impl Store {
                 for field in ["details", "summary", "age", "aliases"] { card.as_object_mut().ok_or("Invalid card")?.remove(field); }
             }
         }
+        if let Some(snapshots) = meta.get_mut("snapshots").and_then(Value::as_array_mut) {
+            let directory = folder.join("snapshots");
+            fs::create_dir_all(&directory).map_err(err)?;
+            for snapshot in snapshots {
+                let key = id(snapshot["id"].as_str().ok_or("Missing snapshot identifier")?)?;
+                let path = directory.join(format!("{key}.json"));
+                if path.exists() {
+                    if json_file(&path)? != *snapshot { return Err("Snapshots are immutable. The kept version was not replaced.".into()); }
+                } else {
+                    write_json(&path, snapshot)?;
+                    let mut text = snapshot["body"].as_str().unwrap_or("").to_string();
+                    if let Some(sections) = snapshot["sections"].as_array() {
+                        for section in sections {
+                            if section["id"] == snapshot["scopeId"] || section["trashedAt"].is_string() { continue; }
+                            text.push_str(&format!("\n\n{} {}\n\n{}", if section["kind"] == "chapter" { "#" } else { "##" }, section["title"].as_str().unwrap_or(""), section["body"].as_str().unwrap_or("")));
+                        }
+                    }
+                    atomic(&directory.join(format!("{key}.md")), text.as_bytes())?;
+                }
+                snapshot.as_object_mut().ok_or("Invalid snapshot")?.remove("body");
+                snapshot.as_object_mut().unwrap().remove("sections");
+            }
+        }
         write_json(&folder.join("project.json"), &meta)?;
         fs::rename(folder.join(".recovery.json"), folder.join(".last-save.json")).map_err(err)
     }
@@ -116,6 +139,12 @@ impl Store {
             for card in cards {
                 let key = card["id"].as_str().ok_or("Missing card identifier")?;
                 *card = json_file(&self.part_path(&folder, "cards", key, "json", card["trashedAt"].is_string())?)?;
+            }
+        }
+        if let Some(snapshots) = data.get_mut("snapshots").and_then(Value::as_array_mut) {
+            for snapshot in snapshots {
+                let key = id(snapshot["id"].as_str().ok_or("Missing snapshot identifier")?)?;
+                *snapshot = json_file(&folder.join("snapshots").join(format!("{key}.json")))?;
             }
         }
         Ok(revision(data))
