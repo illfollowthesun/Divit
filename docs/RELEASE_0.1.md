@@ -39,3 +39,6 @@ Work in this order. Commit after each part, no push until the writer says so.
 ## A4. Name and icon (writer decides the name)
 14. App icon set (ico/png all sizes, installer, taskbar, README) once the writer picks the final name; ASCII-safe name everywhere (repo, installer, exe, data folder), Turkish spelling only in display text if kept. Do not rename anything until the name is confirmed.
 15. **Themes.** Today Settings has only "Warm paper" (light) and "After hours" (dark). Add "Match Windows" (follows the system light/dark setting) and 3–4 more calm, colourful-but-quiet themes, never plain black-and-white or generic grey (for example: sage green paper, dusty blue ink, warm terracotta evening, deep plum night), each with its own accent, all built on the same CSS tokens; switchable from Settings and from the command/shortcut sheet, applied instantly, remembered. Check contrast (WCAG AA) for text and underlines in every theme.
+
+## Later (0.2+, not this round)
+- **iPad and Android tablet:** the writer wants Divit on tablets. Tauri 2 supports iOS and Android; keep new code mobile-friendly now (no Windows-only APIs in shared UI code, touch-sized targets, no hover-only actions) so a tablet build is possible later. Note any Windows-only pieces (Credential Manager, data folder paths) in docs/TABLET_NOTES.md.
