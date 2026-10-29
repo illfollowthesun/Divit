@@ -246,6 +246,8 @@ fn main() {
         .plugin(tauri_plugin_single_instance::init(|app, _, _| { if let Some(window) = app.get_webview_window("main") { let _ = window.set_focus(); } }))
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_updater::Builder::new().build())
+        .plugin(tauri_plugin_process::init())
         .setup(|app| {
             let root = dirs::document_dir().ok_or("Could not locate your Documents folder")?.join("Yazi");
             app.manage(AppState(Arc::new(Mutex::new(Store::new(root).map_err(std::io::Error::other)?))));

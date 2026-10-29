@@ -5,7 +5,7 @@ import type { Page } from '@playwright/test'
 // really fetched and saved. Every native call is recorded on window.__calls.
 export type BridgeOptions = {
   config: Record<string, unknown>; keys?: Record<string, boolean>; projects?: Record<string, unknown>[]
-  search?: unknown; searchError?: string; testMessage?: string; answer?: unknown; searchKeys?: Record<string, boolean>
+  search?: unknown; searchError?: string; testMessage?: string; answer?: unknown; searchKeys?: Record<string, boolean>; update?: unknown
 }
 export async function desktopBridge(page: Page, options: BridgeOptions) {
   await page.addInitScript((options: BridgeOptions) => {
@@ -48,6 +48,7 @@ export async function desktopBridge(page: Page, options: BridgeOptions) {
             const result = await response.json(); if (!response.ok) throw result.error; return result
           }
           case 'backup_action': return { enabled: false, lastBackupAt: null }
+          case 'plugin:updater|check': return options.update ?? null
           default: return null
         }
       },

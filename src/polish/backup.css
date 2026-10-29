@@ -4,6 +4,10 @@
 .backup-actions button{font-size:11px}
 .backup-status{font:12px 'IBM Plex Sans';color:var(--accent);margin:17px 0 10px}
 .backup-settings .quiet{font-size:11px;margin-bottom:0}
+.update-banner{display:flex;align-items:center;gap:10px;padding:8px 16px;background:var(--chrome);border-bottom:1px solid var(--line);font-size:13px}
+.update-banner span{flex:1}
+.settings-updates{margin:14px 0;font-size:13px}
+.settings-updates small{display:block;color:var(--muted);margin:2px 0 8px}
 .ai-settings{padding:14px 16px;background:var(--chrome);border-radius:5px;margin:14px 0}
 .ai-settings .section-label{margin-bottom:10px}
 .ai-settings .field{margin-top:12px}

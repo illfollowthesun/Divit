@@ -8,3 +8,6 @@ playwright-report/
 *.log
 *.tsbuildinfo
 src-tauri/gen/
+# Updater signing secrets live in %USERPROFILE%\.tauri, never here.
+*.key
+*.password.txt
