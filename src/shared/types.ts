@@ -11,11 +11,11 @@ export type Project = {
   ideaId?: string; revision?: string; published?: PublishResult
   sections?: Section[]; cards?: ProjectCard[]; snapshots?: Snapshot[];
   notes?: ProjectNote[]; dailyGoal?: number; writingLog?: WritingDay[];
-  language?: 'en' | 'tr';
+  language?: 'en' | 'tr'; ignoredWords?: string[];
 }
 export type Idea = { schemaVersion: 1; id: string; title: string; tags: string[]; status: Stage; createdAt: string; projectId?: string; revision?: string }
 export type ImageRecord = { id: string; file: string; name: string; addedAt: string; dataUrl?: string }
-export type Settings = { schemaVersion: number; theme: 'light' | 'dark'; siteRepo: string; aiProvider: 'claude-code' | 'anthropic' | 'ollama'; backupFolder?: string }
+export type Settings = { schemaVersion: number; theme: 'light' | 'dark'; siteRepo: string; aiProvider: 'claude-code' | 'anthropic' | 'ollama'; backupFolder?: string; dictionary?: Partial<Record<'en' | 'tr', string[]>> }
 export type BackupInfo = { enabled: boolean; lastBackupAt: string | null; path?: string; folder?: string; skipped?: boolean }
 export type TrashEntry = { key: string; kind: 'projects' | 'ideas' | 'images'; id: string; title: string; content?: Project | Idea | ImageRecord }
 export type Library = { projects: Project[]; ideas: Idea[]; images: ImageRecord[]; settings: Settings; trash: TrashEntry[]; dataRoot: string }

@@ -23,3 +23,5 @@ import './polish/backup.css'
 import './polish/language.css'
 
 import './polish/diff.css'
+
+import './polish/spelling.css'

@@ -4,9 +4,14 @@ import type { ViewUpdate } from '@codemirror/view'
 import { Compartment, EditorState } from '@codemirror/state'
 import type { ProjectCard } from '../shared/types'
 import { cardLinks } from './card-links'
+import { spellCheck, refreshSpelling } from './spell-check'
+import { acceptedWords } from '../spell/words'
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands'
 import { markdown } from '@codemirror/lang-markdown'
 import { syntaxHighlighting, defaultHighlightStyle } from '@codemirror/language'
+
+// Native squiggles cannot be read or offered as suggestions, so Yazı checks spelling itself.
+const attributes = (language: string) => EditorView.contentAttributes.of({ 'aria-label': 'Markdown text', spellcheck: 'false', lang: language, autocorrect: 'off', autocapitalize: 'off' })
 
 function centerCaret(view: EditorView) {
   view.requestMeasure({
@@ -25,7 +30,7 @@ function centerCaret(view: EditorView) {
   })
 }
 
-export function Editor({ id, body, onChange, onReady, typewriter = false, cards, onCardOpen, language = 'en' }: { id: string; body: string; onChange: (text: string) => void; onReady: (view: EditorView | null) => void; typewriter?: boolean; cards?: ProjectCard[]; onCardOpen?: (id: string) => void; language?: 'en' | 'tr' }) {
+export function Editor({ id, body, onChange, onReady, typewriter = false, cards, onCardOpen, language = 'en', dictionary, ignored, onAddWord, onIgnoreWord, onSpellError }: { id: string; body: string; onChange: (text: string) => void; onReady: (view: EditorView | null) => void; typewriter?: boolean; cards?: ProjectCard[]; onCardOpen?: (id: string) => void; language?: 'en' | 'tr'; dictionary?: string[]; ignored?: string[]; onAddWord?: (word: string) => void; onIgnoreWord?: (word: string) => void; onSpellError?: (message: string) => void }) {
   const element = useRef<HTMLDivElement>(null)
   const changed = useRef(onChange); changed.current = onChange
   const ready = useRef(onReady); ready.current = onReady
@@ -34,6 +39,8 @@ export function Editor({ id, body, onChange, onReady, typewriter = false, cards,
   const cardConfig = useRef(new Compartment()), cardsRef = useRef(cards), cardOpen = useRef(onCardOpen)
   const languageConfig = useRef(new Compartment())
   cardsRef.current = cards; cardOpen.current = onCardOpen
+  const spelling = useRef({ language, accepted: new Set<string>(), add: onAddWord, ignore: onIgnoreWord, error: onSpellError })
+  spelling.current = { language, accepted: acceptedWords(language, dictionary, ignored, (cards ?? []).filter(c => !c.trashedAt).flatMap(c => [c.name, ...c.aliases])), add: onAddWord, ignore: onIgnoreWord, error: onSpellError }
   // Each draft owns its undo history. Only a draft switch recreates the editor.
   const initial = useRef(body); initial.current = body
   useEffect(() => {
@@ -42,7 +49,8 @@ export function Editor({ id, body, onChange, onReady, typewriter = false, cards,
       history(), keymap.of([...defaultKeymap, ...historyKeymap]), markdown(), syntaxHighlighting(defaultHighlightStyle),
       EditorView.lineWrapping, placeholder('Begin anywhere. The first sentence can change.'),
       cardConfig.current.of(cardLinks(() => cardsRef.current ?? [], id => cardOpen.current?.(id))),
-      languageConfig.current.of(EditorView.contentAttributes.of({ 'aria-label': 'Markdown text', spellcheck: 'true', lang: language, autocorrect: 'off', autocapitalize: 'off' })),
+      languageConfig.current.of(attributes(language)),
+      spellCheck({ language: () => spelling.current.language, accepted: () => spelling.current.accepted, add: word => spelling.current.add?.(word), ignore: word => spelling.current.ignore?.(word), error: message => spelling.current.error?.(message) }),
       EditorView.updateListener.of((update: ViewUpdate) => {
         if (update.docChanged) changed.current(update.state.doc.toString())
         if (typewriterRef.current && (update.docChanged || update.selectionSet || update.focusChanged)) centerCaret(update.view)
@@ -51,7 +59,8 @@ export function Editor({ id, body, onChange, onReady, typewriter = false, cards,
     if (typewriterRef.current) centerCaret(view)
     return () => { editor.current = null; ready.current(null); view.destroy() }
   }, [id])
-  useEffect(() => { editor.current?.dispatch({ effects: languageConfig.current.reconfigure(EditorView.contentAttributes.of({ 'aria-label': 'Markdown text', spellcheck: 'true', lang: language, autocorrect: 'off', autocapitalize: 'off' })) }) }, [language])
+  useEffect(() => { editor.current?.dispatch({ effects: languageConfig.current.reconfigure(attributes(language)) }) }, [language])
+  useEffect(() => { editor.current?.dispatch({ effects: refreshSpelling.of(null) }) }, [language, dictionary, ignored, cards])
   useEffect(() => { editor.current?.dispatch({ effects: cardConfig.current.reconfigure(cardLinks(() => cardsRef.current ?? [], id => cardOpen.current?.(id))) }) }, [cards])
   useEffect(() => {
     const view = editor.current

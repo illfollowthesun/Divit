@@ -111,9 +111,17 @@ The development browser preview provides the same export dialog through a loopba
 
 [Snapshot comparison](docs/screenshots/phase2-snapshots.png) · [Typewriter](docs/screenshots/phase2-typewriter.png) · [Export](docs/screenshots/phase2-export.png) · [Compact layout](docs/screenshots/phase2-compact.png) · [Exported sample Markdown](docs/examples/the-last-ferry.md)
 
-## Automatic backups and manual restore
+## Spell check
 
-The editor's LANGUAGE setting selects English or Turkish for the project and is saved with it. CodeMirror's editable surface sets `spellcheck=true` and the matching `lang`, with `autocorrect=off` and capitalization disabled. The app never replaces a misspelled word automatically. Actual squiggles and suggestions depend on the English/Turkish dictionaries available to Windows/WebView2; browser tests verify the attributes, persistence and unchanged text, while native underline rendering remains a manual check.
+Each project has a LANGUAGE setting (English or Turkish), saved with the project. Yazı checks spelling itself with Hunspell dictionaries (en-GB and Turkish, both MIT-licensed, bundled with the app) running in a background worker, because the browser's own squiggles cannot be read or offered as suggestions. The Turkish dictionary loads in about a second the first time a Turkish project is open.
+
+- Misspelled words get a red wavy underline. A word is checked only after you finish typing it. Links, code, HTML and images are skipped, and so are character and place card names and aliases.
+- Click an underlined word to see up to three suggestions just above it. Click one to replace that word, or press Esc to close the popover.
+- Right-click an underlined word (or press the context-menu key or Shift F10 on it) for the same suggestions, **Add to dictionary**, **Ignore in this project**, and Cut, Copy and Paste. Everywhere else the normal menu appears.
+- The personal dictionary is stored per language in `Documents/Yazi/settings.json` (`dictionary.en`, `dictionary.tr`). Ignored words are stored in the project (`ignoredWords`).
+- Nothing is ever corrected automatically. The native spellcheck and autocorrect are turned off.
+
+## Automatic backups and manual restore
 
 In the desktop app, open Settings and choose a backup folder outside `Documents/Yazi`, such as a USB drive or a folder already managed by OneDrive. Save settings to enable the daily check, or use **Back up now**. Backups run once per local day while the app is open, and again on close after writing has been saved. They use the installed Node.js 22 runtime. The native storage lock serializes the full ZIP against application writes. Settings shows the last successful backup time; a failed backup does not replace that record.
 
