@@ -9,6 +9,7 @@
   .drawer-scrim{display:block;position:fixed;inset:0;z-index:80;background:#24251e44}
   .app.distraction-mode .right-drawer{top:29px}
   .app.focus-mode .right-edge{display:none}
+  .app:not(.focus-mode) .paper{padding-right:52px} /* keep text and the language menu clear of the edge button */
 }
 @media(max-width:900px){
   .app .library.left-drawer{position:fixed;inset:98px auto 0 0;z-index:81;width:min(280px,calc(100vw - 40px));visibility:hidden;transform:translateX(-105%);pointer-events:none;transition:transform .16s ease,visibility .16s ease;box-shadow:12px 0 35px #2222}
