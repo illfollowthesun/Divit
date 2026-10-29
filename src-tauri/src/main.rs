@@ -3,6 +3,7 @@ mod ai;
 mod ai_complete;
 mod ai_search;
 mod import;
+mod location;
 mod search_service;
 mod storage;
 use serde_json::{json, Value};
@@ -10,9 +11,50 @@ use std::{io::Write, path::PathBuf, process::{Command, Stdio}, sync::{Arc, Mutex
 use tauri::Manager;
 use storage::{Result, Store};
 struct AppState(Arc<Mutex<Store>>);
+// Set when the chosen library folder was not reachable at start, so the default one is open instead.
+struct LibraryNote(Mutex<Option<String>>);
+const DATA_FOLDER: &str = "Yazi";
+fn default_root() -> Result<PathBuf> { Ok(dirs::document_dir().ok_or("Could not locate your Documents folder")?.join(DATA_FOLDER)) }
 
 #[tauri::command]
-fn library(state: tauri::State<AppState>) -> Result<Value> { state.0.lock().map_err(|e| e.to_string())?.library() }
+fn library(state: tauri::State<AppState>, note: tauri::State<LibraryNote>) -> Result<Value> {
+    let mut library = state.0.lock().map_err(|e| e.to_string())?.library()?;
+    if let Some(problem) = note.0.lock().map_err(|e| e.to_string())?.clone() { library["rootProblem"] = json!(problem); }
+    Ok(library)
+}
+// What moving the library into `target` would do, before anything is copied.
+#[tauri::command]
+fn library_location(state: tauri::State<AppState>, target: String) -> Result<Value> {
+    let current = state.0.lock().map_err(|e| e.to_string())?.root.clone();
+    location::inspect(&PathBuf::from(target), &current, DATA_FOLDER)
+}
+// "move" copies the library there (verified file by file) and switches; "use" opens a library already
+// there, for a second computer. Either way the previous folder is left untouched.
+#[tauri::command]
+async fn library_move(app: tauri::AppHandle, state: tauri::State<'_, AppState>, note: tauri::State<'_, LibraryNote>, target: String, mode: String) -> Result<Value> {
+    if mode != "move" && mode != "use" { return Err("Invalid library action".into()); }
+    let config = app.path().app_config_dir().map_err(|e| e.to_string())?;
+    let shared = state.0.clone();
+    let result = tauri::async_runtime::spawn_blocking(move || -> Result<Value> {
+        // Holding the lock for the whole copy keeps every save waiting until the switch is done.
+        let mut store = shared.lock().map_err(|e| e.to_string())?;
+        let plan = location::inspect(&PathBuf::from(&target), &store.root, DATA_FOLDER)?;
+        let root = PathBuf::from(plan["root"].as_str().unwrap_or_default());
+        let copied = if mode == "move" {
+            if plan["existing"] == true { return Err("A library is already in that folder. Choose to use it, or pick another folder.".into()); }
+            location::copy_verified(&store.root, &root)?
+        } else {
+            if plan["existing"] != true { return Err("There is no library in that folder yet.".into()); }
+            0
+        };
+        let previous = store.root.clone();
+        *store = Store::new(root.clone())?;
+        location::remember(&config, &root)?;
+        Ok(json!({ "dataRoot": root.to_string_lossy(), "previous": previous.to_string_lossy(), "copied": copied }))
+    }).await.map_err(|e| e.to_string())??;
+    *note.0.lock().map_err(|e| e.to_string())? = None;
+    Ok(result)
+}
 #[tauri::command]
 fn save_project(state: tauri::State<AppState>, data: Value, expected: Option<String>) -> Result<Value> { state.0.lock().map_err(|e| e.to_string())?.save_project(data, expected) }
 #[tauri::command]
@@ -260,8 +302,15 @@ fn main() {
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_process::init())
         .setup(|app| {
-            let root = dirs::document_dir().ok_or("Could not locate your Documents folder")?.join("Yazi");
+            let config = app.path().app_config_dir()?;
+            let mut problem = None;
+            let root = match location::chosen(&config) {
+                Some(chosen) if chosen.is_dir() => chosen,
+                Some(chosen) => { problem = Some(format!("Your library folder {} is not available, so the one in Documents is open. Reconnect the drive or let your sync app finish, then restart.", chosen.display())); default_root()? }
+                None => default_root()?,
+            };
             app.manage(AppState(Arc::new(Mutex::new(Store::new(root).map_err(std::io::Error::other)?))));
+            app.manage(LibraryNote(Mutex::new(problem)));
             if let Some(window) = app.get_webview_window("main") {
                 if let Ok(Some(monitor)) = window.current_monitor() {
                     let scale = monitor.scale_factor();
@@ -273,6 +322,6 @@ fn main() {
             }
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![library, save_project, save_idea, save_settings, import_image, image_data, trash, restore, site_action, export_action, backup_action, research_action, ai_status, ai_save, ai_set_key, ai_forget_key, ai_test, ai_search, ai_ask_unsourced, search_set_key, search_forget_key, read_import, save_export])
+        .invoke_handler(tauri::generate_handler![library, save_project, save_idea, save_settings, import_image, image_data, trash, restore, site_action, export_action, backup_action, research_action, ai_status, ai_save, ai_set_key, ai_forget_key, ai_test, ai_search, ai_ask_unsourced, search_set_key, search_forget_key, read_import, save_export, library_location, library_move])
         .run(tauri::generate_context!()).expect("Could not start Yazı");
 }

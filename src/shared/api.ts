@@ -89,6 +89,13 @@ export const api = {
     link.href = url; link.download = filename; link.click(); setTimeout(() => URL.revokeObjectURL(url), 10000)
     return { path: t('Browser download'), filename }
   },
+  chooseLibraryFolder: async (): Promise<string | null> => {
+    if (!desktop) return null
+    const folder = await open({ directory: true, multiple: false, title: t('Choose where your library should live') })
+    return typeof folder === 'string' ? folder : null
+  },
+  libraryLocation: (target: string): Promise<{ root: string; existing: boolean; projects: number; changedAt: number | null }> => invoke('library_location', { target }),
+  moveLibrary: (target: string, mode: 'move' | 'use'): Promise<{ dataRoot: string; previous: string; copied: number }> => invoke('library_move', { target, mode }),
   library: async (): Promise<Library> => desktop ? invoke('library') : preview(),
   saveProject: async (data: Project): Promise<Project> => desktop ? invoke('save_project', { data, expected: data.revision ?? null }) : savePreview('projects', data),
   saveIdea: async (data: Idea): Promise<Idea> => desktop ? invoke('save_idea', { data, expected: data.revision ?? null }) : savePreview('ideas', data),
