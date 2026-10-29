@@ -56,6 +56,7 @@ test('capture the Phase 2 browser preview and verify the compact writing desk', 
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
   await page.locator('.paper').evaluate(el => { el.scrollTop = 0 })
   await expect(page.getByRole('button', { name: 'Toggle companion', exact: true })).toBeVisible()
+  await expect(page.locator('#writing-companion')).toBeHidden() // wait for the drawer to finish sliding out
   await page.screenshot({ path: `docs/screenshots/${prefix}-960.png` })
   expect(errors).toEqual([])
 })

@@ -25,3 +25,5 @@ import './polish/language.css'
 import './polish/diff.css'
 
 import './polish/spelling.css'
+
+import './polish/lines.css'

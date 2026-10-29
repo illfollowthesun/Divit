@@ -1,0 +1,20 @@
+/* Fewer lines: spacing and soft tints separate areas. Lines remain only where they carry meaning
+   (active tab and nav underlines, the selected item marker, form fields, list rows in dialogs). */
+.topbar,.preview-notice,.document-toolbar,.panel-tabs{border-bottom:0}
+.editor-footer,.panel-footnote,.library-bottom{border-top:0}
+.library{border-right:0}
+.side-panel{border-left:0}
+.paper-rule{height:0;background:none;margin:12px 0 22px}
+.section-heading input{border-bottom:0}
+.library-divider{height:0;background:none;margin:14px 0 10px}
+.outline{border-bottom:0;margin-bottom:18px}
+.project-card,.cards-panel .project-card{border:0;border-radius:5px}
+.project-card>div,.cards-panel .project-card>div{border-top:0}
+.project-card.card-selected{box-shadow:inset 2px 0 var(--accent)}
+.note-card{border:0;background:var(--card);border-radius:5px}
+.project-note{border-bottom:0;padding:14px 0}
+.snapshot-comparison>section{border:0;border-radius:5px}
+.settings-info,.backup-settings{border-top:0;border-bottom:0;padding:14px 16px;background:var(--chrome);border-radius:5px}
+.idea-card{border:0}
+.column-heading{border-bottom:0;padding-bottom:6px}
+.capture{border-bottom:0}
