@@ -16,3 +16,17 @@ test('large unchanged passages retain word-level detail around a small change',(
   const changes=check(prefix+'old'+suffix,prefix+'new'+suffix)
   assert.equal(changes.filter(c=>c.kind==='removed').map(c=>c.text).join(''),'old')
 })
+test('a rewritten sentence reads as one change, not confetti, and paragraph breaks stay',()=>{
+  const changes=check('Every morning, the city offered Derya the same small bargain.\n\nKept.','At six in the morning, the city belonged to the people.\n\nKept.')
+  assert.ok(changes.filter(c=>c.kind==='removed').length<=2,JSON.stringify(changes))
+  assert.ok(changes.every(c=>c.kind==='equal'||!c.text.includes('\n\nKept')))
+  assert.equal(changes[changes.length-1].kind,'equal')
+})
+test('many small edits across a long chapter keep word-level detail',()=>{
+  const para=(i,w)=>`Paragraph ${i} keeps an ${w} word in place.`
+  const before=Array.from({length:600},(_,i)=>para(i,'old')).join('\n'),after=Array.from({length:600},(_,i)=>para(i,'new')).join('\n')
+  const started=performance.now(),changes=check(before,after)
+  assert.deepEqual([...new Set(changes.filter(c=>c.kind==='removed').map(c=>c.text))],['old'])
+  assert.equal(changes.filter(c=>c.kind==='removed').length,600)
+  assert.ok(performance.now()-started<2000)
+})
