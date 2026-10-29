@@ -1,4 +1,5 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+mod ai;
 mod storage;
 use serde_json::{json, Value};
 use std::{io::Write, path::PathBuf, process::{Command, Stdio}, sync::{Arc, Mutex}};
@@ -136,6 +137,31 @@ async fn research_action(app: tauri::AppHandle, state: tauri::State<'_, AppState
     }).await.map_err(|e| e.to_string())?
 }
 
+#[tauri::command]
+fn ai_status(state: tauri::State<AppState>) -> Result<Value> {
+    let store = state.0.lock().map_err(|e| e.to_string())?;
+    ai::status(&ai::load(&store.root)?)
+}
+#[tauri::command]
+fn ai_save(state: tauri::State<AppState>, config: Value) -> Result<Value> {
+    let next: ai::AiConfig = serde_json::from_value(config).map_err(|_| "Invalid AI settings".to_string())?;
+    let store = state.0.lock().map_err(|e| e.to_string())?;
+    let saved = ai::validate(next, &ai::load(&store.root)?)?;
+    ai::save(&store.root, &saved)?;
+    ai::status(&saved)
+}
+// The key goes from the Settings field straight into Windows Credential Manager; it is never returned.
+#[tauri::command]
+fn ai_set_key(provider: String, key: String) -> Result<()> { ai::set_key(ai::ProviderKind::parse(&provider)?, &key) }
+#[tauri::command]
+fn ai_forget_key(provider: String) -> Result<()> { ai::forget_key(ai::ProviderKind::parse(&provider)?) }
+#[tauri::command]
+async fn ai_test(state: tauri::State<'_, AppState>) -> Result<String> {
+    let config = { let store = state.0.lock().map_err(|e| e.to_string())?; ai::load(&store.root)? };
+    let key = ai::get_key(config.provider)?;
+    ai::test(&config, key.as_deref()).await
+}
+
 fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_single_instance::init(|app, _, _| { if let Some(window) = app.get_webview_window("main") { let _ = window.set_focus(); } }))
@@ -154,6 +180,6 @@ fn main() {
             }
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![library, save_project, save_idea, save_settings, import_image, image_data, trash, restore, site_action, export_action, backup_action, research_action])
+        .invoke_handler(tauri::generate_handler![library, save_project, save_idea, save_settings, import_image, image_data, trash, restore, site_action, export_action, backup_action, research_action, ai_status, ai_save, ai_set_key, ai_forget_key, ai_test])
         .run(tauri::generate_context!()).expect("Could not start Yazı");
 }

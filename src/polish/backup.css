@@ -4,3 +4,16 @@
 .backup-actions button{font-size:11px}
 .backup-status{font:12px 'IBM Plex Sans';color:var(--accent);margin:17px 0 10px}
 .backup-settings .quiet{font-size:11px;margin-bottom:0}
+.ai-settings{padding:14px 16px;background:var(--chrome);border-radius:5px;margin:14px 0}
+.ai-settings .section-label{margin-bottom:10px}
+.ai-settings .field{margin-top:12px}
+.ai-key>span{display:block;font-size:12px;margin-bottom:6px}
+.ai-key-row{display:flex;gap:8px}
+.ai-key-row input{flex:1}
+.ai-key-stored{font-size:12px;margin:0 0 6px;display:flex;align-items:center;gap:8px}
+.ai-key-stored .popover-text{margin-left:0}
+.ai-usage{font:11px 'IBM Plex Mono';color:var(--muted);margin:14px 0 6px}
+.ai-usage.over{color:var(--error)}
+.ai-billing,.ai-settings>.quiet{font-size:11px}
+.ai-note{font-size:12px;color:var(--accent)}
+.ai-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
