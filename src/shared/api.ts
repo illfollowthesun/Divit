@@ -1,6 +1,7 @@
 import { invoke, isTauri } from '@tauri-apps/api/core'
 import { open } from '@tauri-apps/plugin-dialog'
 import type { Idea, ImageRecord, Library, Project, PublishPlan, PublishResult, Settings, TrashEntry, ExportFormat, ExportTools, ExportResult, BackupInfo } from './types'
+import type { ImportFile } from '../projects/import'
 
 export const desktop = isTauri()
 const key = 'yazi-browser-preview-v1'
@@ -54,6 +55,27 @@ export const api = {
     const url = URL.createObjectURL(await response.blob()), link = document.createElement('a')
     link.href = url; link.download = filename; link.click(); setTimeout(() => URL.revokeObjectURL(url), 10000)
     return { path: 'Browser download', filename, format }
+  },
+  // Writing to bring in: read-only copies of the chosen files, or of a folder's files.
+  chooseImport: async (folder: boolean): Promise<ImportFile[]> => {
+    if (desktop) {
+      const picked = await open(folder ? { directory: true, multiple: false, title: 'Choose a folder of writing to bring in' } : { multiple: true, title: 'Choose writing to bring in', filters: [{ name: 'Markdown, text or Word', extensions: ['md', 'markdown', 'txt', 'docx'] }] })
+      const paths = picked ? Array.isArray(picked) ? picked : [picked] : []
+      return paths.length ? invoke('read_import', { paths }) : []
+    }
+    return new Promise((resolve, reject) => {
+      const input = document.createElement('input'); input.type = 'file'; input.multiple = true; input.accept = '.md,.markdown,.txt,.docx'
+      if (folder) input.webkitdirectory = true
+      input.addEventListener('cancel', () => resolve([]))
+      input.onchange = async () => {
+        try {
+          const chosen = Array.from(input.files ?? []).filter(f => /\.(md|markdown|txt|docx)$/i.test(f.name) && !f.name.startsWith('~$')).sort((a, b) => (a.webkitRelativePath || a.name).localeCompare(b.webkitRelativePath || b.name))
+          resolve(await Promise.all(chosen.map(async (file): Promise<ImportFile> => /\.docx$/i.test(file.name)
+            ? { name: file.name, kind: 'docx', data: btoa(Array.from(new Uint8Array(await file.arrayBuffer()), b => String.fromCharCode(b)).join('')) }
+            : { name: file.name, kind: 'text', text: (await file.text()).replace(/^﻿/, '') })))
+        } catch (e) { reject(e) }
+      }; input.click()
+    })
   },
   library: async (): Promise<Library> => desktop ? invoke('library') : preview(),
   saveProject: async (data: Project): Promise<Project> => desktop ? invoke('save_project', { data, expected: data.revision ?? null }) : savePreview('projects', data),

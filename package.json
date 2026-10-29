@@ -33,6 +33,7 @@
     "dictionary-en-gb": "^3.0.0",
     "dictionary-tr": "^2.0.0",
     "dompurify": "^3.2.7",
+    "mammoth": "^1.13.0",
     "marked": "^16.4.0",
     "nspell": "^2.1.5",
     "react": "^19.2.0",

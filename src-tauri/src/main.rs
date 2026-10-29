@@ -2,6 +2,7 @@
 mod ai;
 mod ai_complete;
 mod ai_search;
+mod import;
 mod search_service;
 mod storage;
 use serde_json::{json, Value};
@@ -20,6 +21,9 @@ fn save_idea(state: tauri::State<AppState>, data: Value, expected: Option<String
 fn save_settings(state: tauri::State<AppState>, data: Value) -> Result<()> { state.0.lock().map_err(|e| e.to_string())?.save_settings(data) }
 #[tauri::command]
 fn import_image(state: tauri::State<AppState>, source: String, key: String) -> Result<Value> { state.0.lock().map_err(|e| e.to_string())?.import_image(&PathBuf::from(source), &key) }
+// Only reads the chosen files; nothing is written until the converted text is saved as a project.
+#[tauri::command]
+async fn read_import(paths: Vec<String>) -> Result<Vec<Value>> { tauri::async_runtime::spawn_blocking(move || import::read(&paths)).await.map_err(|e| e.to_string())? }
 #[tauri::command]
 fn image_data(state: tauri::State<AppState>, key: String) -> Result<String> { state.0.lock().map_err(|e| e.to_string())?.image_data(&key) }
 #[tauri::command]
@@ -262,6 +266,6 @@ fn main() {
             }
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![library, save_project, save_idea, save_settings, import_image, image_data, trash, restore, site_action, export_action, backup_action, research_action, ai_status, ai_save, ai_set_key, ai_forget_key, ai_test, ai_search, ai_ask_unsourced, search_set_key, search_forget_key])
+        .invoke_handler(tauri::generate_handler![library, save_project, save_idea, save_settings, import_image, image_data, trash, restore, site_action, export_action, backup_action, research_action, ai_status, ai_save, ai_set_key, ai_forget_key, ai_test, ai_search, ai_ask_unsourced, search_set_key, search_forget_key, read_import])
         .run(tauri::generate_context!()).expect("Could not start Yazı");
 }
