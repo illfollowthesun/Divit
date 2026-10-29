@@ -34,7 +34,9 @@
     "resources": {
       "../scripts/site-bridge.mjs": "site-bridge.mjs",
       "../scripts/export-bridge.mjs": "export-bridge.mjs",
-      "../scripts/backup-bridge.mjs": "backup-bridge.mjs"
+      "../scripts/backup-bridge.mjs": "backup-bridge.mjs",
+      "../scripts/research-bridge.mjs": "research-bridge.mjs",
+      "../scripts/research-format.mjs": "research-format.mjs"
     },
     "windows": {
       "nsis": {

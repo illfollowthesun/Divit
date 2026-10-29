@@ -1,4 +1,4 @@
-import { readFile, writeFile, mkdir, rename, stat } from 'node:fs/promises'
+import { readFile, writeFile, mkdir, rename, stat, readdir } from 'node:fs/promises'
 import { join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { randomUUID } from 'node:crypto'
@@ -50,10 +50,38 @@ function checkAnnotations(index, { highlights, notes, ai }) {
   if (JSON.stringify({ highlights, notes, ai }).length > 5 * 1024 * 1024) throw new Error('Research notes are too large.')
 }
 
+// Inbox files are never deleted: each moves to _imported, _duplicates or _invalid beside it.
+async function moveAside(inbox, name, folder) {
+  const target = join(inbox, folder); await mkdir(target, { recursive: true })
+  const taken = await stat(join(target, name)).then(() => true, () => false)
+  await rename(join(inbox, name), join(target, taken ? `${Date.now()}-${name}` : name))
+}
+const inboxFiles = async inbox => (await readdir(inbox, { withFileTypes: true }).catch(() => [])).filter(item => item.isFile() && /.md$/i.test(item.name)).map(item => item.name).sort()
+async function scanInbox(paths, index, now, settleMs) {
+  const imported = [], duplicates = [], invalid = []
+  for (const name of await inboxFiles(paths.inbox)) {
+    const path = join(paths.inbox, name), info = await stat(path).catch(() => null)
+    // A file still being written waits for the next scan.
+    if (!info || settleMs > 0 && Date.now() - info.mtimeMs < settleMs) continue // mtime can be a hair ahead of Date.now() on Windows
+    let result = null
+    try {
+      if (info.size > MAX_TEXT) throw new Error('too large')
+      const parsed = parseSource(await readFile(path, 'utf8'))
+      result = await addSource(paths, index, parsed.meta, parsed.text, 'inbox', now)
+      if (!result.duplicate) await saveIndex(paths, index)
+    } catch { result = null }
+    await moveAside(paths.inbox, name, !result ? '_invalid' : result.duplicate ? '_duplicates' : '_imported')
+    if (!result) invalid.push(name); else if (result.duplicate) duplicates.push(name); else imported.push(result.source)
+  }
+  return { imported, duplicates, invalid }
+}
+
 export async function research(request, runtime = {}) {
   const paths = await folders(request), now = runtime.now ?? new Date()
   if (request.action === 'load') return await loadIndex(paths)
+  if (request.action === 'pending') return (await inboxFiles(paths.inbox)).length
   const index = await loadIndex(paths)
+  if (request.action === 'scan-inbox') return await scanInbox(paths, index, now, runtime.settleMs ?? 300)
   if (request.action === 'read-source') {
     const source = index.sources.find(s => s.id === request.sourceId)
     if (!source || !validId(source.id)) throw new Error('This source is no longer saved.')

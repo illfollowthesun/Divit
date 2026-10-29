@@ -102,6 +102,35 @@ async fn export_action(app: tauri::AppHandle, state: tauri::State<'_, AppState>,
     call_bridge(&app, "export-bridge.mjs", request).await
 }
 
+const RESEARCH_ACTIONS: [&str; 7] = ["load", "read-source", "add-source", "update-source", "save-annotations", "scan-inbox", "pending"];
+#[tauri::command]
+async fn research_action(app: tauri::AppHandle, state: tauri::State<'_, AppState>, project_id: String, action: String, payload: Option<Value>) -> Result<Value> {
+    if !RESEARCH_ACTIONS.contains(&action.as_str()) { return Err("Invalid research action".into()); }
+    let key = storage::id(&project_id)?.to_string();
+    let shared = state.0.clone();
+    let script = bridge_path(&app, "research-bridge.mjs")?;
+    tauri::async_runtime::spawn_blocking(move || -> Result<Value> {
+        let store = shared.lock().map_err(|e| e.to_string())?;
+        let project = store.root.join("projects").join(&key);
+        if !project.is_dir() { return Err("This project is no longer in the library.".into()); }
+        if action == "pending" {
+            // Polled while a project is open: count inbox files without starting Node.
+            let inbox = project.join("research").join("inbox");
+            let count = std::fs::read_dir(&inbox).map(|items| items.filter_map(|item| item.ok())
+                .filter(|item| item.file_type().map(|t| t.is_file()).unwrap_or(false) && item.path().extension().is_some_and(|e| e.eq_ignore_ascii_case("md"))).count()).unwrap_or(0);
+            return Ok(json!(count));
+        }
+        let mut request = match payload { Some(Value::Object(map)) => Value::Object(map), None => json!({}), Some(_) => return Err("Invalid research request".into()) };
+        request["dataRoot"] = json!(store.root.to_string_lossy());
+        request["projectId"] = json!(key);
+        request["action"] = json!(action);
+        request["createProject"] = json!(false);
+        let result = run_bridge(script, request);
+        drop(store); // Research files are written under the same lock as the writing.
+        result
+    }).await.map_err(|e| e.to_string())?
+}
+
 fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_single_instance::init(|app, _, _| { if let Some(window) = app.get_webview_window("main") { let _ = window.set_focus(); } }))
@@ -120,6 +149,6 @@ fn main() {
             }
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![library, save_project, save_idea, save_settings, import_image, image_data, trash, restore, site_action, export_action, backup_action])
+        .invoke_handler(tauri::generate_handler![library, save_project, save_idea, save_settings, import_image, image_data, trash, restore, site_action, export_action, backup_action, research_action])
         .run(tauri::generate_context!()).expect("Could not start Yazı");
 }

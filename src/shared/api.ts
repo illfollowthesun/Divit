@@ -27,6 +27,14 @@ export const api = {
     const folder = await open({ directory: true, multiple: false, title: 'Choose a backup folder outside Yazi' })
     return typeof folder === 'string' ? folder : null
   },
+  // Research files: the desktop app goes through the native storage lock, the preview through the dev server.
+  research: async <T>(projectId: string, action: 'load' | 'read-source' | 'add-source' | 'update-source' | 'save-annotations' | 'scan-inbox' | 'pending', payload: Record<string, unknown> = {}): Promise<T> => {
+    if (desktop) return invoke('research_action', { projectId, action, payload })
+    const response = await fetch('/__yazi/research', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Yazi-Preview': '1' }, body: JSON.stringify({ ...payload, projectId, action }) })
+    const result = await response.json().catch(() => ({ error: 'Research needs the desktop app or the development preview.' }))
+    if (!response.ok) throw new Error(result?.error ?? 'Research is unavailable.')
+    return result as T
+  },
   exportStatus: async (): Promise<ExportTools> => {
     if (desktop) return invoke('export_action', { action: 'status', projectId: null, expectedRevision: null, format: null })
     const response = await fetch('/__yazi/export')

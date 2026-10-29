@@ -3,6 +3,7 @@ import type { ReactNode } from 'react'
 import type { EditorView } from '@codemirror/view'
 import { useCompactWidth, trapDrawer } from './polish/drawers'
 import { BackupSettings } from './settings/BackupSettings'
+import { useResearch } from './research/useResearch'
 import { Editor } from './editor/Editor'
 import { Preview } from './editor/Preview'
 import { api, desktop } from './shared/api'
@@ -78,6 +79,7 @@ export function App() {
     failed: error => setError(message(error)),
   })
   const view = useRef<EditorView | null>(null)
+  useResearch(draft?.id ?? null, setError)
   const mounted = useRef(true)
   const captureInput = useRef<HTMLInputElement>(null)
 
