@@ -1,5 +1,6 @@
 import type { Project, ProjectType, Section } from '../shared/types'
 import { newProject, slugify } from '../shared/types.ts'
+import { t } from '../i18n/index.ts'
 
 // Bringing in existing writing. Each file becomes one piece: the whole text of a blog post, a scene of a
 // story, a chapter of a book. Only copies are made; the files the writer chose are never changed.
@@ -39,7 +40,7 @@ export async function convert(files: ImportFile[]): Promise<ImportedText[]> {
 const pieces = (texts: ImportedText[], kind: Section['kind']): Section[] => texts.map(t => ({ id: crypto.randomUUID(), kind, title: t.title, body: t.body }))
 const joined = (texts: ImportedText[]) => texts.map(t => texts.length > 1 ? `## ${t.title}\n\n${t.body}` : t.body).filter(Boolean).join('\n\n')
 export function importedProject(texts: ImportedText[], type: ProjectType, title: string): Project {
-  const name = title.trim() || (texts.length === 1 ? texts[0].title : 'Imported writing')
+  const name = title.trim() || (texts.length === 1 ? texts[0].title : t('Imported writing'))
   const project = newProject(name, undefined, type)
   if (type === 'blog') return { ...project, body: joined(texts) }
   return { ...project, sections: pieces(texts, type === 'book' ? 'chapter' : 'scene') }

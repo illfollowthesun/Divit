@@ -1,11 +1,12 @@
 import { useMemo, useState } from 'react'
+import { t } from '../i18n'
 import DOMPurify from 'dompurify'
 import { marked, Renderer } from 'marked'
 import { wordDiff } from './word-diff'
 
 function documentFor(text: string) {
   const node = document.createElement('div'), renderer = new Renderer()
-  renderer.image = ({ text }: { text: string }) => `[Image: ${text.replace(/[<>&]/g, '')}]`
+  renderer.image = ({ text }: { text: string }) => `[${t('Image')}: ${text.replace(/[<>&]/g, '')}]`
   node.innerHTML = DOMPurify.sanitize(marked.parse(text, { async: false, renderer }), { ALLOWED_TAGS: ['p','h1','h2','h3','h4','h5','h6','strong','em','s','code','pre','blockquote','ul','ol','li','a','br','hr','table','thead','tbody','tr','th','td'], ALLOWED_ATTR: [] })
   return node
 }
@@ -38,5 +39,5 @@ export function SnapshotDiff({ before, after, beforeTitle, afterTitle }: { befor
     }
     return { before: highlight(old, removed, 'removed', onlyChanges), after: highlight(current, added, 'added', onlyChanges), changed: removed.length + added.length > 0 }
   }, [before, after, onlyChanges])
-  return <><div className="diff-options"><label><input type="checkbox" checked={onlyChanges} onChange={e => setOnlyChanges(e.target.checked)}/> Only show changes</label><span><del className="diff-removed">Removed</del> <ins className="diff-added">Added</ins></span></div>{!result.changed && <p className="quiet">No text changes.</p>}<div className="snapshot-comparison"><section><div className="section-label">KEPT VERSION</div><h3>{beforeTitle}</h3><div className="snapshot-document" dangerouslySetInnerHTML={{ __html: result.before }}/></section><section><div className="section-label">CURRENT WRITING</div><h3>{afterTitle}</h3><div className="snapshot-document" dangerouslySetInnerHTML={{ __html: result.after }}/></section></div></>
+  return <><div className="diff-options"><label><input type="checkbox" checked={onlyChanges} onChange={e => setOnlyChanges(e.target.checked)}/> {t('Only show changes')}</label><span><del className="diff-removed">{t('Removed')}</del> <ins className="diff-added">{t('Added')}</ins></span></div>{!result.changed && <p className="quiet">{t('No text changes.')}</p>}<div className="snapshot-comparison"><section><div className="section-label">{t('KEPT VERSION')}</div><h3>{beforeTitle}</h3><div className="snapshot-document" dangerouslySetInnerHTML={{ __html: result.before }}/></section><section><div className="section-label">{t('CURRENT WRITING')}</div><h3>{afterTitle}</h3><div className="snapshot-document" dangerouslySetInnerHTML={{ __html: result.after }}/></section></div></>
 }

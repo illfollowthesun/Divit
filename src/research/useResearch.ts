@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { api } from '../shared/api'
+import { t } from '../i18n'
 import type { Research, ResearchSource } from '../shared/types'
 
 const message = (e: unknown) => e instanceof Error ? e.message : String(e)
@@ -34,12 +35,12 @@ export function useResearch(projectId: string | null, onError: (message: string)
   }, [projectId, store, requestState])
   // Each change builds on the result of the one before, so quick successive highlights are all kept.
   const saveAnnotations = useCallback((change: (current: Annotations) => Partial<Annotations>) => {
-    if (!projectId) return Promise.reject(new Error('Choose a project first.'))
+    if (!projectId) return Promise.reject(new Error(t('Choose a project first.')))
     const requests = requestState(projectId)
     requests.revision++; requests.pendingWrites++
     const run = saving.current.then(async () => {
       const owned = latest.current
-      if (!projectId || !owned || owned.projectId !== projectId) throw new Error('This research is still loading. Try again in a moment.')
+      if (!projectId || !owned || owned.projectId !== projectId) throw new Error(t('This research is still loading. Try again in a moment.'))
       const { highlights, notes, ai } = owned.research
       const saved = await api.research<Research>(projectId, 'save-annotations', { highlights, notes, ai, ...change({ highlights, notes, ai }) })
       if (open.current === projectId) store({ projectId, research: saved })

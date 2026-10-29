@@ -51,7 +51,7 @@ test('Gemini comes first, then local models; keys go only to Credential Manager;
   await provider.selectOption('anthropic')
   await expect(model).toHaveValue('claude-sonnet-5-5')
   await expect(model.locator('option')).toHaveText(['Claude Sonnet 5.5 · $2 / $10 per million tokens in / out', 'Claude Haiku 5.5 (lowest cost) · $0.1 / $0.5 per million tokens in / out', 'Claude Opus 5.5 · $4 / $20 per million tokens in / out'])
-  const fallbacks = section.getByLabel(/retry it on Anthropic's recommended fallback model/)
+  const fallbacks = section.getByLabel(/retry it on Anthropic’s recommended fallback model/)
   await expect(fallbacks).not.toBeChecked(); await expect(fallbacks).toBeEnabled()
   await fallbacks.check(); await model.selectOption('claude-haiku-5-5')
   await expect(fallbacks).not.toBeChecked(); await expect(fallbacks).toBeDisabled(); await expect(section).toContainText('(not available for this model)')

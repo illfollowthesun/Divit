@@ -6,7 +6,7 @@ import { desktopBridge, nativeCalls } from './desktop-bridge'
 test('Help opens feedback and bug issues in the browser with version and Windows details, never the writing', async ({ page }) => {
   const body = 'A private sentence that must stay on this computer.'
   await desktopBridge(page, { config: {}, projects: [{ ...newProject('Private draft'), id: randomUUID(), mode: 'normal', body }] })
-  await page.goto('/'); await expect(page.getByLabel('Title')).toHaveValue('Private draft'); await page.keyboard.press('F1')
+  await page.goto('/'); await expect(page.getByLabel('Title')).toHaveValue('Private draft'); await page.getByRole('button', { name: /Keyboard shortcuts/ }).click()
   const help = page.getByRole('dialog', { name: 'A few familiar keys' })
   await expect(help).toContainText('Your writing is never included.')
   await help.getByRole('button', { name: 'Report a bug ↗' }).click()

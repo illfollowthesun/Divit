@@ -55,6 +55,6 @@ test('unranked service results say the snippets are not AI', async ({ page }) =>
   await desktopBridge(page, { config: { ...local, search: { provider: 'searxng', searxngUrl: 'http://localhost:8080', always: false } }, search: { candidates: [{ ...candidate, summary: '', excerpt: 'Kış tarifesi: ilk vapur 06:10.' }], dropped: 0, via: 'SearXNG', ranked: false, rankProblem: 'llama3.2 did not answer in the expected form.', usage }, projects: [{ ...newProject('Ferry notes'), id: randomUUID(), mode: 'normal' }] })
   const drawer = await search(page)
   await drawer.getByRole('button', { name: 'Search with AI' }).click()
-  await expect(drawer.locator('.search-via')).toHaveText("Found with SearXNG, in its own order. llama3.2 did not answer in the expected form. The text under each page is SearXNG's snippet, not AI.")
+  await expect(drawer.locator('.search-via')).toHaveText("Found with SearXNG, in its own order. llama3.2 did not answer in the expected form. The text under each page is SearXNG’s snippet, not AI.")
   await expect(drawer.locator('.ai-excerpt')).toHaveText('Kış tarifesi: ilk vapur 06:10.')
 })

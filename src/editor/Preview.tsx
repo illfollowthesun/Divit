@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { t } from '../i18n'
 import DOMPurify from 'dompurify'
 import { marked, Renderer } from 'marked'
 import { api } from '../shared/api'
@@ -14,19 +15,19 @@ export function Preview({ text, images }: { text: string; images: ImageRecord[] 
       const renderer = new Renderer()
       renderer.image = ({ href, text }: { href: string; text: string }) => {
         const match = href.match(/^yazi-image:([a-zA-Z0-9-]+)$/)
-        return match ? `<img data-local-id="${match[1]}" alt="${escape(text)}">` : `<span>[Image: ${escape(text || 'not loaded')}]</span>`
+        return match ? `<img data-local-id="${match[1]}" alt="${escape(text)}">` : `<span>[${t('Image')}: ${escape(text || t('not loaded'))}]</span>`
       }
       container.innerHTML = DOMPurify.sanitize(marked.parse(text, { async: false, renderer }), { FORBID_ATTR: ['src', 'srcset'] })
       for (const img of container.querySelectorAll('img')) {
         const id = img.getAttribute('data-local-id')
         const image = id && images.find(i => i.id === id)
         if (image) img.src = await api.imageData(image)
-        else { img.removeAttribute('src'); img.alt = img.alt || 'External image (not loaded)' }
+        else { img.removeAttribute('src'); img.alt = img.alt || t('External image (not loaded)') }
       }
       for (const a of container.querySelectorAll('a')) { a.setAttribute('target', '_blank'); a.setAttribute('rel', 'noopener noreferrer') }
       if (active) setHtml(container.innerHTML)
-    })().catch(() => { if (active) setHtml('<p>Could not load the preview.</p>') })
+    })().catch(() => { if (active) setHtml(`<p>${t('Could not load the preview.')}</p>`) })
     return () => { active = false }
   }, [text, images])
-  return text.trim() ? <article className="prose" dangerouslySetInnerHTML={{ __html: html }} /> : <p className="quiet empty-preview">Your words will take shape here.</p>
+  return text.trim() ? <article className="prose" dangerouslySetInnerHTML={{ __html: html }} /> : <p className="quiet empty-preview">{t('Your words will take shape here.')}</p>
 }

@@ -1,10 +1,11 @@
 import { Decoration, EditorView, ViewPlugin } from '@codemirror/view'
 import type { DecorationSet, ViewUpdate } from '@codemirror/view'
 import type { ProjectCard } from '../shared/types'
+import { t } from '../i18n'
 import { cardMentions } from './card-mentions'
 export function cardLinks(cards: () => ProjectCard[], open: (id: string) => void) {
   function ranges(view: EditorView) {
-    return Decoration.set(cardMentions(view.state.doc.toString(), cards()).map(m => Decoration.mark({ class: 'card-mention', attributes: { 'data-card-id': m.id, role: 'link', tabindex: '0', 'aria-label': `Open card for ${m.name}` } }).range(m.from, m.to)), true)
+    return Decoration.set(cardMentions(view.state.doc.toString(), cards()).map(m => Decoration.mark({ class: 'card-mention', attributes: { 'data-card-id': m.id, role: 'link', tabindex: '0', 'aria-label': t('Open card for {name}', { name: m.name }) } }).range(m.from, m.to)), true)
   }
   return [ViewPlugin.fromClass(class {
     decorations: DecorationSet

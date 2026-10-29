@@ -1,4 +1,5 @@
 import type { Project } from './types'
+import { t } from '../i18n/index.ts'
 
 export type SaveStatus = 'All changes saved' | 'Saving…' | 'Unsaved changes' | 'Not saved — your text is still here'
 
@@ -36,7 +37,7 @@ export class DraftSession {
   get dirty(): boolean { return this.current !== null && canonicalDraft(this.current) !== this.persisted }
 
   select(project: Project | null): void {
-    if (this.dirty) throw new Error('Your current text has not been saved. Save or copy it before opening another draft.')
+    if (this.dirty) throw new Error(t('Your current text has not been saved. Save or copy it before opening another draft.'))
     this.current = project ? structuredClone(project) : null
     this.persisted = project ? canonicalDraft(project) : ''
     this.events.changed(this.current, 'All changes saved')

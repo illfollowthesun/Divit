@@ -1,6 +1,7 @@
 import { EditorView, ViewPlugin, showTooltip } from '@codemirror/view'
 import type { ViewUpdate } from '@codemirror/view'
 import { StateEffect, StateField } from '@codemirror/state'
+import { t } from '../i18n'
 import { syntaxTree, ensureSyntaxTree } from '@codemirror/language'
 import type { SyntaxNode } from '@lezer/common'
 import { suggestions } from '../spell/spell-client'
@@ -46,9 +47,9 @@ const popover = StateField.define<Popover | null>({
   provide: field => showTooltip.compute([field], state => {
     const value = state.field(field)
     return value && { pos: value.from, end: value.to, above: true, arrow: false, create: view => {
-      const dom = document.createElement('div'); dom.className = 'spell-popover'; dom.setAttribute('role', 'group'); dom.setAttribute('aria-label', `Spelling suggestions for ${value.word}`)
-      if (!value.options.length) dom.append('No suggestions')
-      else { dom.append('Did you mean: '); value.options.forEach((option, i) => { if (i) dom.append(' · '); dom.append(button(option, () => replace(view, value, option))) }) }
+      const dom = document.createElement('div'); dom.className = 'spell-popover'; dom.setAttribute('role', 'group'); dom.setAttribute('aria-label', t('Spelling suggestions for {word}', { word: value.word }))
+      if (!value.options.length) dom.append(t('No suggestions'))
+      else { dom.append(`${t('Did you mean:')} `); value.options.forEach((option, i) => { if (i) dom.append(' · '); dom.append(button(option, () => replace(view, value, option))) }) }
       return { dom }
     } }
   }),
@@ -63,20 +64,20 @@ async function openMenu(view: EditorView, spelling: Spelling, hit: Hit, x: numbe
   let options: string[] = []
   try { options = await suggestions(hit.language, hit.word) } catch (error) { if (activeViews.has(view) && alive()) spelling.error(failure(error)) }
   if (view.state.doc !== doc || !activeViews.has(view) || !alive() || !view.state.field(checkIssues).issues.some(issue => issue.id === hit.id)) return
-  const menu = document.createElement('div'); menu.className = 'spell-menu'; menu.setAttribute('role', 'menu'); menu.setAttribute('aria-label', `Spelling: ${hit.word}`)
+  const menu = document.createElement('div'); menu.className = 'spell-menu'; menu.setAttribute('role', 'menu'); menu.setAttribute('aria-label', t('Spelling: {word}', { word: hit.word }))
   const item = (label: string, run: () => void, disabled = false) => { const node = button(label, () => { close(); run() }); node.setAttribute('role', 'menuitem'); node.disabled = disabled; menu.append(node) }
   const separator = () => { const node = document.createElement('div'); node.setAttribute('role', 'separator'); menu.append(node) }
-  const clipboard = (action: Promise<unknown>) => { action.catch(() => spelling.error('Clipboard access was blocked. Use Ctrl X, Ctrl C or Ctrl V instead.')) }
+  const clipboard = (action: Promise<unknown>) => { action.catch(() => spelling.error(t('Clipboard access was blocked. Use Ctrl X, Ctrl C or Ctrl V instead.'))) }
   const { from, to } = view.state.selection.main, selected = view.state.sliceDoc(from, to)
   options.forEach(option => item(option, () => replace(view, hit, option)))
-  if (!options.length) item('No suggestions', () => {}, true)
+  if (!options.length) item(t('No suggestions'), () => {}, true)
   separator()
-  item('Add to dictionary', () => spelling.add(hit.word, hit.language))
-  item('Ignore in this project', () => spelling.ignore(hit.word))
+  item(t('Add to dictionary'), () => spelling.add(hit.word, hit.language))
+  item(t('Ignore in this project'), () => spelling.ignore(hit.word))
   separator()
-  item('Cut', () => clipboard(navigator.clipboard.writeText(selected).then(() => view.dispatch({ changes: { from, to }, userEvent: 'delete.cut' }))), !selected)
-  item('Copy', () => clipboard(navigator.clipboard.writeText(selected)), !selected)
-  item('Paste', () => clipboard(navigator.clipboard.readText().then(text => { view.dispatch({ ...view.state.replaceSelection(text), userEvent: 'input.paste', scrollIntoView: true }); view.focus() })))
+  item(t('Cut'), () => clipboard(navigator.clipboard.writeText(selected).then(() => view.dispatch({ changes: { from, to }, userEvent: 'delete.cut' }))), !selected)
+  item(t('Copy'), () => clipboard(navigator.clipboard.writeText(selected)), !selected)
+  item(t('Paste'), () => clipboard(navigator.clipboard.readText().then(text => { view.dispatch({ ...view.state.replaceSelection(text), userEvent: 'input.paste', scrollIntoView: true }); view.focus() })))
   const items = () => [...menu.querySelectorAll<HTMLButtonElement>('button:not(:disabled)')]
   menu.addEventListener('keydown', event => {
     const list = items(), index = list.indexOf(document.activeElement as HTMLButtonElement)

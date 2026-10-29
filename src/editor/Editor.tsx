@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { t } from '../i18n'
 import { EditorView, keymap, placeholder } from '@codemirror/view'
 import type { ViewUpdate } from '@codemirror/view'
 import { Compartment, EditorState } from '@codemirror/state'
@@ -15,7 +16,7 @@ import { markdown } from '@codemirror/lang-markdown'
 import { syntaxHighlighting, defaultHighlightStyle } from '@codemirror/language'
 
 // Native squiggles cannot be read or offered as suggestions, so Yazı checks spelling itself.
-const attributes = (language: string) => EditorView.contentAttributes.of({ 'aria-label': 'Markdown text', spellcheck: 'false', lang: language === 'auto' ? '' : language, autocorrect: 'off', autocapitalize: 'off' })
+const attributes = (language: string) => EditorView.contentAttributes.of({ 'aria-label': t('Markdown text'), spellcheck: 'false', lang: language === 'auto' ? '' : language, autocorrect: 'off', autocapitalize: 'off' })
 
 function centerCaret(view: EditorView) {
   view.requestMeasure({
@@ -52,7 +53,7 @@ export function Editor({ id, body, onChange, onReady, typewriter = false, checki
     if (!element.current) return
     const view = new EditorView({ parent: element.current, state: EditorState.create({ doc: initial.current, extensions: [
       checkIssues, history(), keymap.of([...defaultKeymap, ...historyKeymap]), markdown(), syntaxHighlighting(defaultHighlightStyle),
-      EditorView.lineWrapping, placeholder('Begin anywhere. The first sentence can change.'),
+      EditorView.lineWrapping, placeholder(t('Begin anywhere. The first sentence can change.')),
       cardConfig.current.of(cardLinks(() => cardsRef.current ?? [], id => cardOpen.current?.(id))),
       languageConfig.current.of(attributes(language)),
       checkConfig.current.of(checking ? spellCheck({ language: () => spelling.current.language, accepted: lang => spelling.current.accepted(lang), issues: (issues, checking) => spelling.current.issues?.(issues, checking), rules: () => spelling.current.rules, add: (word, lang) => spelling.current.add?.(word, lang), ignore: word => spelling.current.ignore?.(word), error: message => spelling.current.error?.(message) }) : []),

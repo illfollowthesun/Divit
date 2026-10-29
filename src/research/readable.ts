@@ -1,6 +1,7 @@
 import { Readability } from '@mozilla/readability'
 import DOMPurify from 'dompurify'
 import TurndownService from 'turndown'
+import { t } from '../i18n'
 import type { ResearchSource } from '../shared/types'
 
 export type PageMeta = Partial<Pick<ResearchSource, 'title' | 'url' | 'site' | 'author' | 'published' | 'type' | 'summary' | 'topic'>>
@@ -27,7 +28,7 @@ export function readablePage(html: string, url: string, contentType = 'text/html
   const article = new Readability(doc.cloneNode(true) as Document, { charThreshold: 200 }).parse()
   const content = DOMPurify.sanitize(article?.content ?? doc.body?.innerHTML ?? '', { FORBID_TAGS: ['style', 'script', 'img', 'iframe'], FORBID_ATTR: ['style'] })
   const text = markdown.turndown(content).replace(/\n{3,}/g, '\n\n').trim()
-  if (!text) throw new Error('No readable text was found on this page. Save the text into the inbox instead.')
+  if (!text) throw new Error(t('No readable text was found on this page. Save the text into the inbox instead.'))
   const site = (article?.siteName || metaContent(doc, 'og:site_name') || host).trim()
   // "Headline | Site name" → "Headline"
   const title = (article?.title || doc.title || host).trim(), suffix = new RegExp(`\\s+[|·–—-]\\s+${site.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i')

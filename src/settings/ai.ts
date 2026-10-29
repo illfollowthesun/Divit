@@ -1,5 +1,6 @@
 import { invoke } from '@tauri-apps/api/core'
 import { desktop } from '../shared/api'
+import { t, tn } from '../i18n'
 
 // Mirrors src-tauri/src/ai.rs. The key itself never comes back from the native side.
 export type AiProvider = 'gemini' | 'local' | 'anthropic' | 'openai' | 'openai-compatible'
@@ -56,8 +57,8 @@ export function searchRoute(status: AiStatus | null): 'native' | 'service' | nul
   if (status.capabilities.nativeSearch && !config.search.always) return 'native'
   return status.searchReady ? 'service' : null
 }
-export const serviceLabel = (status: AiStatus | null) => searchServices.find(s => s.id === status?.config.search.provider)?.label.replace(/ \(.*\)$/, '') ?? ''
-const needsDesktop = () => Promise.reject(new Error('AI runs from the desktop app.'))
+export const serviceLabel = (status: AiStatus | null) => t(searchServices.find(s => s.id === status?.config.search.provider)?.label ?? '').replace(/ \(.*\)$/, '')
+const needsDesktop = () => Promise.reject(new Error(t('AI runs from the desktop app.')))
 export const ai = {
   status: (): Promise<AiStatus> => desktop ? invoke<AiStatus>('ai_status').then(filled) : needsDesktop(),
   save: (config: AiConfig): Promise<AiStatus> => desktop ? invoke<AiStatus>('ai_save', { config }).then(filled) : needsDesktop(),
@@ -71,11 +72,11 @@ export const ai = {
 }
 export const money = (usd: number) => `$${usd < 0.01 ? usd.toFixed(4) : usd.toFixed(2)}`
 // Gemini prices are paid-tier list prices; a free-tier key is not charged for tokens.
-export const costNote = (provider: AiProvider) => provider === 'gemini' ? ' if billed (free-tier keys are not charged; search charges excluded)' : ''
+export const costNote = (provider: AiProvider) => provider === 'gemini' ? ` ${t('if billed (free-tier keys are not charged; search charges excluded)')}` : ''
 export const usageLine = (usage: AiUsage, month: string, provider: AiProvider) => {
-  if (usage.month !== month || !usage.calls) return 'No AI requests this month.'
-  const cost = usage.costUsd > 0 ? ` · about ${money(usage.costUsd)}${costNote(provider)}` : ''
-  const searches = usage.webSearches ? ` · ${usage.webSearches} web ${usage.webSearches === 1 ? 'search' : 'searches'}` : ''
-  const unpriced = usage.unpricedCalls ? ` (${usage.unpricedCalls} without a known price)` : ''
-  return `This month: ${usage.calls} ${usage.calls === 1 ? 'request' : 'requests'} · ${usage.inputTokens.toLocaleString()} in / ${usage.outputTokens.toLocaleString()} out tokens${searches}${cost}${unpriced}`
+  if (usage.month !== month || !usage.calls) return t('No AI requests this month.')
+  const cost = usage.costUsd > 0 ? ` · ${t('about {cost}', { cost: money(usage.costUsd) })}${costNote(provider)}` : ''
+  const searches = usage.webSearches ? ` · ${tn(usage.webSearches, '{n} web search', '{n} web searches')}` : ''
+  const unpriced = usage.unpricedCalls ? ` ${t('({n} without a known price)', { n: usage.unpricedCalls })}` : ''
+  return `${t('This month:')} ${tn(usage.calls, '{n} request', '{n} requests')} · ${t('{input} in / {output} out tokens', { input: usage.inputTokens, output: usage.outputTokens })}${searches}${cost}${unpriced}`
 }
