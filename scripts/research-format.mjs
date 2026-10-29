@@ -46,4 +46,17 @@ export function cleanMeta(meta) {
   clean.type = sourceTypes.includes(clean.type) ? clean.type : 'other'
   return clean
 }
-export const emptyResearch = () => ({ schemaVersion: 1, sources: [], highlights: [], notes: [], ai: [] })
+export const emptyResearch = () => ({ schemaVersion: 1, sources: [], highlights: [], notes: [], ai: [], requests: [] })
+
+// The prompt the writer pastes to Claude (or any assistant): where to write and in which format.
+export function requestPrompt({ topic, angle, language, count, inbox, projectTitle }) {
+  return [
+    `Please research this topic for my writing${projectTitle ? ` ("${projectTitle}")` : ''} and save what you find as source files.`, '',
+    `Topic: ${topic}`, ...(angle ? [`Angle: ${angle}`] : []), `Language of the sources: ${language === 'tr' ? 'Turkish' : 'English'}`, `How many sources: ${count}`, '',
+    'Write one Markdown file per source (source-1.md, source-2.md, …) into this folder:', inbox, '',
+    'Use exactly this format. Only title is required. Keep the original wording of the page; never paraphrase it silently.', '',
+    '---', 'title: …', 'url: https://…', 'site: …', 'author: …', 'published: YYYY-MM-DD', 'type: news | article | blog | paper | other', `topic: ${topic}`, 'summary: 2-3 sentences', '---', '',
+    'Readable text or an excerpt of the page, in its original wording.', '',
+    'Only use real pages you have opened, with their real URLs.',
+  ].join('\n')
+}

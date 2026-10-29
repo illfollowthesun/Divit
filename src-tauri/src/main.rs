@@ -102,7 +102,7 @@ async fn export_action(app: tauri::AppHandle, state: tauri::State<'_, AppState>,
     call_bridge(&app, "export-bridge.mjs", request).await
 }
 
-const RESEARCH_ACTIONS: [&str; 8] = ["load", "read-source", "add-source", "update-source", "save-annotations", "scan-inbox", "pending", "fetch-page"];
+const RESEARCH_ACTIONS: [&str; 9] = ["load", "read-source", "add-source", "update-source", "save-annotations", "scan-inbox", "pending", "fetch-page", "add-request"];
 #[tauri::command]
 async fn research_action(app: tauri::AppHandle, state: tauri::State<'_, AppState>, project_id: String, action: String, payload: Option<Value>) -> Result<Value> {
     if !RESEARCH_ACTIONS.contains(&action.as_str()) { return Err("Invalid research action".into()); }

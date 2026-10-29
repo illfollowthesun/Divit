@@ -2,7 +2,7 @@ import { readFile, writeFile, mkdir, rename, stat, readdir } from 'node:fs/promi
 import { join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { randomUUID } from 'node:crypto'
-import { parseSource, serializeSource, normalizeUrl, cleanMeta, emptyResearch } from './research-format.mjs'
+import { parseSource, serializeSource, normalizeUrl, cleanMeta, emptyResearch, requestPrompt } from './research-format.mjs'
 
 // Research lives beside the writing: projects/<id>/research/{research.json, sources/, inbox/, requests/}.
 const validId = value => typeof value === 'string' && /^[A-Za-z0-9-]{1,100}$/.test(value)
@@ -122,6 +122,19 @@ export async function research(request, runtime = {}) {
     if (patch.usedIn !== undefined) { if (!Array.isArray(patch.usedIn) || patch.usedIn.some(u => u.sectionId !== null && !validId(u.sectionId))) throw new Error('Invalid quote location.'); source.usedIn = patch.usedIn.map(u => ({ sectionId: u.sectionId, at: String(u.at), highlightId: validId(u.highlightId) ? u.highlightId : undefined })) }
     await saveIndex(paths, index)
     return source
+  }
+  if (request.action === 'add-request') {
+    const topic = String(request.topic ?? '').trim().slice(0, 300), angle = String(request.angle ?? '').trim().slice(0, 300)
+    const language = request.language === 'tr' ? 'tr' : 'en', count = Math.max(1, Math.min(20, Math.round(Number(request.count) || 5)))
+    if (!topic) throw new Error('Name the topic to search for.')
+    const entry = { id: randomUUID(), topic, ...(angle ? { angle } : {}), language, count, createdAt: now.toISOString() }
+    const prompt = requestPrompt({ ...entry, inbox: paths.inbox, projectTitle: String(request.projectTitle ?? '').trim() })
+    await mkdir(paths.requests, { recursive: true }); await mkdir(paths.inbox, { recursive: true })
+    const header = ['---', `topic: ${JSON.stringify(topic)}`, ...(angle ? [`angle: ${JSON.stringify(angle)}`] : []), `language: ${language}`, `count: ${count}`, `created: ${entry.createdAt}`, '---', ''].join('\n')
+    await atomic(join(paths.requests, `${entry.id}.md`), `${header}\n${prompt}\n`)
+    index.requests = [...(index.requests ?? []), entry]
+    await saveIndex(paths, index)
+    return { request: entry, prompt, inbox: paths.inbox, path: join(paths.requests, `${entry.id}.md`) }
   }
   if (request.action === 'save-annotations') {
     checkAnnotations(index, request)

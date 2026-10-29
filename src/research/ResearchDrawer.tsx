@@ -6,6 +6,7 @@ import { readablePage } from './readable'
 import { SourceReader } from './SourceReader'
 import { HighlightsTab } from './HighlightsTab'
 import { NotesTab } from './NotesTab'
+import { RequestPanel } from './RequestPanel'
 import { LONG_QUOTE_WORDS, wordCount } from './citation'
 import type { Annotations } from './useResearch'
 
@@ -16,7 +17,7 @@ type Tab = typeof tabs[number]
 export type InsertQuote = (kind: 'quote' | 'footnote', quote: string, source: ResearchSource) => boolean
 export const newInboxCount = (research: Research | null) => research?.sources.filter(s => s.origin === 'inbox' && s.status === 'unread').length ?? 0
 
-export function ResearchDrawer({ projectId, research, reload, saveAnnotations, close, insert, sectionId, placeName }: { projectId: string; research: Research | null; reload: () => Promise<unknown>; saveAnnotations: (change: (current: Annotations) => Partial<Annotations>) => Promise<void>; close: () => void; insert: InsertQuote; sectionId: string | null; placeName: (sectionId: string | null) => string }) {
+export function ResearchDrawer({ projectId, projectTitle, language, suggestTopic, research, reload, saveAnnotations, close, insert, sectionId, placeName }: { projectId: string; projectTitle: string; language: 'en' | 'tr'; suggestTopic: () => string; research: Research | null; reload: () => Promise<unknown>; saveAnnotations: (change: (current: Annotations) => Partial<Annotations>) => Promise<void>; close: () => void; insert: InsertQuote; sectionId: string | null; placeName: (sectionId: string | null) => string }) {
   const [tab, setTab] = useState<Tab>('Sources'), [insertAs, setInsertAs] = useState<'quote' | 'footnote'>('quote')
   const [url, setUrl] = useState(''), [working, setWorking] = useState(false), [problem, setProblem] = useState(''), [notice, setNotice] = useState('')
   const [query, setQuery] = useState(''), [type, setType] = useState('all'), [status, setStatus] = useState('all')
@@ -62,6 +63,7 @@ export function ResearchDrawer({ projectId, research, reload, saveAnnotations, c
       <div id="research-panel" role="tabpanel" aria-labelledby={`research-tab-${tab}`}>
         {tab === 'Sources' && <>
           <form className="add-url" onSubmit={event => void addUrl(event)}><label className="sr-only" htmlFor="research-url">Web address to save</label><input id="research-url" ref={field} type="url" inputMode="url" placeholder="Paste a link to keep a readable copy" value={url} disabled={working} onChange={event => setUrl(event.target.value)}/><button className="outline-button" disabled={working || !url.trim()}>{working ? 'Saving…' : 'Add'}</button></form>
+          <RequestPanel projectId={projectId} projectTitle={projectTitle} language={language} suggestTopic={suggestTopic} research={research}/>
           {sources.length > 0 && <div className="source-filters"><label className="sr-only" htmlFor="source-search">Find a source</label><input id="source-search" placeholder="Find a source…" value={query} onChange={event => setQuery(event.target.value)}/><select aria-label="Source type" value={type} onChange={event => setType(event.target.value)}><option value="all">All types</option>{types.map(t => <option key={t} value={t}>{t}</option>)}</select><select aria-label="Reading status" value={status} onChange={event => setStatus(event.target.value)}><option value="all">Any status</option><option value="unread">Unread</option><option value="read">Read</option><option value="used">Quoted</option></select></div>}
           <div className="source-list">{shown.map(source => <button key={source.id} className={`source-row ${source.status}`} onClick={() => openSource(source.id)}>
             <span className="source-title">{source.status === 'unread' && <span className="unread-dot" aria-label="Unread"/>}{source.title}</span>

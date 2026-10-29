@@ -28,7 +28,7 @@ export const api = {
     return typeof folder === 'string' ? folder : null
   },
   // Research files: the desktop app goes through the native storage lock, the preview through the dev server.
-  research: async <T>(projectId: string, action: 'load' | 'read-source' | 'add-source' | 'update-source' | 'save-annotations' | 'scan-inbox' | 'pending' | 'fetch-page', payload: Record<string, unknown> = {}): Promise<T> => {
+  research: async <T>(projectId: string, action: 'load' | 'read-source' | 'add-source' | 'update-source' | 'save-annotations' | 'scan-inbox' | 'pending' | 'fetch-page' | 'add-request', payload: Record<string, unknown> = {}): Promise<T> => {
     if (desktop) return invoke('research_action', { projectId, action, payload })
     const response = await fetch('/__yazi/research', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Yazi-Preview': '1' }, body: JSON.stringify({ ...payload, projectId, action }) })
     const result = await response.json().catch(() => ({ error: 'Research needs the desktop app or the development preview.' }))
