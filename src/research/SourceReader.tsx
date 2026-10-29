@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { api } from '../shared/api'
-import type { Highlight, ResearchSource } from '../shared/types'
+import type { AiNote, Highlight, ResearchSource } from '../shared/types'
 import type { Annotations } from './useResearch'
 import { textBlocks } from './blocks'
 import { anchor, overlaps, segments } from './anchor'
@@ -17,7 +17,7 @@ function textOffset(root: HTMLElement, node: Node, offset: number) {
   return Number(block.dataset.from) + range.toString().length
 }
 
-export function SourceReader({ projectId, source, back, reload, highlights, save, focusHighlight, onInsert, placeName }: { projectId: string; source: ResearchSource; back: () => void; reload: () => Promise<unknown>; highlights: Highlight[]; save: (change: (current: Annotations) => Partial<Annotations>) => Promise<void>; focusHighlight?: string; onInsert: (quote: string, highlightId?: string) => void; placeName: (sectionId: string | null) => string }) {
+export function SourceReader({ aiNotes, projectId, source, back, reload, highlights, save, focusHighlight, onInsert, placeName }: { aiNotes: AiNote[]; projectId: string; source: ResearchSource; back: () => void; reload: () => Promise<unknown>; highlights: Highlight[]; save: (change: (current: Annotations) => Partial<Annotations>) => Promise<void>; focusHighlight?: string; onInsert: (quote: string, highlightId?: string) => void; placeName: (sectionId: string | null) => string }) {
   const [text, setText] = useState<string | null>(null), [problem, setProblem] = useState('')
   const [popover, setPopover] = useState<Popover | null>(null), [note, setNote] = useState('')
   const heading = useRef<HTMLHeadingElement>(null), body = useRef<HTMLDivElement>(null), reader = useRef<HTMLElement>(null)
@@ -85,6 +85,7 @@ export function SourceReader({ projectId, source, back, reload, highlights, save
     <p className="source-meta">{[source.site, source.author, source.published ?? (source.saved && `saved ${source.saved}`)].filter(Boolean).join(' · ')}</p>
     {source.url && <p className="source-url" title="Original address">{source.url}</p>}
     {source.summary && <p className="source-summary">{source.summary}</p>}
+    {aiNotes.filter(n => n.kind === 'summary').map(n => <p key={n.id} className="ai-summary" title={`${n.provider} · ${n.model}`}><span className="ai-label">AI</span> {n.body}</p>)}
     {places.length > 0 && <p className="source-used">Quoted in {places.join(', ')}</p>}
     {problem && <p className="research-problem" role="alert">{problem}</p>}
     {lost.length > 0 && <p className="quiet highlight-lost">{lost.length === 1 ? 'One highlight' : `${lost.length} highlights`} no longer match the saved text. {lost.length === 1 ? 'It is' : 'They are'} kept in Highlights.</p>}

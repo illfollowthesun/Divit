@@ -98,3 +98,12 @@
 .request-actions .popover-text{margin-left:0}
 .request-path{font:10px 'IBM Plex Mono';color:var(--muted);overflow-wrap:anywhere;user-select:all;margin:6px 0 0}
 .request-prompt{width:100%;font:11px/1.4 'IBM Plex Mono';margin-bottom:6px}
+.request-ai-note{font-size:11px;margin:8px 0 0}
+.ai-candidates{margin-top:10px}
+.ai-spend{font:11px 'IBM Plex Mono';color:var(--muted);margin:0 0 10px;line-height:1.5}
+.ai-candidate{background:var(--card);border-radius:5px;padding:10px 12px;margin-bottom:8px}
+.ai-candidate h4{font:500 16px/1.3 Newsreader,Georgia,serif;margin:6px 0 2px}
+.ai-candidate.kept{opacity:.75}
+.ai-summary{font-size:13px;line-height:1.5;margin:6px 0}
+.ai-summary .ai-label{margin-right:4px}
+.ai-excerpt{margin:6px 0;padding-left:10px;border-left:2px solid var(--muted);font:italic 13px/1.5 Newsreader,Georgia,serif;color:var(--muted)}
