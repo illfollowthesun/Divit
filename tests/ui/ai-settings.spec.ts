@@ -3,8 +3,9 @@ import { test, expect } from '@playwright/test'
 test('in the browser preview, AI settings only explain that AI runs from the desktop app', async ({ page }) => {
   await page.goto('/'); await page.getByRole('button', { name: 'Open settings' }).click()
   const section = page.getByRole('dialog').locator('.ai-settings')
+  const apiKey = section.locator('.ai-key').getByLabel('API key', { exact: true })
   await expect(section).toContainText('AI features run from the desktop app')
-  await expect(section.getByLabel('API key')).toHaveCount(0)
+  await expect(apiKey).toHaveCount(0)
 })
 
 // Stands in for the Tauri bridge so the desktop form can be exercised: it records every native call.
@@ -34,8 +35,9 @@ test('desktop AI settings send the key only to Credential Manager and never keep
   })
   await page.goto('/'); await page.getByRole('button', { name: 'Open settings' }).click()
   const section = page.getByRole('dialog').locator('.ai-settings')
+  const apiKey = section.locator('.ai-key').getByLabel('API key', { exact: true })
   await expect(section.getByLabel('Use AI in Yazı')).not.toBeChecked()
-  await expect(section.getByLabel('API key')).toHaveCount(0) // hidden while AI is off
+  await expect(apiKey).toHaveCount(0) // hidden while AI is off
   await section.getByLabel('Use AI in Yazı').check()
   await expect(section.getByLabel('Provider')).toHaveValue('anthropic')
   await expect(section.getByLabel('Model')).toHaveValue('claude-opus-5-5')
@@ -43,9 +45,9 @@ test('desktop AI settings send the key only to Credential Manager and never keep
   await expect(section.getByRole('button', { name: 'Test connection' })).toBeDisabled()
 
   const secret = 'sk-ant-test-0123456789'
-  await section.getByLabel('API key').fill(secret); await section.getByRole('button', { name: 'Store key' }).click()
+  await apiKey.fill(secret); await section.getByRole('button', { name: 'Store key' }).click()
   await expect(section.getByRole('status')).toHaveText('Key stored in Windows Credential Manager.')
-  await expect(section.getByLabel('API key')).toHaveValue('')
+  await expect(apiKey).toHaveValue('')
   await expect(section).toContainText('A key is stored in Windows Credential Manager.')
 
   await section.getByLabel('Model').selectOption('claude-sonnet-5-5'); await section.getByLabel('Monthly soft limit (USD)').fill('5')
