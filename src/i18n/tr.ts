@@ -14,8 +14,10 @@ export const tr: Record<string, string> = {
   'English': 'İngilizce', 'Turkish': 'Türkçe', 'English (UK)': 'İngilizce (BK)', 'Untitled': 'Başlıksız', 'Cancel': 'Vazgeç', 'Done': 'Tamam', 'Edit': 'Düzenle',
   'Restore': 'Geri getir', 'Set aside': 'Kenara koy', 'Keep': 'Sakla', 'Discard': 'At', 'Copy': 'Kopyala', 'Cut': 'Kes', 'Paste': 'Yapıştır', 'Later': 'Sonra',
   'Checking…': 'Denetleniyor…', 'Working…': 'Çalışıyor…', 'Try again': 'Tekrar dene', 'today': 'bugün', 'not yet': 'henüz yok', 'not configured': 'ayarlanmadı', 'not loaded': 'yüklenmedi', 'Image': 'Görsel',
-  '{n} word': '{n} kelime', '{n} words': '{n} kelime', '{n} min read': '{n} dk okuma', '{n} new': '{n} yeni', 'words today': 'kelime bugün', '/ {goal} words today': '/ {goal} kelime bugün',
-  '{done} of {goal} words today': 'Bugün {goal} kelimenin {done} kelimesi',
+  '{n} word': '{n} kelime', '{n} words': '{n} kelime', '{n} min read': '{n} dk okuma', '{n} new': '{n} yeni',
+  '{done} of {goal} words today': 'Bugün {goal} kelimenin {done} kelimesi', '{done} / {goal} today': 'bugün {done} / {goal}', '{n} days in a row': '{n} gündür aralıksız', 'Off': 'Kapalı',
+  'Optional. Shows today’s words and how many days in a row you have written, at the bottom of the page. Never shown in Write mode.': 'İsteğe bağlı. Bugünkü kelimelerinizi ve kaç gündür aralıksız yazdığınızı sayfanın altında gösterir. Yaz modunda asla görünmez.',
+  'words today in this project': 'kelime bugün bu projede', 'A daily goal for all your writing can be set in Settings.': 'Tüm yazılarınız için günlük hedefi Ayarlar’dan belirleyebilirsiniz.',
 
   // Start, top bar and library
   'Opening your writing desk…': 'Yazı masanız açılıyor…', 'A little room for your words.': 'Kelimeleriniz için küçük bir oda.',
@@ -178,7 +180,7 @@ export const tr: Record<string, string> = {
   'Details': 'Ayrıntılar', 'A habit, a memory, a detail to remember…': 'Bir alışkanlık, bir anı, hatırlanacak bir ayrıntı…', 'Save card': 'Kartı kaydet', 'Character': 'Karakter', 'Place': 'Yer', 'CHARACTER': 'KARAKTER',
   'Also {names}': 'Diğer adları: {names}', 'Less': 'Daha az', 'More': 'Daha fazla', 'Edit card': 'Kartı düzenle', 'A face, a place, a small detail.': 'Bir yüz, bir yer, küçük bir ayrıntı.', 'Set-aside cards': 'Kenara konan kartlar', 'Restore card': 'Kartı geri getir',
   'THE NOTEBOOK': 'DEFTER', 'Writing log': 'Yazma kaydı', 'Timeline': 'Zaman çizelgesi', 'Research notes now live in the Research panel': 'Araştırma notları artık Araştırma panelinde',
-  'A little, often.': 'Az ama sık.', 'A local record of words added and removed. No AI, no streak to protect.': 'Eklenen ve silinen kelimelerin yerel kaydı. Yapay zekâ yok, korunacak bir seri yok.', 'Daily word goal': 'Günlük kelime hedefi', 'Daily word progress': 'Günlük kelime ilerlemesi',
+  'A little, often.': 'Az ama sık.', 'A local record of words added and removed. No AI, no streak to protect.': 'Eklenen ve silinen kelimelerin yerel kaydı. Yapay zekâ yok, korunacak bir seri yok.',
   'When': 'Ne zaman', 'Day 3, before the last ferry': '3. gün, son vapurdan önce', 'Note text': 'Not metni', 'Keep the order of events close, in your own words.': 'Olayların sırasını kendi kelimelerinizle yakında tutun.', '+ Event': '+ Olay', 'Edit note': 'Notu düzenle',
   'Manuscript outline': 'Metin taslağı', 'MANUSCRIPT': 'METİN', '{n} chapters and scenes': '{n} bölüm ve sahne', 'Scene status for {title}: {status}': '{title} sahnesinin durumu: {status}', 'Cycle scene status: draft, to fix, done': 'Sahne durumunu değiştir: taslak, düzeltilecek, bitti',
   '+ Chapter': '+ Bölüm', '+ Scene': '+ Sahne', 'Move {title} up': '{title} yukarı taşı', 'Move {title} down': '{title} aşağı taşı', 'Set aside ({n})': 'Kenara konanlar ({n})',

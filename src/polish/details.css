@@ -1,5 +1,6 @@
 .metadata input[type=text]{appearance:none;font-family:'IBM Plex Sans',sans-serif;font-size:11px;line-height:1.5}
 .metadata input[aria-invalid=true]{color:var(--error)}
+.goal-status{display:inline-flex;align-items:center;gap:8px;white-space:nowrap}
 .editor-footer .daily-goal-line{width:65px;height:3px;border:0;appearance:none;background:var(--line);accent-color:var(--accent);border-radius:2px;overflow:hidden}
 .daily-goal-line::-webkit-progress-bar{background:var(--line)}
 .daily-goal-line::-webkit-progress-value{background:var(--accent)}
