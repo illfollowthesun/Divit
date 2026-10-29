@@ -13,8 +13,21 @@ use storage::{Result, Store};
 struct AppState(Arc<Mutex<Store>>);
 // Set when the chosen library folder was not reachable at start, so the default one is open instead.
 struct LibraryNote(Mutex<Option<String>>);
-const DATA_FOLDER: &str = "Yazi";
+const DATA_FOLDER: &str = "Divit";
+// Before the rename the library lived in Documents\Yazi and the chosen-folder note under this id.
+const OLD_DATA_FOLDER: &str = "Yazi";
+const OLD_IDENTIFIER: &str = "com.firextream.yazi";
 fn default_root() -> Result<PathBuf> { Ok(dirs::document_dir().ok_or("Could not locate your Documents folder")?.join(DATA_FOLDER)) }
+// Documents\Divit, copied once from Documents\Yazi if only the old folder exists. If that copy fails,
+// the old folder opens instead and nothing is lost.
+fn documents_root(problem: &mut Option<String>) -> Result<PathBuf> {
+    let new = default_root()?;
+    let old = new.with_file_name(OLD_DATA_FOLDER);
+    match location::migrate_documents(&old, &new) {
+        Ok(_) => Ok(new),
+        Err(e) => { *problem = Some(format!("Your library could not be copied from {} to {}: {e} The old folder is open; nothing was lost.", old.display(), new.display())); Ok(old) }
+    }
+}
 
 #[tauri::command]
 fn library(state: tauri::State<AppState>, note: tauri::State<LibraryNote>) -> Result<Value> {
@@ -304,10 +317,16 @@ fn main() {
         .setup(|app| {
             let config = app.path().app_config_dir()?;
             let mut problem = None;
-            let root = match location::chosen(&config) {
+            // A folder chosen before the rename keeps being used where it is.
+            let pointer = location::chosen(&config).or_else(|| {
+                let chosen = location::chosen(&dirs::config_dir()?.join(OLD_IDENTIFIER))?;
+                let _ = location::remember(&config, &chosen);
+                Some(chosen)
+            });
+            let root = match pointer {
                 Some(chosen) if chosen.is_dir() => chosen,
-                Some(chosen) => { problem = Some(format!("Your library folder {} is not available, so the one in Documents is open. Reconnect the drive or let your sync app finish, then restart.", chosen.display())); default_root()? }
-                None => default_root()?,
+                Some(chosen) => { problem = Some(format!("Your library folder {} is not available, so the one in Documents is open. Reconnect the drive or let your sync app finish, then restart.", chosen.display())); documents_root(&mut problem)? }
+                None => documents_root(&mut problem)?,
             };
             app.manage(AppState(Arc::new(Mutex::new(Store::new(root).map_err(std::io::Error::other)?))));
             app.manage(LibraryNote(Mutex::new(problem)));
@@ -323,5 +342,5 @@ fn main() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![library, save_project, save_idea, save_settings, import_image, image_data, trash, restore, site_action, export_action, backup_action, research_action, ai_status, ai_save, ai_set_key, ai_forget_key, ai_test, ai_search, ai_ask_unsourced, search_set_key, search_forget_key, read_import, save_export, library_location, library_move])
-        .run(tauri::generate_context!()).expect("Could not start Yazı");
+        .run(tauri::generate_context!()).expect("Could not start Divit");
 }

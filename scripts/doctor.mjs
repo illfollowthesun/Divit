@@ -37,7 +37,7 @@ if (desktop) {
 
 if (process.argv.includes('--json')) console.log(JSON.stringify({ mode: desktop ? 'desktop' : 'frontend', checks }, null, 2))
 else {
-  console.log(`Yazi ${desktop ? 'desktop' : 'browser preview'} prerequisites\n`)
+  console.log(`Divit ${desktop ? 'desktop' : 'browser preview'} prerequisites\n`)
   for (const item of checks) console.log(`${item.ok ? 'OK' : item.required ? 'MISSING' : 'OPTIONAL'}  ${item.name}\n    ${item.detail}`)
   console.log('\nNo installation or system setting was changed.')
 }

@@ -1,4 +1,4 @@
-// Research source files: YAML-style frontmatter + the saved readable text, readable without Yazı.
+// Research source files: YAML-style frontmatter + the saved readable text, readable without Divit.
 // Pure functions, shared by the bridge, the frontend and the tests.
 export const sourceFields = ['title', 'url', 'site', 'author', 'published', 'saved', 'type', 'topic', 'summary']
 export const sourceTypes = ['news', 'article', 'blog', 'paper', 'other']

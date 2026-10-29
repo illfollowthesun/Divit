@@ -1,5 +1,5 @@
 // In-app AI. Keys live in Windows Credential Manager and never reach the webview, project files,
-// backups or exports. Settings (provider, model, usage) live in Documents/Yazi/ai.json without the key.
+// backups or exports. Settings (provider, model, usage) live in the library's ai.json without the key.
 // Every request is started by the writer; nothing runs in the background.
 use crate::search_service::{self, SearchConfig, SearchKind};
 use crate::storage::{atomic, Result};
@@ -11,7 +11,9 @@ pub const ANTHROPIC_VERSION: &str = "2026-10-21";
 const ANTHROPIC_URL: &str = "https://api.anthropic.com/v1";
 pub const GEMINI_URL: &str = "https://generativelanguage.googleapis.com/v1beta";
 const OPENAI_URL: &str = "https://api.openai.com/v1";
-const KEYRING_SERVICE: &str = "com.firextream.yazi";
+const KEYRING_SERVICE: &str = "com.firextream.divit";
+// Keys stored before the app was renamed from Yazı to Divit; read once and copied to the new name.
+const LEGACY_KEYRING_SERVICE: &str = "com.firextream.yazi";
 
 // Listed in the order Settings shows them: the free and private options first.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
@@ -162,9 +164,18 @@ pub fn set_named_key(name: &str, key: &str) -> Result<()> {
     entry(name)?.set_password(key).map_err(|e| format!("The key could not be stored: {e}"))
 }
 pub fn get_named_key(name: &str) -> Result<Option<String>> {
-    match entry(name)?.get_password() { Ok(key) => Ok(Some(key)), Err(keyring::Error::NoEntry) => Ok(None), Err(e) => Err(format!("The key could not be read: {e}")) }
+    match entry(name)?.get_password() {
+        Ok(key) => Ok(Some(key)),
+        Err(keyring::Error::NoEntry) => match keyring::Entry::new(LEGACY_KEYRING_SERVICE, name).and_then(|old| old.get_password()) {
+            Ok(key) => { let _ = entry(name)?.set_password(&key); Ok(Some(key)) }
+            Err(_) => Ok(None),
+        },
+        Err(e) => Err(format!("The key could not be read: {e}")),
+    }
 }
+// Removes the key under both names, so a key stored before the rename cannot come back.
 pub fn forget_named_key(name: &str) -> Result<()> {
+    if let Ok(old) = keyring::Entry::new(LEGACY_KEYRING_SERVICE, name) { let _ = old.delete_credential(); }
     match entry(name)?.delete_credential() { Ok(()) | Err(keyring::Error::NoEntry) => Ok(()), Err(e) => Err(format!("The key could not be removed: {e}")) }
 }
 pub fn set_key(kind: ProviderKind, key: &str) -> Result<()> { set_named_key(kind.key_name(), key) }
@@ -199,7 +210,7 @@ pub fn record(config: &mut AiConfig, month: &str, model: &str, input_tokens: u64
     match spent { Some(c) => usage.cost_usd += c, None => usage.unpriced_calls += 1 }
     spent
 }
-// A soft limit: Yazı warns, the writer decides.
+// A soft limit: Divit warns, the writer decides.
 pub fn over_limit(config: &AiConfig, month: &str) -> bool {
     config.usage.month == month && config.monthly_limit_usd.is_some_and(|limit| config.usage.cost_usd >= limit)
 }
@@ -243,7 +254,7 @@ pub fn gemini_error(status: u16, body: &str, searching: bool) -> String {
 }
 
 pub fn client(seconds: u64) -> Result<reqwest::Client> {
-    reqwest::Client::builder().timeout(Duration::from_secs(seconds)).connect_timeout(Duration::from_secs(15)).user_agent("Yazi/0.1").build().map_err(|e| e.to_string())
+    reqwest::Client::builder().timeout(Duration::from_secs(seconds)).connect_timeout(Duration::from_secs(15)).user_agent("Divit/0.1").build().map_err(|e| e.to_string())
 }
 pub fn network(error: reqwest::Error) -> String {
     if error.is_timeout() { "The AI service took too long to answer. Nothing was changed.".into() } else { "The AI service could not be reached. Check your connection.".into() }
@@ -389,7 +400,7 @@ mod tests {
     #[test]
     #[ignore]
     fn windows_credential_manager_round_trip() {
-        let entry = keyring::Entry::new("com.firextream.yazi.test", "round-trip").unwrap();
+        let entry = keyring::Entry::new("com.firextream.divit.test", "round-trip").unwrap();
         entry.set_password("sk-test-not-a-real-key").unwrap();
         assert_eq!(entry.get_password().unwrap(), "sk-test-not-a-real-key");
         entry.delete_credential().unwrap();

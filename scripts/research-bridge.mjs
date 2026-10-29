@@ -86,7 +86,7 @@ export async function fetchPage(url, runtime = {}) {
   let parsed; try { parsed = new URL(String(url).trim()) } catch { throw new Error('Paste a full web address, starting with https://.') }
   if (!['http:', 'https:'].includes(parsed.protocol)) throw new Error('Only http and https pages can be saved.')
   let response
-  try { response = await fetch(parsed, { redirect: 'follow', signal: AbortSignal.timeout(runtime.timeoutMs ?? 15000), headers: { 'User-Agent': 'Yazi/0.1 (private research copy)', Accept: 'text/html,application/xhtml+xml,text/plain;q=0.9' } }) }
+  try { response = await fetch(parsed, { redirect: 'follow', signal: AbortSignal.timeout(runtime.timeoutMs ?? 15000), headers: { 'User-Agent': 'Divit/0.1 (private research copy)', Accept: 'text/html,application/xhtml+xml,text/plain;q=0.9' } }) }
   catch (error) { throw new Error(error.name === 'TimeoutError' ? 'The page took too long to answer. Try again later.' : 'The page could not be reached. Check the address and your connection.') }
   if (!response.ok) throw new Error(`The page answered with an error (${response.status}).`)
   const contentType = response.headers.get('content-type') ?? ''

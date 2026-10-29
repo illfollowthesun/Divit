@@ -53,7 +53,7 @@ export async function toDocx(title: string, markdown: string): Promise<Uint8Arra
     return out
   }
   const document = new d.Document({
-    creator: 'Yazı', title,
+    creator: 'Divit', title,
     styles: { default: { document: { run: { font: 'Georgia', size: 24 } } } },
     sections: [{ children: [new d.Paragraph({ heading: d.HeadingLevel.TITLE, children: [new d.TextRun(title)] }), ...await paragraphs(documentBlocks(markdown, t('Notes')))] }],
   })
@@ -78,7 +78,7 @@ export async function toPdf(title: string, markdown: string): Promise<Uint8Array
     return out
   }
   const definition = {
-    info: { title, creator: 'Yazı' }, pageSize: 'A4', pageMargins: [72, 72, 72, 72],
+    info: { title, creator: 'Divit' }, pageSize: 'A4', pageMargins: [72, 72, 72, 72],
     defaultStyle: { font: 'Roboto', fontSize: 11, lineHeight: 1.35 },
     styles: { title: { fontSize: 24, margin: [0, 0, 0, 20] }, h1: { fontSize: 18, bold: true, margin: [0, 16, 0, 8] }, h2: { fontSize: 15, bold: true, margin: [0, 12, 0, 6] }, h3: { fontSize: 13, bold: true, margin: [0, 10, 0, 4] } },
     footer: (page: number, pages: number) => ({ text: `${page} / ${pages}`, alignment: 'center', fontSize: 9, color: '#777', margin: [0, 24, 0, 0] }),

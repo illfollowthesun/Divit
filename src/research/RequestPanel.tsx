@@ -96,8 +96,8 @@ export function RequestPanel({ projectId, projectTitle, language, suggestTopic, 
         {canSearch && <button type="button" className="accent-button" disabled={working || !form.topic.trim()} onClick={() => void searchWithAi()}>{working ? t('Searching the web…') : t('Search with AI')}</button>}
         <button className={canSearch ? 'outline-button' : 'accent-button'} disabled={working || !form.topic.trim()}>{canSearch ? t('Save a request instead') : working ? t('Saving…') : t('Save request')}</button>
         <button type="button" disabled={working} onClick={() => setForm(null)}>{t('Cancel')}</button></div>
-      {route === 'native' && <p className="quiet request-ai-note">{t('Search with AI uses {model}. You choose which sources to keep; Yazı then saves the real pages.', { model: aiStatus!.price?.label ?? config!.model })}</p>}
-      {route === 'service' && <p className="quiet request-ai-note">{t('{service} finds the pages; {model} ranks and summarises them. You choose which sources to keep; Yazı then saves the real pages.', { service: serviceLabel(aiStatus), model: aiStatus!.price?.label ?? config!.model })}</p>}
+      {route === 'native' && <p className="quiet request-ai-note">{t('Search with AI uses {model}. You choose which sources to keep; Divit then saves the real pages.', { model: aiStatus!.price?.label ?? config!.model })}</p>}
+      {route === 'service' && <p className="quiet request-ai-note">{t('{service} finds the pages; {model} ranks and summarises them. You choose which sources to keep; Divit then saves the real pages.', { service: serviceLabel(aiStatus), model: aiStatus!.price?.label ?? config!.model })}</p>}
       {aiOn && !canSearch && <p className="quiet request-ai-note">{aiStatus?.capabilities.keyRequired && !aiStatus.hasKey[config!.provider] ? t('Add an API key in Settings → AI to search with AI.') : t('Searching the web needs Gemini (with billing), Claude, or a search service such as Tavily in Settings → AI.')}</p>}
     </form>}
     {problem && <p className="research-problem" role="alert">{problem}</p>}

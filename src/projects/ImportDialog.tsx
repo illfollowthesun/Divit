@@ -25,7 +25,7 @@ export function ImportDialog({ project, busy, run }: { project: Project | null; 
   const total = texts?.reduce((sum, t) => sum + words(t.body), 0) ?? 0, images = texts?.reduce((sum, t) => sum + t.images, 0) ?? 0
   const into = target === 'open' && project ? project.type : type
   return <div className="import-dialog">
-    <p className="quiet">{t('Bring in Markdown, text or Word (.docx) files. Yazı makes its own copy; your original files are never moved or changed.')}</p>
+    <p className="quiet">{t('Bring in Markdown, text or Word (.docx) files. Divit makes its own copy; your original files are never moved or changed.')}</p>
     <div className="dialog-actions"><button type="button" className="outline-button" disabled={reading || busy} onClick={() => void choose(false)}>{t('Choose files…')}</button><button type="button" className="outline-button" disabled={reading || busy} onClick={() => void choose(true)}>{t('Choose a folder…')}</button></div>
     {reading && <p className="quiet" role="status">{t('Reading the files…')}</p>}
     {problem && <p className="modal-error" role="alert">{problem}</p>}

@@ -15,7 +15,7 @@ import { defaultKeymap, history, historyKeymap } from '@codemirror/commands'
 import { markdown } from '@codemirror/lang-markdown'
 import { syntaxHighlighting, defaultHighlightStyle } from '@codemirror/language'
 
-// Native squiggles cannot be read or offered as suggestions, so Yazı checks spelling itself.
+// Native squiggles cannot be read or offered as suggestions, so Divit checks spelling itself.
 const attributes = (language: string) => EditorView.contentAttributes.of({ 'aria-label': t('Markdown text'), spellcheck: 'false', lang: language === 'auto' ? '' : language, autocorrect: 'off', autocapitalize: 'off' })
 
 function centerCaret(view: EditorView) {

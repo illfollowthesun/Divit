@@ -9,10 +9,10 @@ async function stateAt(root) {
   try { return JSON.parse(await readFile(join(root,'.backup-state.json'),'utf8')) }
   catch(error) { if(error.code==='ENOENT')return {}; throw new Error('The backup state could not be read. Your files were not changed.') }
 }
-async function entries(root, prefix='Yazi/') {
+async function entries(root, prefix='Divit/') {
   const out=[{name:prefix,directory:true}]
   for(const item of await readdir(root,{withFileTypes:true})) {
-    if(item.isSymbolicLink())throw new Error('A symbolic link was found in Yazi. Back it up separately before continuing.')
+    if(item.isSymbolicLink())throw new Error('A symbolic link was found in the library. Back it up separately before continuing.')
     const path=join(root,item.name),name=prefix+item.name
     if(item.isDirectory())out.push(...await entries(path,name+'/'))
     else if(item.isFile())out.push({name,path,directory:false})
@@ -44,12 +44,12 @@ export async function backup(request, runtime={}) {
   if(!['daily','close','manual'].includes(request.reason))throw new Error('Unknown backup reason.')
   const folder=resolve(request.folder)
   await mkdir(folder,{recursive:true});const canonical=await realpath(folder),child=relative(root,canonical)
-  if(!child||!child.startsWith('..')&&!isAbsolute(child))throw new Error('Choose a backup folder outside Documents/Yazi.')
+  if(!child||!child.startsWith('..')&&!isAbsolute(child))throw new Error('Choose a backup folder outside your library folder.')
   const now=runtime.now??new Date(),day=localDay(now)
   if(request.reason==='daily'&&state.day===day&&state.folder===folder)return {enabled:true,skipped:true,lastBackupAt:state.lastBackupAt,path:state.path}
   const backupId=state.backupId??randomUUID()
   if(!/^[a-f0-9-]{36}$/.test(backupId))throw new Error('Invalid backup identity.')
-  const filename=`yazi-${backupId}-${now.toISOString().replace(/[:.]/g,'-')}-${randomUUID().slice(0,8)}.zip`,destination=join(folder,filename),temporary=destination+'.partial'
+  const filename=`divit-${backupId}-${now.toISOString().replace(/[:.]/g,'-')}-${randomUUID().slice(0,8)}.zip`,destination=join(folder,filename),temporary=destination+'.partial'
   const files=await entries(root)
   await writeZip(temporary,files,now)
   // Verify the completed directory record before publishing the archive.
@@ -57,7 +57,7 @@ export async function backup(request, runtime={}) {
   await rename(temporary,destination)
   const next={backupId,day,folder,lastBackupAt:now.toISOString(),path:destination}
   const stateTemp=join(root,`.backup-state-${randomUUID()}.pending`);await writeFile(stateTemp,JSON.stringify(next,null,2),'utf8');await rename(stateTemp,join(root,'.backup-state.json'))
-  const owned=(await readdir(folder)).filter(name=>name.startsWith(`yazi-${backupId}-`)&&name.endsWith('.zip')).sort().reverse()
+  const owned=(await readdir(folder)).filter(name=>name.startsWith(`divit-${backupId}-`)&&name.endsWith('.zip')).sort().reverse()
   for(const name of owned.slice(14)){const trash=join(folder,'_trash');await mkdir(trash,{recursive:true});await rename(join(folder,name),join(trash,`${randomUUID()}-${name}`))}
   return {enabled:true,lastBackupAt:next.lastBackupAt,path:destination,files:files.length,bytes:(await stat(destination)).size}
 }

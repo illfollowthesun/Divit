@@ -64,7 +64,7 @@ async function sourcesFor(request) {
 export async function exportDocument(request, runtime = {}) {
   if (!Object.hasOwn(formats, request.format)) throw new Error('Choose Markdown, PDF, DOCX or EPUB.')
   const tools = runtime.tools ?? await exportTools()
-  if (request.format !== 'markdown' && !tools.pandoc) throw new Error('Pandoc is not installed. Install Pandoc and reopen Yazı, or download Markdown now.')
+  if (request.format !== 'markdown' && !tools.pandoc) throw new Error('Pandoc is not installed. Install Pandoc and reopen Divit, or download Markdown now.')
   if (request.format === 'pdf' && !tools.pdfEngine) throw new Error('PDF needs a Pandoc PDF engine. Install Typst (recommended) or XeLaTeX, then reopen Yazı.')
   const markdown = compileMarkdown(request.project, await sourcesFor(request), await quotedFor(request))
   const root = resolve(request.outputRoot)

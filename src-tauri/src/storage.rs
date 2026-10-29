@@ -57,7 +57,7 @@ impl Store {
         let pending = folder.join(".recovery.json");
         if pending.exists() {
             let data = json_file(&pending)?;
-            // A user may have edited Markdown or metadata while Yazı was closed
+            // A user may have edited Markdown or metadata while Divit was closed
             // after an interrupted write. Keep both files before replaying it.
             let body_path = folder.join("draft.md");
             if body_path.exists() || folder.join("project.json").exists() {
@@ -189,7 +189,7 @@ impl Store {
         let folder = self.path("projects", &key)?;
         if folder.exists() {
             let current = self.project(&key)?;
-            if expected.as_deref() != current["revision"].as_str() { return Err("This draft changed outside Yazı. Your unsaved text is still in the editor. Copy it before reloading.".into()); }
+            if expected.as_deref() != current["revision"].as_str() { return Err("This draft changed outside Divit. Your unsaved text is still in the editor. Copy it before reloading.".into()); }
         } else if expected.is_some() { return Err("The draft was moved. Your unsaved text is still in the editor.".into()); }
         if !data["body"].is_string() || !data["title"].is_string() { return Err("Invalid project data".into()); }
         // Reject changed snapshot IDs before making a recovery journal, so a bad

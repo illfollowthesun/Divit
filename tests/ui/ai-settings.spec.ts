@@ -23,10 +23,10 @@ test('Gemini comes first, then local models; keys go only to Credential Manager;
   await page.goto('/'); await page.getByRole('button', { name: 'Open settings' }).click()
   const section = page.getByRole('dialog').locator('.ai-settings')
   const apiKey = section.locator('.ai-key').getByLabel('API key', { exact: true })
-  await expect(section.getByLabel('Use AI in Yazı')).not.toBeChecked()
+  await expect(section.getByLabel('Use AI in Divit')).not.toBeChecked()
   await expect(apiKey).toHaveCount(0) // hidden while AI is off
   await expect(section).toContainText('subscriptions cannot be used here')
-  await section.getByLabel('Use AI in Yazı').check()
+  await section.getByLabel('Use AI in Divit').check()
 
   const provider = section.getByLabel('Provider')
   await expect(provider.locator('option')).toHaveText(['Google Gemini (free tier, easiest)', 'Local model: Ollama or LM Studio (free, private)', 'Anthropic (Claude)', 'OpenAI', 'Other OpenAI-compatible service'])

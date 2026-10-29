@@ -2,7 +2,7 @@
 
 // Explicitly opt in: these tests use the real Windows vault, under an isolated service.
 // No provider key is written, logged, replaced or deleted.
-const SERVICE: &str = "com.firextream.yazi.verification";
+const SERVICE: &str = "com.firextream.divit.verification";
 const FIXTURE: &str = "verification-only-not-an-api-key";
 
 #[test]
@@ -48,8 +48,8 @@ fn credential_child_process() {
 #[ignore = "Read-only provider access diagnostic; never displays keys"]
 fn report_provider_key_availability_without_secrets() {
     for provider in ["gemini", "anthropic"] {
-        let entry = keyring::Entry::new("com.firextream.yazi", &format!("ai-{provider}")).unwrap();
-        let present = match entry.get_password() {
+        // Keys stored before the rename are still under the old name until the app first reads them.
+        let present = match keyring::Entry::new("com.firextream.divit", &format!("ai-{provider}")).unwrap().get_password().or_else(|_| keyring::Entry::new("com.firextream.yazi", &format!("ai-{provider}")).unwrap().get_password()) {
             Ok(value) => !value.trim().is_empty(),
             Err(keyring::Error::NoEntry) => false,
             Err(_) => panic!("Credential Manager could not read {provider}'s key status"),

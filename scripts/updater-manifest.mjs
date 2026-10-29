@@ -1,10 +1,10 @@
 // Writes latest.json for the in-app updater after a signed `tauri build`.
-// Usage: node scripts/updater-manifest.mjs [owner/repo]   (default Firextream/Yazi)
+// Usage: node scripts/updater-manifest.mjs [owner/repo]   (default Firextream/Divit)
 // Upload latest.json next to the installer and its .sig on the GitHub release v<version>.
 import { readFileSync, readdirSync, writeFileSync, existsSync } from 'node:fs'
 import { join } from 'node:path'
 
-const repo = process.argv[2] ?? 'Firextream/Yazi'
+const repo = process.argv[2] ?? 'Firextream/Divit'
 const { version } = JSON.parse(readFileSync('src-tauri/tauri.conf.json', 'utf8'))
 const folder = 'src-tauri/target/release/bundle/nsis'
 const installer = readdirSync(folder).find(name => name.endsWith('-setup.exe') && name.includes(`_${version}_`))

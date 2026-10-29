@@ -45,6 +45,12 @@ pub fn inspect(parent: &Path, current: &Path, folder_name: &str) -> Result<Value
 }
 fn normal(path: &Path) -> PathBuf { PathBuf::from(path.to_string_lossy().to_lowercase().trim_end_matches(['\\', '/'])) }
 
+// The one-time move from Documents\Yazi (the app's old name) to Documents\Divit: copy, verify, switch.
+// Returns how many files were copied, or None when there is nothing to move. The old folder is kept.
+pub fn migrate_documents(old: &Path, new: &Path) -> Result<Option<usize>> {
+    if new.exists() || !is_library(old) { return Ok(None); }
+    copy_verified(old, new).map(Some)
+}
 // Copies the whole library into `target` through a staging folder, compares every file, then renames
 // the staging folder into place. Returns how many files were copied.
 pub fn copy_verified(from: &Path, target: &Path) -> Result<usize> {
@@ -95,6 +101,19 @@ mod tests {
         assert!(copy_verified(&old, &cloud.join("Divit")).is_err(), "never copies over an existing library");
         let config = dir.path().join("config"); remember(&config, &cloud.join("Divit")).unwrap();
         assert_eq!(chosen(&config), Some(cloud.join("Divit")));
+    }
+    #[test]
+    fn the_old_yazi_folder_is_copied_once_to_divit_and_kept() {
+        let dir = tempfile::tempdir().unwrap();
+        let (old, new) = (dir.path().join("Yazi"), dir.path().join("Divit"));
+        assert_eq!(migrate_documents(&old, &new).unwrap(), None, "nothing to move on a fresh computer");
+        library(&old);
+        assert_eq!(migrate_documents(&old, &new).unwrap(), Some(3));
+        assert_eq!(fs::read_to_string(new.join("projects/a/draft.md")).unwrap(), "İstanbul, sabah.");
+        assert!(old.join("projects/a/draft.md").exists());
+        fs::write(old.join("projects/a/draft.md"), "changed in the old folder later").unwrap();
+        assert_eq!(migrate_documents(&old, &new).unwrap(), None, "runs once: an existing Divit folder is never overwritten");
+        assert_eq!(fs::read_to_string(new.join("projects/a/draft.md")).unwrap(), "İstanbul, sabah.");
     }
     #[test]
     fn folders_inside_the_library_or_holding_other_files_are_refused() {

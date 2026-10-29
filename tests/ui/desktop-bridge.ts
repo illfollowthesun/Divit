@@ -25,7 +25,7 @@ export async function desktopBridge(page: Page, options: BridgeOptions) {
         hasSearchKey: { ...searchKeys }, searchReady: search.provider === 'searxng' ? !!search.searxngUrl : !!searchKeys[search.provider],
         capabilities: { nativeSearch: ['gemini', 'anthropic'].includes(provider), deepResearch: false, streaming: true, local: provider === 'local', keyRequired: provider !== 'local' } }
     }
-    const library = { projects: options.projects ?? [], ideas: [], images: [], trash: [], dataRoot: 'C:/Users/writer/Documents/Yazi', settings: { schemaVersion: 1, theme: 'light', siteRepo: '', aiProvider: 'claude-code' } }
+    const library = { projects: options.projects ?? [], ideas: [], images: [], trash: [], dataRoot: 'C:/Users/writer/Documents/Divit', settings: { schemaVersion: 1, theme: 'light', siteRepo: '', aiProvider: 'claude-code' } }
     w.__calls = calls; w.isTauri = true
     w.__TAURI_INTERNALS__ = {
       transformCallback: () => Math.floor(Math.random() * 1e9), unregisterCallback: () => {}, convertFileSrc: (p: string) => p,

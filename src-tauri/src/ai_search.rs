@@ -1,6 +1,6 @@
 // "Search about this topic" through Claude's web search tool. Claude hands its picks back through a
 // strict save_sources tool; only pages that appeared in the actual search results are kept, and the
-// writer approves each one before Yazı fetches and saves the real page.
+// writer approves each one before Divit fetches and saves the real page.
 use crate::ai::{self, AiConfig, ModelInfo, ANTHROPIC_VERSION};
 use crate::storage::Result;
 use serde::{Deserialize, Serialize};

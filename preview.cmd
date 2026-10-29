@@ -17,7 +17,7 @@ if errorlevel 1 (
 call npm.cmd run build
 if errorlevel 1 goto failed
 echo.
-echo Opening the browser preview. Keep this window open while using Yazi.
+echo Opening the browser preview. Keep this window open while using Divit.
 echo This preview uses browser storage. It does not open your desktop writing files.
 call npm.cmd run dev -- --open
 if errorlevel 1 goto failed

@@ -31,7 +31,7 @@ export const api = {
   },
   chooseBackupFolder: async (): Promise<string | null> => {
     if (!desktop) return null
-    const folder = await open({ directory: true, multiple: false, title: t('Choose a backup folder outside Yazi') })
+    const folder = await open({ directory: true, multiple: false, title: t('Choose a backup folder outside Divit') })
     return typeof folder === 'string' ? folder : null
   },
   // Research files: the desktop app goes through the native storage lock, the preview through the dev server.

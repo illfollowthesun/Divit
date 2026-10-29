@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Yazı",
+  "productName": "Divit",
   "version": "0.1.0",
-  "identifier": "com.firextream.yazi",
+  "identifier": "com.firextream.divit",
   "build": {
     "beforeDevCommand": "npm.cmd run dev",
     "devUrl": "http://localhost:1420",
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "Yazı",
+        "title": "Divit",
         "width": 1440,
         "height": 950,
         "minWidth": 760,
@@ -27,7 +27,7 @@
     "updater": {
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDdBQ0Y4ODM3OUU1NDlDRTAKUldUZ25GU2VONGpQZWs4OUJyemVZMmo5TjBSZ2VXbmdrTkhCYjlNRm5xK2xic3dSTU1OU1UwY1QK",
       "endpoints": [
-        "https://github.com/Firextream/Yazi/releases/latest/download/latest.json"
+        "https://github.com/Firextream/Divit/releases/latest/download/latest.json"
       ],
       "windows": {
         "installMode": "passive"
@@ -41,6 +41,10 @@
       "nsis"
     ],
     "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.png",
       "icons/icon.ico"
     ],
     "resources": {
@@ -57,7 +61,7 @@
           "English"
         ],
         "installMode": "currentUser",
-        "startMenuFolder": "Yazı"
+        "startMenuFolder": "Divit"
       }
     }
   }

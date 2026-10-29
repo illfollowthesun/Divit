@@ -15,12 +15,12 @@ export function ExportPanel({ project, disabled, result, run, quoted }: { projec
   const pandocReady = !!tools?.pandoc && (format !== 'pdf' || !!tools.pdfEngine)
   const engine: ExportEngine = format === 'epub' || usePandoc && pandocReady && format !== 'markdown' ? 'pandoc' : 'builtin'
   const available = engine === 'builtin' || pandocReady
-  return <div className="export-panel"><p className="quiet">{t('A copy of your whole manuscript, in its current chapter and scene order. Cards, notes and set-aside writing stay in Yazı.')}</p><div className="export-summary"><span className="section-label">{t('THE MANUSCRIPT')}</span><h3>{project.title || t('Untitled')}</h3>{project.type !== 'blog' && <p>{t('{n} chapters and scenes', { n: orderedSections(project).length })}</p>}</div>
+  return <div className="export-panel"><p className="quiet">{t('A copy of your whole manuscript, in its current chapter and scene order. Cards, notes and set-aside writing stay in Divit.')}</p><div className="export-summary"><span className="section-label">{t('THE MANUSCRIPT')}</span><h3>{project.title || t('Untitled')}</h3>{project.type !== 'blog' && <p>{t('{n} chapters and scenes', { n: orderedSections(project).length })}</p>}</div>
     <label className="field">{t('Export format')}<select value={format} onChange={e => setFormat(e.target.value as ExportFormat)}><option value="docx">Word (.docx)</option><option value="pdf">PDF (.pdf)</option><option value="markdown">Markdown (.md)</option><option value="epub">{t('EPUB (.epub, needs Pandoc)')}</option></select></label>
     <div className="export-dependencies">
       {format === 'epub'
-        ? <p>{!checked ? t('Checking local export tools…') : tools?.pandoc ? t('EPUB is made with {version}.', { version: tools.version }) : t('EPUB needs Pandoc. Install Pandoc from pandoc.org and reopen Yazı, or choose Word, PDF or Markdown.')}</p>
-        : <p>{t('Made by Yazı itself. No extra tools are needed.')}</p>}
+        ? <p>{!checked ? t('Checking local export tools…') : tools?.pandoc ? t('EPUB is made with {version}.', { version: tools.version }) : t('EPUB needs Pandoc. Install Pandoc from pandoc.org and reopen Divit, or choose Word, PDF or Markdown.')}</p>
+        : <p>{t('Made by Divit itself. No extra tools are needed.')}</p>}
       {format !== 'epub' && format !== 'markdown' && tools?.pandoc && <label className="acknowledge"><input type="checkbox" checked={usePandoc} disabled={!pandocReady} onChange={e => setUsePandoc(e.target.checked)}/> {pandocReady ? t('Use {version} instead, for finer typesetting', { version: tools.version }) : t('Pandoc is installed, but PDF also needs Typst or XeLaTeX.')}</label>}
     </div>
     <label className="acknowledge export-sources"><input type="checkbox" checked={withSources && quoted > 0} disabled={!quoted} onChange={e => setWithSources(e.target.checked)}/> {quoted ? tn(quoted, 'Add a Sources list at the end ({n} quoted source)', 'Add a Sources list at the end ({n} quoted sources)') : t('Add a Sources list at the end (no sources quoted yet)')}</label>
