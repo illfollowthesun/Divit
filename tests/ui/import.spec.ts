@@ -16,7 +16,7 @@ async function docx(title: string, paragraph: string) {
 
 test('Word and Markdown files come in as chapters of a new book, or after the open project’s text', async ({ page }) => {
   await page.goto('/'); await page.evaluate(() => localStorage.clear()); await page.reload()
-  await page.getByRole('button', { name: 'Bring in writing…' }).click()
+  await page.locator('#writing-library').getByRole('button', { name: 'Bring in writing…' }).click()
   const dialog = page.getByRole('dialog', { name: 'Bring in your writing' })
   await expect(dialog).toContainText('your original files are never moved or changed')
   const chooser = page.waitForEvent('filechooser')
@@ -39,7 +39,7 @@ test('Word and Markdown files come in as chapters of a new book, or after the op
   const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('yazi-browser-preview-v1')!).projects[0])
   expect(saved.sections.map((s: { kind: string; title: string; body: string }) => [s.kind, s.title, s.body])).toEqual([['chapter', 'Dawn', 'The city before dawn.'], ['chapter', 'The harbour', 'Gulls before the light. **Bold words.**']])
 
-  await page.getByRole('button', { name: 'Bring in writing…' }).click()
+  await page.locator('#writing-library').getByRole('button', { name: 'Bring in writing…' }).click()
   const again = page.waitForEvent('filechooser')
   await dialog.getByRole('button', { name: 'Choose files…' }).click()
   await (await again).setFiles([{ name: 'epilogue.txt', mimeType: 'text/plain', buffer: Buffer.from('After.') }])

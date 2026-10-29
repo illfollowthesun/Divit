@@ -32,3 +32,18 @@
 .ai-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
 .ai-provider-note{display:block;margin-top:6px;line-height:1.5}
 .ai-fallbacks{margin-top:10px;font-size:12px}
+.welcome{max-width:620px;margin:auto;padding:24px 28px;border:1px solid var(--line);border-radius:6px;background:var(--card)}
+.welcome h2{margin:10px 0 14px;font-size:28px}
+.welcome dl{margin:0}
+.welcome dl>div{padding:8px 0;border-top:1px solid var(--line)}
+.welcome dt{font-size:13px;font-weight:500;margin-bottom:2px}
+.welcome dd{margin:0;font-size:13px;line-height:1.6;color:var(--muted)}
+.welcome .dialog-actions{margin:16px 0 0;justify-content:flex-start;flex-wrap:wrap}
+.welcome .dialog-actions button:last-child{margin-left:auto}
+.settings-advanced{margin:18px 0;font-size:12px}
+.settings-advanced summary{cursor:pointer;color:var(--muted);font-size:12px;padding:4px 0}
+.settings-advanced[open] summary{color:var(--text)}
+@media(min-width:901px){.metadata{grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1.4fr) minmax(190px,auto)}}
+.metadata select{max-width:100%}
+.search-service,.import-target{border:0;padding:0;margin:16px 0 0;min-width:0}
+.search-service legend{font-size:11px;color:var(--muted);padding:0;margin-bottom:2px}

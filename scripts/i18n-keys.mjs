@@ -11,7 +11,7 @@ export const DYNAMIC = [
   'projects', 'ideas', 'images', 'STORY', 'BOOK', 'CHAPTER', 'SCENE', 'Sand', 'Sage', 'Sky', 'Rose',
   'All changes saved', 'Saving…', 'Unsaved changes', 'Not saved — your text is still here',
   'Write / Review / Normal', 'Leave Write mode', 'New writing', 'New story or book', 'Add chapter / scene', 'Character/place cards', 'Project notebook', 'Snapshots',
-  'Export', 'Save now', 'Catch an idea', 'Publish to my site (when set up)', 'Typewriter mode', 'Focus mode', 'Settings', 'Keyboard help', 'Leave focus / close dialog', 'Undo / redo',
+  'Export', 'Save now', 'Catch an idea', 'Publish to my site (when set up)', 'Typewriter mode', 'Focus mode', 'Settings', 'Help and shortcuts', 'Bring in writing', 'Leave focus / close dialog', 'Undo / redo',
   'Warm paper', 'Sage paper', 'Dusty blue ink', 'After hours', 'Terracotta evening', 'Plum night',
   'Gemini 3.8 Flash', 'Gemini 3.5 Flash-Lite (lowest cost)', 'Claude Sonnet 5.5', 'Claude Haiku 5.5 (lowest cost)', 'Claude Opus 5.5',
 ]
