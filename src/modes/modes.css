@@ -1,0 +1,6 @@
+.mode-write > :not(.workspace),.mode-write .workspace > :not(.writing-area),.mode-write .document-toolbar,.mode-write .editor-footer,.mode-write .paper > :not(.markdown-editor){display:none!important}
+.mode-write .workspace{height:100dvh}
+.mode-write .paper{padding:45px max(24px,calc((100vw - 750px)/2));height:100%}
+.mode-write .writing-area{width:100%;border:0}
+.mode-review .library,.mode-review .research-drawer{display:none}
+.document-toolbar select[aria-label="Writing mode"]{font-size:12px;padding:5px;color:var(--muted);background:var(--paper);border:0}

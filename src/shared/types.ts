@@ -4,6 +4,7 @@ export type Section = { id: string; kind: 'chapter' | 'scene'; parentId?: string
 export type ProjectCard = { id: string; kind: 'character' | 'place'; name: string; summary: string; details: string; age: string; aliases: string[]; trashedAt?: string }
 export type Snapshot = { id: string; scopeId: string | null; title: string; label: string; createdAt: string; body: string; sections: Section[] }
 export type ProjectNote = { id: string; kind: 'research' | 'timeline'; title: string; body: string; when: string; trashedAt?: string }
+export type WritingMode = 'write' | 'review' | 'normal'
 export type WritingDay = { date: string; added: number; removed: number }
 export type Project = {
   schemaVersion: 1; id: string; type: ProjectType; title: string; slug: string; date: string; place: string;
@@ -11,11 +12,11 @@ export type Project = {
   ideaId?: string; revision?: string; published?: PublishResult
   sections?: Section[]; cards?: ProjectCard[]; snapshots?: Snapshot[];
   notes?: ProjectNote[]; dailyGoal?: number; writingLog?: WritingDay[];
-  language?: 'en' | 'tr'; ignoredWords?: string[];
+  language?: 'en' | 'tr'; ignoredWords?: string[]; mode?: WritingMode;
 }
 export type Idea = { schemaVersion: 1; id: string; title: string; tags: string[]; status: Stage; createdAt: string; projectId?: string; revision?: string }
 export type ImageRecord = { id: string; file: string; name: string; addedAt: string; dataUrl?: string }
-export type Settings = { schemaVersion: number; theme: 'light' | 'dark'; siteRepo: string; aiProvider: 'claude-code' | 'anthropic' | 'ollama'; backupFolder?: string; dictionary?: Partial<Record<'en' | 'tr', string[]>> }
+export type Settings = { schemaVersion: number; theme: 'light' | 'dark'; siteRepo: string; aiProvider: 'claude-code' | 'anthropic' | 'ollama'; backupFolder?: string; dictionary?: Partial<Record<'en' | 'tr', string[]>>; lastMode?: WritingMode; underlines?: boolean }
 // Research: files in projects/<id>/research/ (format in scripts/research-format.mjs, README "Research").
 export type ResearchSource = { id: string; title: string; url?: string; site?: string; author?: string; published?: string; saved?: string; type: 'news' | 'article' | 'blog' | 'paper' | 'other'; topic?: string; summary?: string; status: 'unread' | 'read' | 'used'; origin: 'url' | 'inbox' | 'ai-found'; addedAt: string; scopeId?: string | null; usedIn: { sectionId: string | null; at: string; highlightId?: string }[] }
 export type Highlight = { id: string; sourceId: string; from: number; to: number; quote: string; color: 1 | 2 | 3 | 4; note?: string; createdAt: string }

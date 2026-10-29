@@ -47,12 +47,15 @@ const popover = StateField.define<Popover | null>({
   }),
 })
 
+const activeViews = new WeakSet<EditorView>()
 let activeMenu: (() => void) | null = null
 const closeMenu = () => activeMenu?.()
 async function openMenu(view: EditorView, spelling: Spelling, hit: Hit, x: number, y: number) {
   closeMenu()
+  const doc = view.state.doc
   let options: string[] = []
   try { options = await suggestions(spelling.language(), hit.word) } catch (error) { spelling.error(failure(error)) }
+  if (view.state.doc !== doc || !activeViews.has(view)) return
   const menu = document.createElement('div'); menu.className = 'spell-menu'; menu.setAttribute('role', 'menu'); menu.setAttribute('aria-label', `Spelling: ${hit.word}`)
   const item = (label: string, run: () => void, disabled = false) => { const node = button(label, () => { close(); run() }); node.setAttribute('role', 'menuitem'); node.disabled = disabled; menu.append(node) }
   const separator = () => { const node = document.createElement('div'); node.setAttribute('role', 'separator'); menu.append(node) }
@@ -91,7 +94,7 @@ export function spellCheck(spelling: Spelling) {
   const plugin = ViewPlugin.fromClass(class {
     decorations: DecorationSet
     timer = 0; typing = false; failed = false; destroyed = false
-    constructor(readonly view: EditorView) { this.decorations = this.build() }
+    constructor(readonly view: EditorView) { activeViews.add(view); this.decorations = this.build() }
     update(update: ViewUpdate) {
       if (update.docChanged) this.typing = update.transactions.some(tr => tr.isUserEvent('input.type'))
       else if (update.selectionSet) this.typing = false
@@ -115,10 +118,10 @@ export function spellCheck(spelling: Spelling) {
       clearTimeout(this.timer)
       this.timer = window.setTimeout(() => {
         void checkWords(language, words).then(changed => { if (changed && !this.destroyed) this.view.dispatch({ effects: refreshSpelling.of(null) }) })
-          .catch(error => { this.failed = true; spelling.error(failure(error)) })
+          .catch(error => { if (!this.destroyed) { this.failed = true; spelling.error(failure(error)) } })
       }, 200)
     }
-    destroy() { this.destroyed = true; clearTimeout(this.timer); closeMenu() }
+    destroy() { activeViews.delete(this.view); this.destroyed = true; clearTimeout(this.timer); closeMenu() }
   }, { decorations: value => value.decorations })
 
   function wordAt(view: EditorView, pos: number): Hit | null {
@@ -130,7 +133,7 @@ export function spellCheck(spelling: Spelling) {
     click: (event, view) => {
       const { main } = view.state.selection
       const hit = (event.target as HTMLElement).closest('.cm-misspelled') && main.empty ? wordAt(view, main.head) : null
-      if (hit) void suggestions(spelling.language(), hit.word).then(options => { if (normalize(view.state.sliceDoc(hit.from, hit.to)) === hit.word) view.dispatch({ effects: openPopover.of({ ...hit, options }) }) }).catch(error => spelling.error(failure(error)))
+      if (hit) void suggestions(spelling.language(), hit.word).then(options => { if (activeViews.has(view) && normalize(view.state.sliceDoc(hit.from, hit.to)) === hit.word) view.dispatch({ effects: openPopover.of({ ...hit, options }) }) }).catch(error => spelling.error(failure(error)))
       return false
     },
     keydown: (event, view) => {

@@ -42,9 +42,10 @@ export class DraftSession {
     this.events.changed(this.current, 'All changes saved')
   }
 
-  edit(patch: Partial<Project>): void {
+  // Settings such as the writing mode are saved without counting as an edit to the writing.
+  edit(patch: Partial<Project>, touch = true): void {
     if (!this.current) return
-    this.current = { ...this.current, ...patch, updatedAt: new Date().toISOString() }
+    this.current = { ...this.current, ...patch, ...(touch ? { updatedAt: new Date().toISOString() } : {}) }
     this.events.changed(this.current, 'Unsaved changes')
   }
 

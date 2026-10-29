@@ -10,16 +10,17 @@ type Owned = { projectId: string; research: Research }
 // Loads a project's research and imports files dropped into its inbox while the project is open.
 // Research is always tagged with the project it was loaded for, so a switch between projects can
 // never show, or save, one project's research into another.
-export function useResearch(projectId: string | null, onError: (message: string) => void) {
+export function useResearch(projectId: string | null, onError: (message: string) => void, paused = false) {
   const [state, setState] = useState<Owned | null>(null)
   const latest = useRef<Owned | null>(null), saving = useRef(Promise.resolve())
   const store = useCallback((value: Owned | null) => { latest.current = value; setState(value) }, [])
   const failed = useRef(onError); failed.current = onError
   const open = useRef(projectId); open.current = projectId
+  const quiet = useRef(paused); quiet.current = paused
   const reload = useCallback(async () => {
     if (!projectId) return null
     const loaded = await api.research<Research>(projectId, 'load')
-    if (open.current === projectId) store({ projectId, research: loaded }) // A late answer for a project left behind is ignored.
+    if (open.current === projectId && !quiet.current) store({ projectId, research: loaded }) // Ignore late answers while writing quietly.
     return loaded
   }, [projectId, store])
   // Each change builds on the result of the one before, so quick successive highlights are all kept.
@@ -36,22 +37,22 @@ export function useResearch(projectId: string | null, onError: (message: string)
   }, [projectId, store])
   useEffect(() => {
     store(null)
-    if (!projectId) return
+    if (!projectId || paused) return
     let active = true, running = false
-    void reload().catch(error => { if (active) failed.current(message(error)) })
+    void reload().catch(error => { if (active && !quiet.current) failed.current(message(error)) })
     const poll = async () => {
       if (running || document.visibilityState !== 'visible') return
       running = true
       try {
         if (await api.research<number>(projectId, 'pending') > 0) {
           const result = await api.research<{ imported: ResearchSource[] }>(projectId, 'scan-inbox')
-          if (active && result.imported.length) await reload()
+          if (active && !quiet.current && result.imported.length) await reload()
         }
-      } catch (error) { if (active) { failed.current(message(error)); clearInterval(timer) } } finally { running = false }
+      } catch (error) { if (active && !quiet.current) { failed.current(message(error)); clearInterval(timer) } } finally { running = false }
     }
     const timer = window.setInterval(() => { void poll() }, INBOX_POLL_MS)
     return () => { active = false; clearInterval(timer) }
-  }, [projectId, reload, store])
+  }, [projectId, reload, store, paused])
   const research = state && state.projectId === projectId ? state.research : null
   return { research, reload, saveAnnotations }
 }
