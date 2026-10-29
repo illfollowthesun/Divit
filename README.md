@@ -139,7 +139,11 @@ The browser preview cannot select or back up the desktop Documents folder. ZIP c
 
 ## Status
 
-Phase 1 and phase 2 source are implemented. The production frontend build, 27 Node tests and 13 browser tests pass. The screenshots and sample Markdown above come from actual browser-preview interactions in an isolated test profile.
+Phase 1, phase 2 and the phase 2 polish (docs/POLISH_phase2.md, items 1–8) are implemented. The production frontend build, 40 Node tests and 24 browser tests pass. The screenshots and sample Markdown above come from actual browser-preview interactions in an isolated test profile.
+
+Phase 2 polish, before → after: [1440 before](docs/screenshots/polish-before-1440.png) · [1440 after](docs/screenshots/polish-after-1440.png) · [960 before](docs/screenshots/polish-before-960.png) · [960 after](docs/screenshots/polish-after-960.png) · [Snapshot diff](docs/screenshots/polish-after-snapshots.png) · [Typewriter](docs/screenshots/polish-after-typewriter.png) · [Export](docs/screenshots/polish-after-export.png)
+
+Not yet verified on the desktop runtime: the Rust side (backup command, window-close permissions) has not been compiled on the current machine, which lacks the Visual Studio C++ build tools. Check backups, closing the window and spelling in `npm run desktop` before relying on them.
 
 Rust/MSVC and Pandoc/PDF engines are not installed in the agent environment. Native storage tests and Windows packaging remain unexecuted. Real DOCX/EPUB/PDF rendering remains unverified; process-contract tests are explicitly distinguished from rendering tests. The browser preview's real Markdown download works. See [verification](docs/verification.md). Phase 2's acceptance milestone still requires Emir to finish a story and export a PDF with the actual tools.
 
