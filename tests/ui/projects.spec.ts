@@ -108,14 +108,14 @@ test('snapshots compare side by side and restoring keeps the rewrite too', async
   await expect(page.locator('.snapshot-comparison section').nth(0)).toContainText('The sea remembered every departure.')
 })
 
-test('browser preview exports a real Markdown download through the local converter bridge', async ({ page }) => {
+test('browser preview exports a real Markdown download with the built-in exporter', async ({ page }) => {
   await page.getByRole('button', { name: /New story or book/ }).click()
   await page.getByLabel('Project title').fill('İstanbul at dawn')
   await page.getByRole('button', { name: 'Create project', exact: true }).click()
   await page.getByRole('button', { name: '+ Scene', exact: true }).click()
   await page.getByLabel('Section title').fill('The crossing')
   await page.getByRole('textbox', { name: 'Markdown text' }).fill('The ferry left before the city woke.')
-  await page.getByRole('button', { name: 'Export', exact: true }).click()
+  await page.getByRole('button', { name: 'Export', exact: true }).click(); await page.getByLabel('Export format').selectOption('markdown')
   const pending = page.waitForEvent('download')
   await page.getByRole('button', { name: 'Export manuscript', exact: true }).click()
   const download = await pending, content = await readFile((await download.path())!, 'utf8')

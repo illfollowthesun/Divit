@@ -243,6 +243,27 @@ impl Store {
         Ok(json!({"projects":projects,"ideas":ideas,"images":images,"settings":settings,"dataRoot":self.root.to_string_lossy(),"trash":self.trash_list()?}))
     }
     pub fn save_settings(&self, data: Value) -> Result<()> { write_json(&self.root.join("settings.json"), &data) }
+    // A finished copy from the built-in exporter. Each export is a new file; an existing copy is never replaced.
+    pub fn save_export(&self, name: &str, extension: &str, bytes: &[u8]) -> Result<Value> {
+        if !["md", "docx", "pdf"].contains(&extension) { return Err("Choose Markdown, Word or PDF.".into()); }
+        if name.is_empty() || name.len() > 120 || !name.bytes().all(|b| b.is_ascii_lowercase() || b.is_ascii_digit() || b == b'-') { return Err("Invalid export file name".into()); }
+        let folder = self.root.join("exports");
+        fs::create_dir_all(&folder).map_err(err)?;
+        for n in 1..1000 {
+            let filename = if n == 1 { format!("{name}.{extension}") } else { format!("{name}-{n}.{extension}") };
+            let path = folder.join(&filename);
+            match fs::OpenOptions::new().write(true).create_new(true).open(&path) {
+                Ok(mut file) => {
+                    use std::io::Write;
+                    file.write_all(bytes).and_then(|_| file.sync_all()).map_err(err)?;
+                    return Ok(json!({"path": path.to_string_lossy(), "filename": filename}));
+                }
+                Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => continue,
+                Err(e) => return Err(err(e)),
+            }
+        }
+        Err("Too many exports with this name today. Move some out of the exports folder.".into())
+    }
     pub fn import_image(&self, source: &Path, key: &str) -> Result<Value> {
         let ext = source.extension().and_then(|x| x.to_str()).unwrap_or("").to_lowercase();
         if !["jpg", "jpeg", "png", "webp", "avif"].contains(&ext.as_str()) { return Err("Choose a JPEG, PNG, WebP or AVIF image.".into()); }
@@ -304,6 +325,14 @@ impl Store {
 mod tests {
     use super::*;
     fn draft() -> Value { json!({"id":"test-1","title":"İstanbul","body":"Merhaba dünya","tags":[],"type":"blog"}) }
+    #[test] fn built_in_exports_never_replace_an_existing_copy() {
+        let dir = tempfile::tempdir().unwrap(); let store = Store::new(dir.path().into()).unwrap();
+        let a = store.save_export("the-last-ferry-2026-10-30", "pdf", b"%PDF-1").unwrap();
+        let b = store.save_export("the-last-ferry-2026-10-30", "pdf", b"%PDF-2").unwrap();
+        assert_eq!((a["filename"].as_str().unwrap(), b["filename"].as_str().unwrap()), ("the-last-ferry-2026-10-30.pdf", "the-last-ferry-2026-10-30-2.pdf"));
+        assert_eq!(fs::read(dir.path().join("exports/the-last-ferry-2026-10-30.pdf")).unwrap(), b"%PDF-1");
+        assert!(store.save_export("../evil", "pdf", b"x").is_err()); assert!(store.save_export("ok", "exe", b"x").is_err());
+    }
     #[test] fn saves_unicode_detects_external_edits_and_recovers_interrupted_transaction() {
         let dir = tempfile::tempdir().unwrap(); let store = Store::new(dir.path().into()).unwrap();
         let saved = store.save_project(draft(), None).unwrap();

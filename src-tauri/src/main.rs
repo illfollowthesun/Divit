@@ -83,6 +83,12 @@ async fn call_bridge(app: &tauri::AppHandle, script_name: &str, request: Value) 
 }
 
 #[tauri::command]
+fn save_export(state: tauri::State<AppState>, name: String, extension: String, data: String) -> Result<Value> {
+    use base64::Engine;
+    let bytes = base64::engine::general_purpose::STANDARD.decode(data).map_err(|_| "The exported file could not be read.".to_string())?;
+    state.0.lock().map_err(|e| e.to_string())?.save_export(&name, &extension, &bytes)
+}
+#[tauri::command]
 async fn backup_action(app: tauri::AppHandle, state: tauri::State<'_, AppState>, reason: String) -> Result<Value> {
     if !["status","daily","close","manual"].contains(&reason.as_str()) { return Err("Invalid backup reason".into()); }
     let shared = state.0.clone();
@@ -267,6 +273,6 @@ fn main() {
             }
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![library, save_project, save_idea, save_settings, import_image, image_data, trash, restore, site_action, export_action, backup_action, research_action, ai_status, ai_save, ai_set_key, ai_forget_key, ai_test, ai_search, ai_ask_unsourced, search_set_key, search_forget_key, read_import])
+        .invoke_handler(tauri::generate_handler![library, save_project, save_idea, save_settings, import_image, image_data, trash, restore, site_action, export_action, backup_action, research_action, ai_status, ai_save, ai_set_key, ai_forget_key, ai_test, ai_search, ai_ask_unsourced, search_set_key, search_forget_key, read_import, save_export])
         .run(tauri::generate_context!()).expect("Could not start Yazı");
 }

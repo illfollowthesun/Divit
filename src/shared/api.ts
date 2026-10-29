@@ -78,6 +78,17 @@ export const api = {
       }; input.click()
     })
   },
+  // Saves a file made by the built-in exporter: Documents\…\exports on desktop, a download in the preview.
+  saveExport: async (name: string, extension: 'md' | 'docx' | 'pdf', bytes: Uint8Array): Promise<{ path: string; filename: string }> => {
+    if (desktop) {
+      let binary = ''; for (let i = 0; i < bytes.length; i += 0x8000) binary += String.fromCharCode(...bytes.subarray(i, i + 0x8000))
+      return invoke('save_export', { name, extension, data: btoa(binary) })
+    }
+    const types = { md: 'text/markdown', docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', pdf: 'application/pdf' }
+    const filename = `${name}.${extension}`, url = URL.createObjectURL(new Blob([bytes as BlobPart], { type: types[extension] })), link = document.createElement('a')
+    link.href = url; link.download = filename; link.click(); setTimeout(() => URL.revokeObjectURL(url), 10000)
+    return { path: t('Browser download'), filename }
+  },
   library: async (): Promise<Library> => desktop ? invoke('library') : preview(),
   saveProject: async (data: Project): Promise<Project> => desktop ? invoke('save_project', { data, expected: data.revision ?? null }) : savePreview('projects', data),
   saveIdea: async (data: Idea): Promise<Idea> => desktop ? invoke('save_idea', { data, expected: data.revision ?? null }) : savePreview('ideas', data),

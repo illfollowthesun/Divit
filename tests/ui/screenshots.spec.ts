@@ -46,7 +46,7 @@ test('capture the Phase 2 browser preview and verify the compact writing desk', 
   await page.screenshot({ path: `${root}/screenshots/${prefix}-typewriter.png` })
   await page.mouse.move(300, 4); await page.getByRole('button', { name: 'Typewriter', exact: true }).click(); await page.getByRole('button', { name: 'Leave focus', exact: true }).click()
 
-  await page.getByRole('button', { name: 'Export', exact: true }).click()
+  await page.getByRole('button', { name: 'Export', exact: true }).click(); await page.getByLabel('Export format').selectOption('markdown')
   const download = page.waitForEvent('download'); await page.getByRole('button', { name: 'Export manuscript', exact: true }).click()
   await (await download).saveAs(`${root}/examples/the-last-ferry.md`)
   await expect(page.locator('.export-result')).toContainText('Copy ready')
