@@ -84,7 +84,8 @@ export const tr: Record<string, string> = {
 
   // Settings
   'Make yourself at home': 'Kendinizi evinizde hissedin', 'Interface language': 'Arayüz dili', 'Same as Windows': 'Windows ile aynı', 'Menus and messages only. The language you write in is set per project.': 'Yalnızca menüler ve iletiler. Yazdığınız dil her projede ayrı seçilir.',
-  'Appearance': 'Görünüm', 'Warm paper': 'Sıcak kâğıt', 'After hours': 'Mesai sonrası',
+  'Appearance': 'Görünüm', 'Theme': 'Tema', 'Match Windows': 'Windows ile aynı', 'Sage paper': 'Adaçayı kâğıdı', 'Dusty blue ink': 'Soluk mavi mürekkep', 'Terracotta evening': 'Kiremit akşamı', 'Plum night': 'Mürdüm gecesi',
+  'Applies at once. Match Windows follows the light or dark setting of Windows.': 'Hemen uygulanır. “Windows ile aynı”, Windows’un açık ya da koyu ayarını izler.', 'Warm paper': 'Sıcak kâğıt', 'After hours': 'Mesai sonrası',
   'Check for a new version when Yazı starts': 'Yazı açılırken yeni sürüm var mı bak', 'Asks GitHub for the latest release; nothing about you or your writing is sent. Yazı always asks before installing.': 'GitHub’a en son sürümü sorar; sizinle ya da yazınızla ilgili hiçbir şey gönderilmez. Yazı kurmadan önce her zaman sorar.',
   'Check for updates': 'Güncellemeleri denetle', 'Version {version} is available.': '{version} sürümü hazır.', 'You have the latest version.': 'En son sürümü kullanıyorsunuz.', 'Could not check for updates: {reason}': 'Güncellemeler denetlenemedi: {reason}',
   'Yazı {version} is ready. Installing restarts Yazı; your writing is saved first.': 'Yazı {version} hazır. Kurulum Yazı’yı yeniden başlatır; yazınız önce kaydedilir.', 'Install and restart': 'Kur ve yeniden başlat', 'Installing…': 'Kuruluyor…',
