@@ -36,3 +36,9 @@ Two additions, both requested by the writer:
 4. LanguageTool engine (optional setting).
 5. AI review on demand.
 Plan first, show the plan, then build step by step with a commit after each step.
+
+## Implementation progress
+- Step 1: Write / Review / Normal selector and shortcuts, Escape to Normal, per-project and last-used persistence. Mode saves preserve the writing timestamp. Normal underlines default off and require explicit opt-in. Write hides the surrounding UI, removes spelling, pauses research polling and ignores late spelling results. The editor stays mounted across mode changes.
+- Step 2: a capability-based `Checker` interface wraps the existing Hunspell en-GB + Turkish worker. Review checks the whole active text (including offscreen paragraphs), shows a local spelling issue panel, and supports exact replacements with Undo. Paragraph language detection uses a small local heuristic; ambiguous paragraphs default to English, and the document can force English or Turkish. Existing dictionaries, suggestions, Markdown exclusions and card-name acceptance are reused. No grammar/style engine or external checking requests yet.
+- Step 3: pending — persistent issue ignores, ignore-once, and transaction-based issue range mapping.
+- Steps 4–5 are deferred until research step 7 is complete.

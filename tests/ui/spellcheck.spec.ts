@@ -2,8 +2,8 @@ import {test,expect} from '@playwright/test'
 const stored=(page:import('@playwright/test').Page)=>page.evaluate(()=>JSON.parse(localStorage.getItem('yazi-browser-preview-v1')!))
 test('EN/TR project language persists and switches the spelling language without correcting text',async({page})=>{
   await page.goto('/');await page.evaluate(()=>localStorage.clear());await page.reload();await page.getByRole('button',{name:/New writing/}).click()
-  const editor=page.getByRole('textbox',{name:'Markdown text'}),text='İlker Türkçe yazıyorr. A misspelld word.'
-  await editor.fill(text);await expect(editor).toHaveAttribute('lang','en')
+  await page.getByRole('button',{name:'Underlines',exact:true}).click();const editor=page.getByRole('textbox',{name:'Markdown text'}),text='İlker Türkçe yazıyorr. A misspelld word.'
+  await page.getByRole('combobox',{name:'LANGUAGE',exact:true}).selectOption('en');await editor.fill(text);await expect(editor).toHaveAttribute('lang','en')
   await expect(page.locator('.cm-misspelled',{hasText:'misspelld'})).toBeVisible()
   await page.getByRole('combobox',{name:'LANGUAGE',exact:true}).selectOption('tr')
   await expect(editor).toHaveAttribute('lang','tr');await expect(editor).toHaveAttribute('spellcheck','false');await expect(editor).toHaveAttribute('autocorrect','off')
@@ -16,7 +16,7 @@ test('EN/TR project language persists and switches the spelling language without
 })
 test('clicking a flagged word offers suggestions above it; Esc closes only the popover; a choice replaces only that word',async({page})=>{
   await page.goto('/');await page.evaluate(()=>localStorage.clear());await page.reload();await page.getByRole('button',{name:/New writing/}).click()
-  const editor=page.getByRole('textbox',{name:'Markdown text'})
+  await page.getByRole('button',{name:'Underlines',exact:true}).click();const editor=page.getByRole('textbox',{name:'Markdown text'})
   await editor.fill('The ticekts were folded.')
   const word=page.locator('.cm-misspelled',{hasText:'ticekts'});await expect(word).toBeVisible()
   await page.keyboard.press('Control+.');await expect(page.locator('.app')).toHaveClass(/focus-mode/)
@@ -33,7 +33,7 @@ test('clicking a flagged word offers suggestions above it; Esc closes only the p
 test('right-click offers suggestions, a per-language dictionary, a per-project ignore list and clipboard actions',async({page,context})=>{
   await context.grantPermissions(['clipboard-read','clipboard-write'])
   await page.goto('/');await page.evaluate(()=>localStorage.clear());await page.reload();await page.getByRole('button',{name:/New writing/}).click()
-  const editor=page.getByRole('textbox',{name:'Markdown text'})
+  await page.getByRole('button',{name:'Underlines',exact:true}).click();const editor=page.getByRole('textbox',{name:'Markdown text'})
   await editor.fill('Zorpex wrote a misspelld note.')
   await page.locator('.cm-misspelled',{hasText:'misspelld'}).click({button:'right'})
   const menu=page.getByRole('menu')
@@ -67,7 +67,7 @@ test('card names are never flagged in Turkish projects',async({page})=>{
   await page.goto('/');await page.evaluate(()=>localStorage.clear());await page.reload()
   await page.getByRole('button',{name:/New story or book/}).click();await page.getByRole('button',{name:'Create project',exact:true}).click()
   await page.getByRole('combobox',{name:'LANGUAGE',exact:true}).selectOption('tr')
-  await page.getByRole('textbox',{name:'Markdown text'}).fill('Vexora kitaplarımızdan birini yazıyorr.')
+  await page.getByRole('button',{name:'Underlines',exact:true}).click();await page.getByRole('textbox',{name:'Markdown text'}).fill('Vexora kitaplarımızdan birini yazıyorr.')
   await expect(page.locator('.cm-misspelled',{hasText:'Vexora'})).toBeVisible({timeout:15000})
   await page.getByRole('tab',{name:'Cards',exact:true}).click();await page.getByRole('button',{name:'+ Character',exact:true}).click()
   await page.getByLabel('Card name').fill('Vexora');await page.getByRole('button',{name:'Save card',exact:true}).click()

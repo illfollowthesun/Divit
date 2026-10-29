@@ -12,7 +12,7 @@ export type Project = {
   ideaId?: string; revision?: string; published?: PublishResult
   sections?: Section[]; cards?: ProjectCard[]; snapshots?: Snapshot[];
   notes?: ProjectNote[]; dailyGoal?: number; writingLog?: WritingDay[];
-  language?: 'en' | 'tr'; ignoredWords?: string[]; mode?: WritingMode;
+  language?: 'en' | 'tr' | 'auto'; ignoredWords?: string[]; mode?: WritingMode;
 }
 export type Idea = { schemaVersion: 1; id: string; title: string; tags: string[]; status: Stage; createdAt: string; projectId?: string; revision?: string }
 export type ImageRecord = { id: string; file: string; name: string; addedAt: string; dataUrl?: string }

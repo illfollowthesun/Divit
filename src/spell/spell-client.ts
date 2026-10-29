@@ -25,16 +25,18 @@ function call<T>(language: SpellLanguage, request: { words?: string[]; suggest?:
 }
 export const verdict = (language: SpellLanguage, word: string) => verdicts[language].get(word)
 
-const asked = { en: new Set<string>(), tr: new Set<string>() }
+// Serialize per language so overlapping scans wait for shared words instead of missing verdicts.
+const queues = { en: Promise.resolve(false), tr: Promise.resolve(false) }
 export async function checkWords(language: SpellLanguage, words: string[]) {
-  const fresh = [...new Set(words)].filter(word => !verdicts[language].has(word) && !asked[language].has(word))
-  if (!fresh.length) return false
-  fresh.forEach(word => asked[language].add(word))
-  try {
+  const result = queues[language].catch(() => false).then(async () => {
+    const fresh = [...new Set(words)].filter(word => !verdicts[language].has(word))
+    if (!fresh.length) return false
     const wrong = new Set(await call<string[]>(language, { words: fresh }))
     for (const word of fresh) verdicts[language].set(word, !wrong.has(word))
     return true
-  } finally { fresh.forEach(word => asked[language].delete(word)) }
+  })
+  queues[language] = result
+  return result
 }
 export function suggestions(language: SpellLanguage, word: string) {
   let found = suggested[language].get(word)

@@ -1,17 +1,20 @@
 import { Decoration, EditorView, ViewPlugin, showTooltip } from '@codemirror/view'
 import type { DecorationSet, ViewUpdate } from '@codemirror/view'
 import { StateEffect, StateField } from '@codemirror/state'
-import { syntaxTree } from '@codemirror/language'
+import { syntaxTree, ensureSyntaxTree } from '@codemirror/language'
 import type { SyntaxNode } from '@lezer/common'
-import { checkWords, suggestions, verdict } from '../spell/spell-client'
-import { misspelled, normalize, spellWords } from '../spell/words'
+import { suggestions } from '../spell/spell-client'
+import { localChecker } from '../modes/local-checker'
+import type { CheckLanguage, Issue } from '../modes/checker'
+import { normalize } from '../spell/words'
 import type { SpellLanguage } from '../spell/words'
 
-export type Spelling = { language: () => SpellLanguage; accepted: () => Set<string>; add: (word: string) => void; ignore: (word: string) => void; error: (message: string) => void }
-type Hit = { from: number; to: number; word: string }
+export type Spelling = { language: () => CheckLanguage; accepted: (language: SpellLanguage) => Set<string>; add: (word: string, language: SpellLanguage) => void; ignore: (word: string) => void; error: (message: string) => void; issues: (issues: Issue[], checking: boolean) => void }
+type Hit = { from: number; to: number; word: string; language: SpellLanguage }
 type Popover = Hit & { options: string[] }
 
 export const refreshSpelling = StateEffect.define<null>()
+const redrawSpelling = StateEffect.define<null>()
 const openPopover = StateEffect.define<Popover | null>()
 // Links, code, HTML and images are not prose.
 const skipped = new Set(['URL', 'InlineCode', 'FencedCode', 'CodeBlock', 'CodeText', 'HTMLTag', 'HTMLBlock', 'Autolink', 'Image', 'CommentBlock'])
@@ -54,7 +57,7 @@ async function openMenu(view: EditorView, spelling: Spelling, hit: Hit, x: numbe
   closeMenu()
   const doc = view.state.doc
   let options: string[] = []
-  try { options = await suggestions(spelling.language(), hit.word) } catch (error) { spelling.error(failure(error)) }
+  try { options = await suggestions(hit.language, hit.word) } catch (error) { spelling.error(failure(error)) }
   if (view.state.doc !== doc || !activeViews.has(view)) return
   const menu = document.createElement('div'); menu.className = 'spell-menu'; menu.setAttribute('role', 'menu'); menu.setAttribute('aria-label', `Spelling: ${hit.word}`)
   const item = (label: string, run: () => void, disabled = false) => { const node = button(label, () => { close(); run() }); node.setAttribute('role', 'menuitem'); node.disabled = disabled; menu.append(node) }
@@ -64,7 +67,7 @@ async function openMenu(view: EditorView, spelling: Spelling, hit: Hit, x: numbe
   options.forEach(option => item(option, () => replace(view, hit, option)))
   if (!options.length) item('No suggestions', () => {}, true)
   separator()
-  item('Add to dictionary', () => spelling.add(hit.word))
+  item('Add to dictionary', () => spelling.add(hit.word, hit.language))
   item('Ignore in this project', () => spelling.ignore(hit.word))
   separator()
   item('Cut', () => clipboard(navigator.clipboard.writeText(selected).then(() => view.dispatch({ changes: { from, to }, userEvent: 'delete.cut' }))), !selected)
@@ -92,48 +95,47 @@ async function openMenu(view: EditorView, spelling: Spelling, hit: Hit, x: numbe
 
 export function spellCheck(spelling: Spelling) {
   const plugin = ViewPlugin.fromClass(class {
-    decorations: DecorationSet
-    timer = 0; typing = false; failed = false; destroyed = false
-    constructor(readonly view: EditorView) { activeViews.add(view); this.decorations = this.build() }
+    decorations: DecorationSet = Decoration.none
+    timer = 0; generation = 0; destroyed = false
+    constructor(readonly view: EditorView) { activeViews.add(view); this.schedule() }
     update(update: ViewUpdate) {
-      if (update.docChanged) this.typing = update.transactions.some(tr => tr.isUserEvent('input.type'))
-      else if (update.selectionSet) this.typing = false
-      if (update.docChanged || update.viewportChanged || update.selectionSet || update.focusChanged || update.transactions.some(tr => tr.effects.some(e => e.is(refreshSpelling)))) this.decorations = this.build()
-    }
-    build() {
-      const { view } = this, language = spelling.language(), accepted = spelling.accepted(), tree = syntaxTree(view.state), head = view.state.selection.main.head
-      const check = (word: string) => verdict(language, word), marks = [], unknown: string[] = []
-      for (const { from, to } of view.visibleRanges) for (const word of spellWords(view.state.sliceDoc(from, to), from)) {
-        if (this.typing && head === word.to) continue // Wait until the word is finished.
-        let prose = true
-        for (let node: SyntaxNode | null = tree.resolveInner(word.from, 1); node; node = node.parent) if (skipped.has(node.name)) { prose = false; break }
-        if (!prose) continue
-        for (const part of new Set([word.word, word.stem])) if (check(part) === undefined) unknown.push(part)
-        if (misspelled(word, language, accepted, check)) marks.push(Decoration.mark({ class: 'cm-misspelled', word: word.word }).range(word.from, word.to))
+      if (update.docChanged || update.transactions.some(tr => tr.effects.some(e => e.is(refreshSpelling)))) {
+        this.decorations = Decoration.none
+        this.schedule()
       }
-      if (unknown.length && !this.failed) this.request(language, unknown)
-      return Decoration.set(marks, true)
     }
-    request(language: SpellLanguage, words: string[]) {
+    schedule() {
       clearTimeout(this.timer)
+      const generation = ++this.generation, doc = this.view.state.doc
+      // Notify React outside CodeMirror's update, including on initial creation.
+      queueMicrotask(() => { if (!this.destroyed && generation === this.generation) spelling.issues([], true) })
       this.timer = window.setTimeout(() => {
-        void checkWords(language, words).then(changed => { if (changed && !this.destroyed) this.view.dispatch({ effects: refreshSpelling.of(null) }) })
-          .catch(error => { if (!this.destroyed) { this.failed = true; spelling.error(failure(error)) } })
+        const tree = ensureSyntaxTree(this.view.state, doc.length, 100) ?? syntaxTree(this.view.state)
+        const prose = (from: number) => {
+          for (let node: SyntaxNode | null = tree.resolveInner(from, 1); node; node = node.parent) if (skipped.has(node.name)) return false
+          return true
+        }
+        void localChecker.check({ text: doc.toString(), language: spelling.language(), accepted: spelling.accepted, prose }).then(issues => {
+          if (this.destroyed || generation !== this.generation || doc !== this.view.state.doc) return
+          this.decorations = Decoration.set(issues.map(issue => Decoration.mark({ class: 'cm-misspelled', word: normalize(issue.original), language: issue.language }).range(issue.from, issue.to)), true)
+          spelling.issues(issues, false)
+          this.view.dispatch({ effects: redrawSpelling.of(null) })
+        }).catch(error => { if (!this.destroyed && generation === this.generation) { spelling.issues([], false); spelling.error(failure(error)) } })
       }, 200)
     }
-    destroy() { activeViews.delete(this.view); this.destroyed = true; clearTimeout(this.timer); closeMenu() }
+    destroy() { activeViews.delete(this.view); this.destroyed = true; ++this.generation; clearTimeout(this.timer); closeMenu() }
   }, { decorations: value => value.decorations })
 
   function wordAt(view: EditorView, pos: number): Hit | null {
     let hit: Hit | null = null
-    view.plugin(plugin)?.decorations.between(pos, pos, (from, to, mark) => { hit = { from, to, word: mark.spec.word } })
+    view.plugin(plugin)?.decorations.between(pos, pos, (from, to, mark) => { hit = { from, to, word: mark.spec.word, language: mark.spec.language } })
     return hit
   }
   return [plugin, popover, EditorView.domEventHandlers({
     click: (event, view) => {
       const { main } = view.state.selection
       const hit = (event.target as HTMLElement).closest('.cm-misspelled') && main.empty ? wordAt(view, main.head) : null
-      if (hit) void suggestions(spelling.language(), hit.word).then(options => { if (activeViews.has(view) && normalize(view.state.sliceDoc(hit.from, hit.to)) === hit.word) view.dispatch({ effects: openPopover.of({ ...hit, options }) }) }).catch(error => spelling.error(failure(error)))
+      if (hit) void suggestions(hit.language, hit.word).then(options => { if (activeViews.has(view) && normalize(view.state.sliceDoc(hit.from, hit.to)) === hit.word) view.dispatch({ effects: openPopover.of({ ...hit, options }) }) }).catch(error => spelling.error(failure(error)))
       return false
     },
     keydown: (event, view) => {

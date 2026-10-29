@@ -36,3 +36,24 @@ test('Normal underlines are an explicit persisted choice', async ({ page }) => {
   await page.keyboard.press('Control+s'); await expect(page.locator('.editor-footer [role=status]')).toHaveText('All changes saved')
   await page.reload(); await expect(toggle).toHaveAttribute('aria-pressed', 'true')
 })
+
+test('Review checks mixed language paragraphs and offscreen text locally, with exact replacement and Undo', async ({ page }) => {
+  await page.goto('/'); await page.evaluate(() => localStorage.clear()); await page.reload()
+  await page.getByRole('button', { name: /New writing/ }).click()
+  const editor = page.getByRole('textbox', { name: 'Markdown text' })
+  const text = 'The ticekts were folded.\n\nTürkçe bir cümle yazıyorr.\n\n' + 'The page is here.\n\n'.repeat(100) + 'A misspelld word.'
+  await editor.fill(text)
+  const external: string[] = []
+  page.on('request', request => { if (!request.url().startsWith('http://127.0.0.1:1420') && !request.url().startsWith('data:')) external.push(request.url()) })
+  await page.keyboard.press('Control+2')
+  const panel = page.getByRole('complementary', { name: 'Review issues' })
+  await expect(panel.getByRole('button', { name: 'misspelld', exact: true })).toBeVisible({ timeout: 15000 })
+  await expect(panel.getByRole('button', { name: 'yazıyorr', exact: true })).toBeVisible()
+  await expect(panel.getByRole('button', { name: 'Türkçe', exact: true })).toHaveCount(0)
+  await panel.getByRole('button', { name: 'Replace ticekts with tickets', exact: true }).click()
+  await page.keyboard.press('Control+s')
+  await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem('yazi-browser-preview-v1')!).projects[0].body)).toBe(text.replace('ticekts', 'tickets'))
+  await editor.press('Control+z'); await page.keyboard.press('Control+s')
+  await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem('yazi-browser-preview-v1')!).projects[0].body)).toBe(text)
+  expect(external).toEqual([])
+})

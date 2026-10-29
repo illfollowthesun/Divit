@@ -2,6 +2,8 @@ import { useEffect, useRef } from 'react'
 import { EditorView, keymap, placeholder } from '@codemirror/view'
 import type { ViewUpdate } from '@codemirror/view'
 import { Compartment, EditorState } from '@codemirror/state'
+import type { CheckLanguage, Issue } from '../modes/checker'
+import type { SpellLanguage } from '../spell/words'
 import type { ProjectCard } from '../shared/types'
 import { cardLinks } from './card-links'
 import { spellCheck, refreshSpelling } from './spell-check'
@@ -30,7 +32,7 @@ function centerCaret(view: EditorView) {
   })
 }
 
-export function Editor({ id, body, onChange, onReady, typewriter = false, checking = false, cards, onCardOpen, language = 'en', dictionary, ignored, onAddWord, onIgnoreWord, onSpellError }: { id: string; body: string; onChange: (text: string) => void; onReady: (view: EditorView | null) => void; typewriter?: boolean; checking?: boolean; cards?: ProjectCard[]; onCardOpen?: (id: string) => void; language?: 'en' | 'tr'; dictionary?: string[]; ignored?: string[]; onAddWord?: (word: string) => void; onIgnoreWord?: (word: string) => void; onSpellError?: (message: string) => void }) {
+export function Editor({ id, body, onChange, onReady, typewriter = false, checking = false, cards, onCardOpen, language = 'auto', onIssues, dictionary, ignored, onAddWord, onIgnoreWord, onSpellError }: { id: string; body: string; onChange: (text: string) => void; onReady: (view: EditorView | null) => void; typewriter?: boolean; checking?: boolean; cards?: ProjectCard[]; onCardOpen?: (id: string) => void; language?: CheckLanguage; onIssues?: (issues: Issue[], checking: boolean) => void; dictionary?: Partial<Record<SpellLanguage, string[]>>; ignored?: string[]; onAddWord?: (word: string, language: SpellLanguage) => void; onIgnoreWord?: (word: string) => void; onSpellError?: (message: string) => void }) {
   const element = useRef<HTMLDivElement>(null)
   const changed = useRef(onChange); changed.current = onChange
   const ready = useRef(onReady); ready.current = onReady
@@ -40,8 +42,8 @@ export function Editor({ id, body, onChange, onReady, typewriter = false, checki
   const checkConfig = useRef(new Compartment())
   const languageConfig = useRef(new Compartment())
   cardsRef.current = cards; cardOpen.current = onCardOpen
-  const spelling = useRef({ language, accepted: new Set<string>(), add: onAddWord, ignore: onIgnoreWord, error: onSpellError })
-  spelling.current = { language, accepted: acceptedWords(language, dictionary, ignored, (cards ?? []).filter(c => !c.trashedAt).flatMap(c => [c.name, ...c.aliases])), add: onAddWord, ignore: onIgnoreWord, error: onSpellError }
+  const spelling = useRef({ language, accepted: (_language: SpellLanguage) => new Set<string>(), issues: onIssues, add: onAddWord, ignore: onIgnoreWord, error: onSpellError })
+  spelling.current = { language, accepted: (lang: SpellLanguage) => acceptedWords(lang, dictionary?.[lang], ignored, (cards ?? []).filter(c => !c.trashedAt).flatMap(c => [c.name, ...c.aliases])), issues: onIssues, add: onAddWord, ignore: onIgnoreWord, error: onSpellError }
   // Each draft owns its undo history. Only a draft switch recreates the editor.
   const initial = useRef(body); initial.current = body
   useEffect(() => {
@@ -51,7 +53,7 @@ export function Editor({ id, body, onChange, onReady, typewriter = false, checki
       EditorView.lineWrapping, placeholder('Begin anywhere. The first sentence can change.'),
       cardConfig.current.of(cardLinks(() => cardsRef.current ?? [], id => cardOpen.current?.(id))),
       languageConfig.current.of(attributes(language)),
-      checkConfig.current.of(checking ? spellCheck({ language: () => spelling.current.language, accepted: () => spelling.current.accepted, add: word => spelling.current.add?.(word), ignore: word => spelling.current.ignore?.(word), error: message => spelling.current.error?.(message) }) : []),
+      checkConfig.current.of(checking ? spellCheck({ language: () => spelling.current.language, accepted: lang => spelling.current.accepted(lang), issues: (issues, checking) => spelling.current.issues?.(issues, checking), add: (word, lang) => spelling.current.add?.(word, lang), ignore: word => spelling.current.ignore?.(word), error: message => spelling.current.error?.(message) }) : []),
       EditorView.updateListener.of((update: ViewUpdate) => {
         if (update.docChanged) changed.current(update.state.doc.toString())
         if (typewriterRef.current && (update.docChanged || update.selectionSet || update.focusChanged)) centerCaret(update.view)
@@ -60,7 +62,7 @@ export function Editor({ id, body, onChange, onReady, typewriter = false, checki
     if (typewriterRef.current) centerCaret(view)
     return () => { editor.current = null; ready.current(null); view.destroy() }
   }, [id])
-  useEffect(() => { editor.current?.dispatch({ effects: checkConfig.current.reconfigure(checking ? spellCheck({ language: () => spelling.current.language, accepted: () => spelling.current.accepted, add: word => spelling.current.add?.(word), ignore: word => spelling.current.ignore?.(word), error: message => spelling.current.error?.(message) }) : []) }) }, [checking])
+  useEffect(() => { editor.current?.dispatch({ effects: checkConfig.current.reconfigure(checking ? spellCheck({ language: () => spelling.current.language, accepted: lang => spelling.current.accepted(lang), issues: (issues, checking) => spelling.current.issues?.(issues, checking), add: (word, lang) => spelling.current.add?.(word, lang), ignore: word => spelling.current.ignore?.(word), error: message => spelling.current.error?.(message) }) : []) }) }, [checking])
   useEffect(() => { editor.current?.dispatch({ effects: languageConfig.current.reconfigure(attributes(language)) }) }, [language])
   useEffect(() => { editor.current?.dispatch({ effects: refreshSpelling.of(null) }) }, [language, dictionary, ignored, cards])
   useEffect(() => { editor.current?.dispatch({ effects: cardConfig.current.reconfigure(cardLinks(() => cardsRef.current ?? [], id => cardOpen.current?.(id))) }) }, [cards])
