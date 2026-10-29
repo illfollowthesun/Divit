@@ -43,7 +43,7 @@ test('capture the Phase 2 browser preview and verify the compact writing desk', 
   await page.mouse.move(800, 500)
   await expect.poll(() => page.locator('.document-toolbar').evaluate(el => getComputedStyle(el).opacity)).toBe('0')
   await page.screenshot({ path: `docs/screenshots/${prefix}-typewriter.png` })
-  await page.getByRole('button', { name: 'Typewriter', exact: true }).click(); await page.getByRole('button', { name: 'Leave focus', exact: true }).click()
+  await page.mouse.move(300, 4); await page.getByRole('button', { name: 'Typewriter', exact: true }).click(); await page.getByRole('button', { name: 'Leave focus', exact: true }).click()
 
   await page.getByRole('button', { name: 'Export', exact: true }).click()
   const download = page.waitForEvent('download'); await page.getByRole('button', { name: 'Export manuscript', exact: true }).click()
