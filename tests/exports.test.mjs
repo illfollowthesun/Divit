@@ -39,3 +39,23 @@ test('converter invocation uses explicit arguments and UTF-8 stdin, retains orig
   }
   assert.equal(JSON.stringify(original),before)
 })
+test('an optional Sources list lists quoted research sources in order of first use, with their citations', async () => {
+  const { mkdtemp, mkdir: makeDir, writeFile: write } = await import('node:fs/promises')
+  const dataRoot = await mkdtemp(join(process.cwd(), '.tmp/export-sources-')), outputRoot = join(dataRoot, 'exports')
+  const story = { id: 'story-7', title: 'Son Vapur', type: 'story', body: 'İlk vapur kalktı.', sections: [] }
+  await makeDir(join(dataRoot, 'projects/story-7/research'), { recursive: true })
+  const at = when => [{ sectionId: null, at: when }]
+  await write(join(dataRoot, 'projects/story-7/research/research.json'), JSON.stringify({ sources: [
+    { id: 'b', title: 'Second used', site: 'Site B', saved: '2026-10-02', status: 'used', usedIn: at('2026-10-29T12:00:00Z') },
+    { id: 'n', title: 'Never quoted', status: 'read', usedIn: [] },
+    { id: 'a', title: 'First used', site: 'Şehir Hatları', published: '2026-10-20', url: 'https://example.com/a', status: 'used', usedIn: at('2026-10-29T09:00:00Z') },
+  ] }))
+  const runtime = { tools: { pandoc: false } }
+  const withList = await exportDocument({ project: story, format: 'markdown', images: [], outputRoot, dataRoot, includeSources: true }, runtime)
+  assert.equal(await readFile(withList.path, 'utf8'), '---\ntitle: "Son Vapur"\n---\n\nİlk vapur kalktı.\n\n# Sources\n\n- First used, Şehir Hatları (2026-10-20), https://example.com/a\n- Second used, Site B (2026-10-02)\n')
+  const without = await exportDocument({ project: story, format: 'markdown', images: [], outputRoot, dataRoot }, runtime)
+  assert.doesNotMatch(await readFile(without.path, 'utf8'), /Sources/)
+  const none = await exportDocument({ project: { ...story, id: 'no-research' }, format: 'markdown', images: [], outputRoot, dataRoot, includeSources: true }, runtime)
+  assert.doesNotMatch(await readFile(none.path, 'utf8'), /# Sources/)
+  await assert.rejects(exportDocument({ project: { ...story, id: '../x' }, format: 'markdown', images: [], outputRoot, dataRoot, includeSources: true }, runtime), /project folder/)
+})

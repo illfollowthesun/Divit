@@ -121,13 +121,24 @@ Each project has a LANGUAGE setting (English or Turkish), saved with the project
 - The personal dictionary is stored per language in `Documents/Yazi/settings.json` (`dictionary.en`, `dictionary.tr`). Ignored words are stored in the project (`ignoredWords`).
 - Nothing is ever corrected automatically. The native spellcheck and autocorrect are turned off.
 
-## Research files
+## Research
+
+Open **Research** in the project toolbar (Ctrl Alt R). It works without AI and makes no network call except fetching a page you paste.
+
+- **Sources**: paste a link and Yazı keeps a readable copy (text only; images, embeds and link targets are dropped) that opens offline afterwards. Files dropped into the project's `research/inbox` folder are imported within a second or two; the toolbar shows how many are new. Search and filter by type and reading status (unread, read, quoted).
+- **Search about this topic**: saves a request (topic, angle, language, number of sources) as a file and shows *Waiting for sources…*. **Copy request** puts a ready-to-paste prompt on the clipboard, with the inbox path and the source format. Ask Claude in chat; the sources it writes into the inbox appear in the list.
+- **Reader and highlights**: select words in a source to highlight them in one of four colours or add a note. Highlights survive restarts; if the saved file is edited they follow their quote, and a quote that disappears is kept and marked, never dropped.
+- **Highlights** and **Notes** tabs: every highlight with its note, and free notes for the topic that can link to a highlight. Research notes from the old Notebook tab were copied here; the originals stay in the project file.
+- **Insert quote** (from a highlight or a selection) adds the quote at the cursor with its citation, as a quote block or a footnote, and asks first above 50 words. The source is then marked as quoted, with where it was used.
+- **Export** can end with a *Sources* list of the sources actually quoted, in the order they were first used.
+
+### Research files
 
 Each project keeps its research next to the writing, as plain files that stay readable without Yazı:
 
 ```
 Documents/Yazi/projects/<project-id>/research/
-  research.json        index: sources (status, where each was quoted), highlights, notes, AI notes
+  research.json        index: sources (status, where each was quoted), highlights, notes, AI notes, requests
   sources/<id>.md      one saved source: frontmatter + the readable text
   inbox/               drop source files here; Yazı imports them (imported originals move to inbox/_imported)
   requests/<id>.md     "Search about this topic" requests

@@ -41,9 +41,9 @@ export const api = {
     if (!response.ok) throw new Error('Restart the preview server to enable local exports.')
     return response.json()
   },
-  exportProject: async (project: Project, format: ExportFormat, images: ImageRecord[]): Promise<ExportResult> => {
-    if (desktop) return invoke('export_action', { action: 'export', projectId: project.id, expectedRevision: project.revision ?? null, format })
-    const response = await fetch('/__yazi/export', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Yazi-Preview': '1' }, body: JSON.stringify({ project, format, images }) })
+  exportProject: async (project: Project, format: ExportFormat, images: ImageRecord[], includeSources = false): Promise<ExportResult> => {
+    if (desktop) return invoke('export_action', { action: 'export', projectId: project.id, expectedRevision: project.revision ?? null, format, includeSources })
+    const response = await fetch('/__yazi/export', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Yazi-Preview': '1' }, body: JSON.stringify({ project, format, images, includeSources }) })
     if (!response.ok) throw new Error((await response.json()).error ?? 'Export failed.')
     const filename = /filename="([^"]+)"/.exec(response.headers.get('Content-Disposition') ?? '')?.[1] ?? `manuscript.${format === 'markdown' ? 'md' : format}`
     const url = URL.createObjectURL(await response.blob()), link = document.createElement('a')

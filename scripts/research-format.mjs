@@ -46,6 +46,16 @@ export function cleanMeta(meta) {
   clean.type = sourceTypes.includes(clean.type) ? clean.type : 'other'
   return clean
 }
+// "Title, Site (2026-10-20), https://…": the one citation format for inserted quotes and exports.
+export function citation(source) {
+  const date = source.published ?? source.saved
+  return `${[source.title, source.site].filter(Boolean).join(', ')}${date ? ` (${date})` : ''}${source.url ? `, ${source.url}` : ''}`
+}
+// Sources the writer quoted, in the order they were first used.
+export function quotedSources(index) {
+  const first = source => source.usedIn?.map(use => use.at).sort()[0] ?? source.addedAt ?? ''
+  return (index?.sources ?? []).filter(source => source.status === 'used').sort((a, b) => first(a).localeCompare(first(b)))
+}
 export const emptyResearch = () => ({ schemaVersion: 1, sources: [], highlights: [], notes: [], ai: [], requests: [] })
 
 // The prompt the writer pastes to Claude (or any assistant): where to write and in which format.

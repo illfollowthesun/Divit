@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { exportTools, exportDocument } from './export-bridge.mjs'
+import { previewDataRoot } from './preview-research.mjs'
 
 export function previewExports() {
   return { name: 'yazi-local-exports', configureServer(server) {
@@ -15,7 +16,7 @@ export function previewExports() {
         const chunks = []; let length = 0
         for await (const chunk of req) { length += chunk.length; if (length > 20 * 1024 * 1024) return send(413, { error: 'This preview export is too large. Use the desktop app.' }); chunks.push(chunk) }
         const request = JSON.parse(Buffer.concat(chunks).toString('utf8'))
-        const result = await exportDocument({ project: request.project, images: request.images, format: request.format, outputRoot: resolve('.tmp/preview-exports') })
+        const result = await exportDocument({ project: request.project, images: request.images, format: request.format, outputRoot: resolve('.tmp/preview-exports'), includeSources: request.includeSources === true, dataRoot: previewDataRoot })
         res.setHeader('Content-Type', result.format === 'markdown' ? 'text/markdown; charset=utf-8' : 'application/octet-stream')
         res.setHeader('Content-Disposition', `attachment; filename="${result.filename}"`)
         res.end(await readFile(result.path))

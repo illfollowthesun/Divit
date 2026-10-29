@@ -1,13 +1,10 @@
 import type { ResearchSource } from '../shared/types'
+import { citation } from '../../scripts/research-format.mjs'
 
+export { citation }
 export const LONG_QUOTE_WORDS = 50
 export const wordCount = (text: string) => text.trim() ? text.trim().split(/\s+/u).length : 0
 
-// "Title, Site (2026-10-20), https://…" — every inserted quote carries this.
-export function citation(source: Pick<ResearchSource, 'title' | 'site' | 'published' | 'saved' | 'url'>) {
-  const date = source.published ?? source.saved
-  return `${[source.title, source.site].filter(Boolean).join(', ')}${date ? ` (${date})` : ''}${source.url ? `, ${source.url}` : ''}`
-}
 export function quoteBlock(quote: string, source: ResearchSource) {
   return `${quote.trim().split('\n').map(line => `> ${line}`.trimEnd()).join('\n')}\n>\n> — ${citation(source)}`
 }

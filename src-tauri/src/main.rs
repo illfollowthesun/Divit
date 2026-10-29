@@ -90,14 +90,14 @@ async fn backup_action(app: tauri::AppHandle, state: tauri::State<'_, AppState>,
 }
 
 #[tauri::command]
-async fn export_action(app: tauri::AppHandle, state: tauri::State<'_, AppState>, action: String, project_id: Option<String>, expected_revision: Option<String>, format: Option<String>) -> Result<Value> {
+async fn export_action(app: tauri::AppHandle, state: tauri::State<'_, AppState>, action: String, project_id: Option<String>, expected_revision: Option<String>, format: Option<String>, include_sources: Option<bool>) -> Result<Value> {
     if action != "status" && action != "export" { return Err("Invalid export action".into()); }
     let request = if action == "status" { json!({"action":"status"}) } else {
         let store = state.0.lock().map_err(|e| e.to_string())?;
         let project = store.project(project_id.as_deref().ok_or("Choose a project")?)?;
         if expected_revision.as_deref() != project["revision"].as_str() { return Err("This project changed on disk. Review the current version before exporting.".into()); }
         let library = store.library()?;
-        json!({"action":"export","format":format.ok_or("Choose an export format")?,"project":project,"images":library["images"],"dataRoot":store.root.to_string_lossy(),"outputRoot":store.root.join("exports").to_string_lossy()})
+        json!({"action":"export","format":format.ok_or("Choose an export format")?,"project":project,"images":library["images"],"dataRoot":store.root.to_string_lossy(),"outputRoot":store.root.join("exports").to_string_lossy(),"includeSources":include_sources.unwrap_or(false)})
     };
     call_bridge(&app, "export-bridge.mjs", request).await
 }

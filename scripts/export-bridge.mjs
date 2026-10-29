@@ -4,6 +4,7 @@ import { join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { randomUUID } from 'node:crypto'
 import { slugify } from './site-bridge.mjs'
+import { citation, quotedSources } from './research-format.mjs'
 
 const formats = { markdown: 'md', pdf: 'pdf', docx: 'docx', epub: 'epub' }
 const engines = { typst: 'typst', xelatex: 'latex', lualatex: 'latex', tectonic: 'latex', weasyprint: 'html5' }
@@ -28,14 +29,22 @@ export async function exportTools() {
   }
   return { pandoc: !!version, version, pdfEngine }
 }
-export function compileMarkdown(project, imageSources = {}) {
+// The optional Sources list: the research sources quoted in this project, first use first.
+async function quotedFor(request) {
+  if (!request.includeSources) return []
+  if (!request.dataRoot || !/^[A-Za-z0-9-]{1,100}$/.test(request.project?.id ?? '')) throw new Error('The sources list needs the project folder.')
+  try { return quotedSources(JSON.parse(await readFile(join(request.dataRoot, 'projects', request.project.id, 'research', 'research.json'), 'utf8'))) }
+  catch (error) { if (error.code === 'ENOENT') return []; throw new Error('research.json could not be read, so no sources list was added. Your writing is unchanged.') }
+}
+export function compileMarkdown(project, imageSources = {}, sources = []) {
   const all = project.sections ?? []
   const nodes = all.filter(n => !n.trashedAt && !n.parentId).flatMap(n => [n, ...all.filter(c => !c.trashedAt && c.parentId === n.id)])
   const body = [project.body?.trim(), ...nodes.map(n => `${n.kind === 'chapter' || project.type === 'story' ? '#' : '##'} ${n.title.replace(/[\r\n]/g, ' ')}\n\n${n.body.trim()}`)].filter(Boolean).join('\n\n')
   if (!body) throw new Error('Write a little before exporting.')
   const text = body.replace(/yazi-image:([a-zA-Z0-9-]+)/g, (_, id) => { if (!imageSources[id]) throw new Error(`Image ${id} is missing from the library.`); return imageSources[id] })
   if (/!\[[^\]]*\]\(\s*<?(?:https?:|file:)/i.test(text)) throw new Error('Import external images into the image library before exporting.')
-  return `---\ntitle: ${JSON.stringify(project.title || 'Untitled')}\n---\n\n${text}\n`
+  const list = sources.length ? `\n\n# Sources\n\n${sources.map(source => `- ${citation(source).replace(/[\r\n]+/g, ' ')}`).join('\n')}` : ''
+  return `---\ntitle: ${JSON.stringify(project.title || 'Untitled')}\n---\n\n${text}${list}\n`
 }
 async function sourcesFor(request) {
   const sources = {}, text = [request.project.body ?? '', ...(request.project.sections ?? []).filter(n => !n.trashedAt).map(n => n.body)].join('\n')
@@ -57,7 +66,7 @@ export async function exportDocument(request, runtime = {}) {
   const tools = runtime.tools ?? await exportTools()
   if (request.format !== 'markdown' && !tools.pandoc) throw new Error('Pandoc is not installed. Install Pandoc and reopen Yazı, or download Markdown now.')
   if (request.format === 'pdf' && !tools.pdfEngine) throw new Error('PDF needs a Pandoc PDF engine. Install Typst (recommended) or XeLaTeX, then reopen Yazı.')
-  const markdown = compileMarkdown(request.project, await sourcesFor(request))
+  const markdown = compileMarkdown(request.project, await sourcesFor(request), await quotedFor(request))
   const root = resolve(request.outputRoot)
   await mkdir(root, { recursive: true })
   let name = slugify(request.project.title) || 'manuscript'
