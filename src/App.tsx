@@ -5,6 +5,8 @@ import { useCompactWidth, trapDrawer } from './polish/drawers'
 import { BackupSettings } from './settings/BackupSettings'
 import { useResearch } from './research/useResearch'
 import { ResearchDrawer, newInboxCount } from './research/ResearchDrawer'
+import type { InsertQuote } from './research/ResearchDrawer'
+import { footnote, nextFootnote, quoteBlock } from './research/citation'
 import { Editor } from './editor/Editor'
 import { Preview } from './editor/Preview'
 import { api, desktop } from './shared/api'
@@ -84,6 +86,30 @@ export function App() {
   const [researchOpen, setResearchOpen] = useState(false)
   const researchToggle = useRef<HTMLButtonElement>(null)
   function closeResearch() { setResearchOpen(false); researchToggle.current?.focus() }
+  // Research notes used to live in the Notebook. Copy them once into the project's research; the
+  // originals stay in the project file untouched.
+  const migrated = useRef('')
+  useEffect(() => {
+    const project = session.current?.project
+    if (!research.research || !project || migrated.current === project.id) return
+    migrated.current = project.id
+    const done = new Set(research.research.notes.map(n => n.migratedFrom)), now = new Date().toISOString()
+    const missing = (project.notes ?? []).filter(n => n.kind === 'research' && !done.has(n.id))
+    if (missing.length) void research.saveAnnotations(current => ({ notes: [...current.notes, ...missing.map(n => ({ id: crypto.randomUUID(), title: n.title, body: n.body, migratedFrom: n.id, createdAt: now, updatedAt: now, ...(n.trashedAt ? { trashedAt: n.trashedAt } : {}) }))] })).catch(error => { migrated.current = ''; setError(message(error)) })
+  }, [research.research, research.saveAnnotations])
+  const insertQuote: InsertQuote = (kind, quote, source) => {
+    const editor = view.current
+    if (!editor) return false
+    const range = editor.state.selection.main, doc = editor.state.doc
+    if (kind === 'quote') {
+      const text = `\n\n${quoteBlock(quote, source)}\n\n`
+      editor.dispatch({ changes: { from: range.from, to: range.to, insert: text }, selection: { anchor: range.from + text.length }, scrollIntoView: true })
+    } else {
+      const note = footnote(quote, source, nextFootnote(doc.toString()))
+      editor.dispatch({ changes: [{ from: range.from, to: range.to, insert: note.inline }, { from: doc.length, insert: `${doc.length ? '\n\n' : ''}${note.note}` }], selection: { anchor: range.from + note.inline.length }, scrollIntoView: true })
+    }
+    return true
+  }
   const mounted = useRef(true)
   const captureInput = useRef<HTMLInputElement>(null)
 
@@ -256,7 +282,7 @@ export function App() {
         <aside ref={rightPanel} id="writing-companion" className={`side-panel ${compactRight ? 'right-drawer' : ''} ${rightOpen ? 'drawer-open' : ''}`} aria-label="Writing companion" aria-hidden={compactRight && !rightOpen} inert={compactRight && !rightOpen || compactLeft && leftOpen} onKeyDown={e => trapDrawer(e, compactRight && rightOpen)}><button className="drawer-close" onClick={() => closeDrawer('right')}>Close companion</button><div className="panel-tabs" role="tablist" aria-label="Companion tabs">{(draft && draft.type !== 'blog' ? ['Preview', 'Cards', 'Notes', 'Check', 'Images'] as const : ['Preview', 'Check', 'Images'] as const).map(t => <button role="tab" aria-selected={tab === t} className={tab === t ? 'active' : ''} key={t} onClick={() => setTab(t)} id={`tab-${t}`} aria-controls="companion-content">{t}</button>)}</div><div className="panel-content" role="tabpanel" id="companion-content" aria-labelledby={`tab-${tab}`}>{tab === 'Preview' ? <><div className="section-label">THE READING VIEW</div>{draft?.title && <h2 className="preview-title">{draft.title}</h2>}{draft?.standfirst && <p className="standfirst">{draft.standfirst}</p>}<Preview text={activeBody} images={lib.images}/></> : tab === 'Notes' && draft ? <Notebook key={draft.id} project={draft} change={edit} disabled={busy}/> : tab === 'Cards' && draft ? <Cards key={draft.id} selectedId={selectedCardId} cards={draft.cards ?? []} change={cards => edit({ cards })} disabled={busy}/> : tab === 'Images' ? <><div className="section-label">A PLACE FOR IMAGES</div><p className="quiet">Keep the originals. Prepare a lighter, private copy when sending to your site.</p><button className="outline-button" onClick={() => void perform(importImages)} disabled={busy}>＋ Add images</button><div className="image-grid compact">{lib.images.map(image => <ImageTile key={image.id} image={image} insert={draft ? () => insert(image) : undefined}/>)}</div></> : <><div className="section-label">A SECOND PAIR OF EYES</div><h3>Your voice stays yours.</h3><p className="quiet">Fact checks, sources and similar writing will arrive in phase 3. Suggestions will appear here, without changing your text.</p><div className="note-card">For now, a small pause:<br/><br/>Is the opening yours?<br/>Is there a detail only you noticed?<br/>Does the ending need to explain?</div><small className="quiet">No AI request is made.</small></>}</div><div className="panel-footnote">Take your time. It’s your page.</div></aside>
       </>}
 
-      {room === 'write' && draft && researchOpen && <ResearchDrawer projectId={draft.id} research={research.research} reload={research.reload} saveAnnotations={research.saveAnnotations} close={closeResearch}/>}
+      {room === 'write' && draft && researchOpen && <ResearchDrawer projectId={draft.id} research={research.research} reload={research.reload} saveAnnotations={research.saveAnnotations} close={closeResearch} insert={insertQuote} sectionId={activeSection?.id ?? null} placeName={id => draft.sections?.find(n => n.id === id)?.title ?? (draft.type === 'blog' ? 'the text' : draft.type === 'story' ? 'Single text' : 'Opening')}/>}
 
       {room === 'ideas' && <main className="room idea-room"><div className="room-heading"><div><div className="eyebrow">BEFORE THE FIRST DRAFT</div><h1>Somewhere to begin.</h1><p className="quiet">Catch a thought. Let it become something.</p></div><span className="room-number">02 / IDEA BOX</span></div><form className="capture" onSubmit={e => { e.preventDefault(); void perform(addIdea) }}><input ref={captureInput} aria-label="New idea" placeholder="A sentence, a question, a place…" value={capture} onChange={e => setCapture(e.target.value)}/><button className="accent-button" disabled={busy || !capture.trim()}>Catch idea <span>＋</span></button></form><div className="tag-filters"><button className={!tag ? 'selected' : ''} onClick={() => setTag('')}>All ideas</button>{tags.map(t => <button key={t} className={tag === t ? 'selected' : ''} onClick={() => setTag(t)}>#{t}</button>)}<label className="tag-filter-input"><span className="sr-only">Filter or add a tag</span><input placeholder="Filter / add tag" value={tag} onChange={e => setTag(e.target.value)}/></label></div><div className="idea-board">{stages.map((stage, index) => { const ideas = lib.ideas.filter(i => i.status === stage && (!tag || i.tags.includes(tag))); return <section className="idea-column" key={stage} aria-label={stage}><div className="column-heading"><span><small>0{index + 1}</small> {stage}</span><span>{ideas.length}</span></div>{ideas.map(idea => <article className="idea-card" key={idea.id}><small>{new Date(idea.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</small><h3>{idea.title}</h3><div className="idea-tags">{idea.tags.map(t => <span key={t}>#{t}</span>)}</div><label className="sr-only" htmlFor={`stage-${idea.id}`}>Stage for {idea.title}</label><select id={`stage-${idea.id}`} value={idea.status} disabled={busy} onChange={e => void perform(async () => { await api.saveIdea({ ...idea, status: e.target.value as Idea['status'] }); await refresh() })}>{stages.map(s => <option key={s}>{s}</option>)}</select><label className="idea-tag-edit">Tags<input aria-label={`Tags for ${idea.title}`} defaultValue={idea.tags.join(', ')} onBlur={e => { const tags = e.target.value.split(',').map(t => t.trim()).filter(Boolean); if (JSON.stringify(tags) !== JSON.stringify(idea.tags)) void perform(async () => { await api.saveIdea({ ...idea, tags }); await refresh() }) }}/></label><div className="card-actions"><button disabled={busy} onClick={() => void perform(async () => { const project = lib.projects.find(p => p.id === idea.projectId); if (project) await openProject(project); else await create(idea.title, idea) })}>{idea.projectId ? 'Open draft' : 'Start writing'} ↗</button><button disabled={busy} aria-label={`Move idea ${idea.title} to trash`} onClick={() => void perform(async () => { await api.trash('ideas', idea.id, idea.title); await refresh() })}>×</button></div></article>)}{ideas.length === 0 && <p className="column-empty">{stage === 'Idea' ? 'Small thoughts welcome.' : stage === 'Research' ? 'Follow your curiosity.' : stage === 'Draft' ? 'Room for a first version.' : 'Words out in the world.'}</p>}</section> })}</div></main>}
 

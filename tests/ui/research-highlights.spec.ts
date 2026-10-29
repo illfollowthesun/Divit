@@ -1,22 +1,8 @@
 import { test, expect } from '@playwright/test'
-import type { Page } from '@playwright/test'
+import { select } from './research-helpers'
 import { mkdir, writeFile, readdir, readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 
-// Selects `phrase` inside the reader the way a mouse drag would, then releases the button.
-async function select(page: Page, phrase: string) {
-  await page.evaluate(phrase => {
-    // The phrase may run across a highlight and plain text, so search the joined text nodes.
-    const root = document.querySelector('.source-text')!, walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT), nodes: Text[] = []
-    while (walker.nextNode()) nodes.push(walker.currentNode as Text)
-    const joined = nodes.map(n => n.data).join(''), at = joined.indexOf(phrase)
-    if (at === -1) throw new Error(`Not found: ${phrase}`)
-    const locate = (offset: number) => { for (const node of nodes) { if (offset <= node.data.length) return [node, offset] as const; offset -= node.data.length } throw new Error('offset') }
-    const range = document.createRange(); range.setStart(...locate(at)); range.setEnd(...locate(at + phrase.length))
-    getSelection()!.removeAllRanges(); getSelection()!.addRange(range)
-    root.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }))
-  }, phrase)
-}
 const body = 'Kış tarifesinde ilk vapur 06:10 kalkıyor.\n\nMartılar ışıktan önce geliyor; iskele sessiz.\n\nSon vapur 23:30.'
 
 test('highlights and notes stay on the source across restarts and edits to the saved file', async ({ page }) => {

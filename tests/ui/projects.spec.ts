@@ -125,22 +125,18 @@ test('browser preview exports a real Markdown download through the local convert
   await expect(page.locator('.export-result')).toContainText('Copy ready')
 })
 
-test('research, timeline and daily writing goals persist without counting metadata as writing', async ({ page }) => {
+test('timeline and daily writing goals persist without counting metadata as writing', async ({ page }) => {
   await page.getByRole('button', { name: /New story or book/ }).click()
   await page.getByLabel('Project title').fill('The Last Ferry'); await page.getByRole('button', { name: 'Create project', exact: true }).click()
   await page.getByRole('textbox', { name: 'Markdown text' }).fill('One quiet morning.')
   await page.getByRole('tab', { name: 'Notes', exact: true }).click(); await page.getByRole('button', { name: 'Writing log', exact: true }).click()
   await page.getByLabel('Daily word goal').fill('10')
   await expect(page.locator('.daily-progress')).toContainText('3 / 10 words today')
-  await page.locator('.notebook-tabs').getByRole('button', { name: 'Research', exact: true }).click(); await page.getByRole('button', { name: '+ Research note', exact: true }).click()
-  await page.getByLabel('Note title').fill('Ferry routes'); await page.getByLabel('Note text').fill('Check the winter timetable before revising.')
-  await page.getByRole('button', { name: 'Save note', exact: true }).click()
   await page.getByRole('button', { name: 'Timeline', exact: true }).click(); await page.getByRole('button', { name: '+ Event', exact: true }).click()
   await page.getByLabel('Note title').fill('Departure'); await page.getByLabel('When', { exact: true }).fill('Day 1, 06:10')
   await page.getByLabel('Note text').fill('Derya takes the first ferry.'); await page.getByRole('button', { name: 'Save note', exact: true }).click()
   await page.keyboard.press('Control+s'); await expect(page.locator('.daily-goal-line')).toHaveAttribute('value', '3'); await expect(page.locator('.daily-goal-line')).toHaveAttribute('max', '10')
   await page.reload(); await page.getByRole('tab', { name: 'Notes', exact: true }).click()
-  await expect(page.locator('.project-notes')).toContainText('Ferry routes')
   await page.getByRole('button', { name: 'Timeline', exact: true }).click(); await expect(page.locator('.project-notes')).toContainText('Day 1, 06:10')
 })
 

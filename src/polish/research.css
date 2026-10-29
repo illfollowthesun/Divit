@@ -60,3 +60,30 @@
 .highlight-note textarea{width:100%;margin-top:8px;font:13px/1.4 'IBM Plex Sans',sans-serif;resize:vertical}
 .popover-actions{display:flex;justify-content:space-between;gap:6px;margin-top:4px}
 .popover-actions .popover-text{margin-left:0}
+.research-tabs{display:flex;gap:20px;margin:6px 0 16px}
+.research-tabs button{padding:6px 0;border-radius:0;position:relative;font-size:12px;color:var(--muted)}
+.research-tabs button.active{color:var(--accent)}
+.research-tabs button.active:after{content:'';position:absolute;left:0;right:0;bottom:-2px;height:2px;background:var(--accent)}
+.research-tabs button span{font:10px 'IBM Plex Mono'}
+.long-quote{background:var(--chrome);border-radius:5px;padding:10px 12px;margin-bottom:10px;font-size:12px}
+.long-quote p{margin:0 0 8px}
+.long-quote div{display:flex;gap:8px}
+.insert-as{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--muted);margin-bottom:14px}
+.insert-as select{font-size:12px;padding:5px 8px}
+.highlight-group{margin-bottom:20px}
+.highlight-group h4{font:500 13px 'IBM Plex Sans',sans-serif;margin:0 0 8px}
+.highlight-group h4 small{font-weight:400;color:var(--muted)}
+.highlight-item{padding:8px 10px 6px 12px;margin-bottom:8px;border-radius:4px;background:var(--card);box-shadow:inset 3px 0 var(--hl,var(--line))}
+.hl-edge-1{--hl:#d9c486}.hl-edge-2{--hl:#a9bf98}.hl-edge-3{--hl:#9db6c8}.hl-edge-4{--hl:#d3a79c}
+.highlight-item blockquote{margin:0;font:16px/1.5 Newsreader,Georgia,serif}
+.highlight-item-note{font-size:12px;color:var(--muted);margin:6px 0 0;white-space:pre-wrap}
+.highlight-actions{display:flex;gap:4px;justify-content:flex-end}
+.highlight-actions .popover-text{margin-left:0}
+.research-note{padding:10px 12px;margin-bottom:8px;border-radius:4px;background:var(--card)}
+.research-note small{font-size:10px;color:var(--muted)}
+.research-note h4{font:500 15px/1.3 Newsreader,Georgia,serif;margin:2px 0 4px}
+.research-note p{font-size:13px;line-height:1.5;white-space:pre-wrap;margin:0 0 4px}
+.linked-quote{display:block;text-align:left;padding:4px 0;font:italic 13px Newsreader,Georgia,serif;color:var(--muted)}
+.notes-tab>.outline-button{margin-bottom:12px}
+.source-used{font-size:12px;color:#5f7049;margin:0 0 8px}
+.notebook-moved{font-size:11px}

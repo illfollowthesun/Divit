@@ -17,7 +17,7 @@ function textOffset(root: HTMLElement, node: Node, offset: number) {
   return Number(block.dataset.from) + range.toString().length
 }
 
-export function SourceReader({ projectId, source, back, reload, highlights, save }: { projectId: string; source: ResearchSource; back: () => void; reload: () => Promise<unknown>; highlights: Highlight[]; save: (change: (current: Annotations) => Partial<Annotations>) => Promise<void> }) {
+export function SourceReader({ projectId, source, back, reload, highlights, save, focusHighlight, onInsert, placeName }: { projectId: string; source: ResearchSource; back: () => void; reload: () => Promise<unknown>; highlights: Highlight[]; save: (change: (current: Annotations) => Partial<Annotations>) => Promise<void>; focusHighlight?: string; onInsert: (quote: string, highlightId?: string) => void; placeName: (sectionId: string | null) => string }) {
   const [text, setText] = useState<string | null>(null), [problem, setProblem] = useState('')
   const [popover, setPopover] = useState<Popover | null>(null), [note, setNote] = useState('')
   const heading = useRef<HTMLHeadingElement>(null), body = useRef<HTMLDivElement>(null), reader = useRef<HTMLElement>(null)
@@ -36,6 +36,13 @@ export function SourceReader({ projectId, source, back, reload, highlights, save
     const escape = (event: globalThis.KeyboardEvent) => { if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); close() } }
     window.addEventListener('keydown', escape, true); return () => window.removeEventListener('keydown', escape, true)
   }, [popover])
+  // Arriving from the Highlights tab: bring that highlight into view.
+  useEffect(() => {
+    if (text === null || !focusHighlight) return
+    const mark = body.current?.querySelector<HTMLElement>(`[data-highlight="${CSS.escape(focusHighlight)}"]`)
+    mark?.scrollIntoView({ block: 'center' }); mark?.focus()
+  }, [text, focusHighlight])
+  const places = [...new Set(source.usedIn.map(use => placeName(use.sectionId)))]
   const lost = anchored.filter(h => h.lost)
   const current = popover?.id ? anchored.find(h => h.id === popover.id) : undefined
 
@@ -78,6 +85,7 @@ export function SourceReader({ projectId, source, back, reload, highlights, save
     <p className="source-meta">{[source.site, source.author, source.published ?? (source.saved && `saved ${source.saved}`)].filter(Boolean).join(' · ')}</p>
     {source.url && <p className="source-url" title="Original address">{source.url}</p>}
     {source.summary && <p className="source-summary">{source.summary}</p>}
+    {places.length > 0 && <p className="source-used">Quoted in {places.join(', ')}</p>}
     {problem && <p className="research-problem" role="alert">{problem}</p>}
     {lost.length > 0 && <p className="quiet highlight-lost">{lost.length === 1 ? 'One highlight' : `${lost.length} highlights`} no longer match the saved text. {lost.length === 1 ? 'It is' : 'They are'} kept in Highlights.</p>}
     {text === null && !problem ? <p className="quiet">Opening the saved copy…</p> : <div ref={body} className="source-text" tabIndex={-1} onMouseUp={() => setTimeout(selected, 0)} onKeyUp={event => { if (event.shiftKey) selected() }}>
@@ -88,7 +96,8 @@ export function SourceReader({ projectId, source, back, reload, highlights, save
     {popover && <div className="highlight-popover" role="dialog" aria-label={current ? 'Edit highlight' : 'Highlight selection'} style={{ left: popover.x, top: popover.y }} onMouseDown={event => { if (!(event.target instanceof HTMLTextAreaElement)) event.preventDefault() }}>
       {popover.problem ? <p>{popover.problem}</p> : <>
         <div className="highlight-colors">{highlightColors.map(color => <button key={color.id} className={`swatch hl-${color.id}`} aria-label={`${current ? 'Change to' : 'Highlight in'} ${color.name}`} aria-pressed={current?.color === color.id} onClick={() => current ? update({ color: color.id }) : create(color.id)}/>)}
-          {!current && !popover.noting && <button className="popover-text" onClick={() => setPopover({ ...popover, noting: true })}>Add note</button>}</div>
+          {!current && !popover.noting && <button className="popover-text" onClick={() => setPopover({ ...popover, noting: true })}>Add note</button>}
+          <button className="popover-text insert-quote" onClick={() => { const quote = text!.slice(popover.from, popover.to), id = current?.id; close(); onInsert(quote, id) }}>Insert quote</button></div>
         {(current || popover.noting) && <div className="highlight-note"><label className="sr-only" htmlFor="highlight-note">Note</label><textarea id="highlight-note" autoFocus={popover.noting} rows={3} placeholder="Why this matters…" value={note} onChange={event => setNote(event.target.value)}/>
           <div className="popover-actions">{current ? <><button className="popover-text" onClick={() => update({ note: note.trim() || undefined })}>Save note</button><button className="popover-text danger" onClick={() => current.note && !popover.confirm ? setPopover({ ...popover, confirm: true }) : void apply(list => list.filter(h => h.id !== current.id))}>{popover.confirm ? 'Remove highlight and note' : 'Remove highlight'}</button></> : <button className="popover-text" onClick={() => create(1, note)}>Save with note</button>}</div></div>}
       </>}
