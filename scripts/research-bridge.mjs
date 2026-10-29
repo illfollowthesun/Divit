@@ -1,0 +1,92 @@
+import { readFile, writeFile, mkdir, rename, stat } from 'node:fs/promises'
+import { join, resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
+import { randomUUID } from 'node:crypto'
+import { parseSource, serializeSource, normalizeUrl, cleanMeta, emptyResearch } from './research-format.mjs'
+
+// Research lives beside the writing: projects/<id>/research/{research.json, sources/, inbox/, requests/}.
+const validId = value => typeof value === 'string' && /^[A-Za-z0-9-]{1,100}$/.test(value)
+const statuses = ['unread', 'read', 'used']
+const MAX_TEXT = 2 * 1024 * 1024
+
+async function atomic(path, text) {
+  const temporary = `${path}.${randomUUID()}.pending`
+  await writeFile(temporary, text, { encoding: 'utf8', flag: 'wx' }); await rename(temporary, path)
+}
+async function folders(request) {
+  if (!validId(request.projectId)) throw new Error('Choose a project first.')
+  const project = join(resolve(request.dataRoot), 'projects', request.projectId)
+  if (request.createProject) await mkdir(project, { recursive: true })
+  else if (!(await stat(project).catch(() => null))?.isDirectory()) throw new Error('This project is no longer in the library.')
+  const root = join(project, 'research')
+  return { root, index: join(root, 'research.json'), sources: join(root, 'sources'), inbox: join(root, 'inbox'), requests: join(root, 'requests') }
+}
+async function loadIndex(paths) {
+  try { return { ...emptyResearch(), ...JSON.parse(await readFile(paths.index, 'utf8')) } }
+  catch (error) { if (error.code === 'ENOENT') return emptyResearch(); throw new Error('research.json could not be read. Nothing was changed.') }
+}
+async function saveIndex(paths, index) { await mkdir(paths.root, { recursive: true }); await atomic(paths.index, JSON.stringify(index, null, 2)) }
+
+// Adds one source unless its URL is already saved. Returns the stored record, or the existing duplicate.
+async function addSource(paths, index, meta, text, origin, now) {
+  const clean = cleanMeta(meta)
+  if (!clean) throw new Error('A source needs a title.')
+  if (typeof text !== 'string' || Buffer.byteLength(text) > MAX_TEXT) throw new Error('This source text is too large (over 2 MB).')
+  const key = clean.url ? normalizeUrl(clean.url) : ''
+  const duplicate = key && index.sources.find(s => s.url && normalizeUrl(s.url) === key)
+  if (duplicate) return { source: duplicate, duplicate: true }
+  clean.saved ??= now.toISOString().slice(0, 10)
+  const source = { id: randomUUID(), ...clean, status: 'unread', origin, addedAt: now.toISOString(), usedIn: [] }
+  await mkdir(paths.sources, { recursive: true })
+  await atomic(join(paths.sources, `${source.id}.md`), serializeSource(clean, text))
+  index.sources.push(source)
+  return { source, duplicate: false }
+}
+function checkAnnotations(index, { highlights, notes, ai }) {
+  if (![highlights, notes, ai].every(Array.isArray)) throw new Error('Invalid research notes.')
+  const ids = new Set(index.sources.map(s => s.id))
+  for (const h of highlights) if (!validId(h?.id) || !ids.has(h.sourceId) || !Number.isInteger(h.from) || !Number.isInteger(h.to) || h.from > h.to || typeof h.quote !== 'string' || ![1, 2, 3, 4].includes(h.color)) throw new Error('Invalid highlight.')
+  for (const n of [...notes, ...ai]) if (!validId(n?.id) || typeof n.body !== 'string') throw new Error('Invalid research note.')
+  if (JSON.stringify({ highlights, notes, ai }).length > 5 * 1024 * 1024) throw new Error('Research notes are too large.')
+}
+
+export async function research(request, runtime = {}) {
+  const paths = await folders(request), now = runtime.now ?? new Date()
+  if (request.action === 'load') return await loadIndex(paths)
+  const index = await loadIndex(paths)
+  if (request.action === 'read-source') {
+    const source = index.sources.find(s => s.id === request.sourceId)
+    if (!source || !validId(source.id)) throw new Error('This source is no longer saved.')
+    return { source, text: parseSource(await readFile(join(paths.sources, `${source.id}.md`), 'utf8')).text }
+  }
+  if (request.action === 'add-source') {
+    const result = await addSource(paths, index, request.meta ?? {}, request.text ?? '', ['url', 'ai-found'].includes(request.origin) ? request.origin : 'url', now)
+    if (!result.duplicate) await saveIndex(paths, index)
+    return result
+  }
+  if (request.action === 'update-source') {
+    const source = index.sources.find(s => s.id === request.sourceId), patch = request.patch ?? {}
+    if (!source) throw new Error('This source is no longer saved.')
+    if (patch.status !== undefined) { if (!statuses.includes(patch.status)) throw new Error('Invalid source status.'); source.status = patch.status }
+    if (patch.scopeId !== undefined) { if (patch.scopeId !== null && !validId(patch.scopeId)) throw new Error('Invalid section.'); source.scopeId = patch.scopeId }
+    if (patch.usedIn !== undefined) { if (!Array.isArray(patch.usedIn) || patch.usedIn.some(u => u.sectionId !== null && !validId(u.sectionId))) throw new Error('Invalid quote location.'); source.usedIn = patch.usedIn.map(u => ({ sectionId: u.sectionId, at: String(u.at), highlightId: validId(u.highlightId) ? u.highlightId : undefined })) }
+    await saveIndex(paths, index)
+    return source
+  }
+  if (request.action === 'save-annotations') {
+    checkAnnotations(index, request)
+    Object.assign(index, { highlights: request.highlights, notes: request.notes, ai: request.ai })
+    await saveIndex(paths, index)
+    return index
+  }
+  throw new Error('Unknown research action.')
+}
+// One request at a time per process (the preview server); the desktop app also holds its storage lock.
+let queue = Promise.resolve()
+export function queued(request, runtime) { const next = queue.then(() => research(request, runtime)); queue = next.catch(() => {}); return next }
+
+if (process.argv[1] && resolve(process.argv[1]) === resolve(fileURLToPath(import.meta.url))) {
+  let raw = ''; for await (const chunk of process.stdin) raw += chunk
+  try { process.stdout.write(JSON.stringify({ ok: true, result: await research(JSON.parse(raw)) })) }
+  catch (error) { process.stdout.write(JSON.stringify({ ok: false, error: error.message })); process.exitCode = 1 }
+}

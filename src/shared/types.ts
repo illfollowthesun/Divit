@@ -16,6 +16,12 @@ export type Project = {
 export type Idea = { schemaVersion: 1; id: string; title: string; tags: string[]; status: Stage; createdAt: string; projectId?: string; revision?: string }
 export type ImageRecord = { id: string; file: string; name: string; addedAt: string; dataUrl?: string }
 export type Settings = { schemaVersion: number; theme: 'light' | 'dark'; siteRepo: string; aiProvider: 'claude-code' | 'anthropic' | 'ollama'; backupFolder?: string; dictionary?: Partial<Record<'en' | 'tr', string[]>> }
+// Research: files in projects/<id>/research/ (format in scripts/research-format.mjs, README "Research").
+export type ResearchSource = { id: string; title: string; url?: string; site?: string; author?: string; published?: string; saved?: string; type: 'news' | 'article' | 'blog' | 'paper' | 'other'; topic?: string; summary?: string; status: 'unread' | 'read' | 'used'; origin: 'url' | 'inbox' | 'ai-found'; addedAt: string; scopeId?: string | null; usedIn: { sectionId: string | null; at: string; highlightId?: string }[] }
+export type Highlight = { id: string; sourceId: string; from: number; to: number; quote: string; color: 1 | 2 | 3 | 4; note?: string; createdAt: string }
+export type ResearchNote = { id: string; title: string; body: string; highlightId?: string; migratedFrom?: string; createdAt: string; updatedAt: string; trashedAt?: string }
+export type AiNote = { id: string; kind: 'summary' | 'answer' | 'angles'; sourceId?: string; question?: string; body: string; provider: string; model: string; createdAt: string }
+export type Research = { schemaVersion: 1; sources: ResearchSource[]; highlights: Highlight[]; notes: ResearchNote[]; ai: AiNote[] }
 export type BackupInfo = { enabled: boolean; lastBackupAt: string | null; path?: string; folder?: string; skipped?: boolean }
 export type TrashEntry = { key: string; kind: 'projects' | 'ideas' | 'images'; id: string; title: string; content?: Project | Idea | ImageRecord }
 export type Library = { projects: Project[]; ideas: Idea[]; images: ImageRecord[]; settings: Settings; trash: TrashEntry[]; dataRoot: string }

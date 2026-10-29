@@ -121,6 +121,38 @@ Each project has a LANGUAGE setting (English or Turkish), saved with the project
 - The personal dictionary is stored per language in `Documents/Yazi/settings.json` (`dictionary.en`, `dictionary.tr`). Ignored words are stored in the project (`ignoredWords`).
 - Nothing is ever corrected automatically. The native spellcheck and autocorrect are turned off.
 
+## Research files
+
+Each project keeps its research next to the writing, as plain files that stay readable without Yazı:
+
+```
+Documents/Yazi/projects/<project-id>/research/
+  research.json        index: sources (status, where each was quoted), highlights, notes, AI notes
+  sources/<id>.md      one saved source: frontmatter + the readable text
+  inbox/               drop source files here; Yazı imports them (imported originals move to inbox/_imported)
+  requests/<id>.md     "Search about this topic" requests
+```
+
+A source file (the same format in `inbox/` and `sources/`):
+
+```
+---
+title: ...
+url: https://...
+site: ...
+author: ...
+published: 2026-10-20
+saved: 2026-10-29
+type: news | article | blog | paper | other
+topic: <the topic it was searched for>
+summary: 2-3 sentence summary
+---
+
+Readable text (Markdown). Keep the original wording; never paraphrase silently.
+```
+
+Only `title` is required. Values containing `: `, `#` or quotes are written as double-quoted strings. Sources are deduplicated by URL (ignoring `www.`, tracking parameters, `#fragments` and trailing slashes). Highlights, notes and AI notes live in `research.json`, never in the source text or the manuscript. Saved sources are for the writer's private research; quotes inserted into the text always carry their citation.
+
 ## Automatic backups and manual restore
 
 In the desktop app, open Settings and choose a backup folder outside `Documents/Yazi`, such as a USB drive or a folder already managed by OneDrive. Save settings to enable the daily check, or use **Back up now**. Backups run once per local day while the app is open, and again on close after writing has been saved. They use the installed Node.js 22 runtime. The native storage lock serializes the full ZIP against application writes. Settings shows the last successful backup time; a failed backup does not replace that record.
