@@ -1,4 +1,4 @@
-import { fold, misspelled, spellWords } from '../spell/words.ts'
+import { fold, misspelled, normalize, spellWords } from '../spell/words.ts'
 import type { SpellLanguage } from '../spell/words.ts'
 
 export type CheckLanguage = SpellLanguage | 'auto'
@@ -33,10 +33,11 @@ export function hunspellChecker(speller: Speller): Checker {
         return spellWords(paragraph[0], paragraph.index).filter(word => input.prose?.(word.from, word.to) !== false).map(word => ({ word, language }))
       })
       await Promise.all((['en', 'tr'] as const).map(language => speller.checkWords(language, candidates.filter(c => c.language === language).flatMap(c => [...new Set([c.word.word, c.word.stem])]))))
-      return candidates.filter(({ word, language }) => misspelled(word, language, input.accepted(language), word => speller.verdict(language, word))).map(({ word, language }) => ({
+      const accepted = { en: input.accepted('en'), tr: input.accepted('tr') }
+      return candidates.filter(({ word, language }) => misspelled(word, language, accepted[language], word => speller.verdict(language, word))).map(({ word, language }) => ({
         id: `hunspell:${language}:${word.from}:${word.to}`, from: word.from, to: word.to, original: input.text.slice(word.from, word.to), language, type: 'spelling', message: `Check spelling: ${word.word}`, engine: 'hunspell', rule: 'unknown-word',
       }))
     },
-    suggest: issue => speller.suggestions(issue.language, issue.original),
+    suggest: issue => speller.suggestions(issue.language, normalize(issue.original)),
   }
 }
