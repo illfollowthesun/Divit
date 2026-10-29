@@ -56,7 +56,7 @@ async function moveAside(inbox, name, folder) {
   const taken = await stat(join(target, name)).then(() => true, () => false)
   await rename(join(inbox, name), join(target, taken ? `${Date.now()}-${name}` : name))
 }
-const inboxFiles = async inbox => (await readdir(inbox, { withFileTypes: true }).catch(() => [])).filter(item => item.isFile() && /.md$/i.test(item.name)).map(item => item.name).sort()
+const inboxFiles = async inbox => (await readdir(inbox, { withFileTypes: true }).catch(() => [])).filter(item => item.isFile() && /\.md$/i.test(item.name)).map(item => item.name).sort()
 async function scanInbox(paths, index, now, settleMs) {
   const imported = [], duplicates = [], invalid = []
   for (const name of await inboxFiles(paths.inbox)) {
