@@ -38,6 +38,7 @@ async fn site_action(app: tauri::AppHandle, state: tauri::State<'_, AppState>, a
         let store = state.0.lock().map_err(|e| e.to_string())?;
         let library = store.library()?;
         let project = store.project(&project_id)?;
+        if library["settings"]["siteRepo"].as_str().unwrap_or("").trim().is_empty() { return Err("Set a site repository folder in Settings → Publish to my site first.".into()); }
         if project["type"] != "blog" { return Err("Stories and books use Export. Only blog posts are sent to the site.".into()); }
         if expected_revision.as_deref() != project["revision"].as_str() { return Err("This draft changed on disk after you opened it. Reload and review the current text before sending.".into()); }
         if project["published"].is_object() { return Err("This draft has already been sent. Review its branch in the site repository.".into()); }

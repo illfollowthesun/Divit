@@ -9,7 +9,7 @@ const key = 'yazi-browser-preview-v1'
 function preview(): Library {
   const saved = localStorage.getItem(key)
   if (saved) return JSON.parse(saved)
-  return { projects: [], ideas: [], images: [], trash: [], dataRoot: t('Browser preview · saved in this browser only'), settings: { schemaVersion: 1, theme: 'light', siteRepo: 'C:\\Users\\edmes\\Documents\\modernist-portfolio', aiProvider: 'claude-code' } }
+  return { projects: [], ideas: [], images: [], trash: [], dataRoot: t('Browser preview · saved in this browser only'), settings: { schemaVersion: 1, theme: 'light', siteRepo: '', aiProvider: 'claude-code' } }
 }
 function persist(data: Library) { localStorage.setItem(key, JSON.stringify(data)) }
 function savePreview<T extends Project | Idea>(collection: 'projects' | 'ideas', data: T): T {

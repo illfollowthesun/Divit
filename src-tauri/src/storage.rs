@@ -238,7 +238,7 @@ impl Store {
             if item.file_type().map_err(err)?.is_dir() { images.push(json_file(&item.path().join("image.json"))?); }
         }
         let settings = if self.root.join("settings.json").exists() { json_file(&self.root.join("settings.json"))? } else {
-            json!({"schemaVersion":1,"theme":"light","siteRepo":dirs::document_dir().unwrap_or_default().join("modernist-portfolio").to_string_lossy(),"aiProvider":"claude-code"})
+            json!({"schemaVersion":1,"theme":"light","siteRepo":""})
         };
         Ok(json!({"projects":projects,"ideas":ideas,"images":images,"settings":settings,"dataRoot":self.root.to_string_lossy(),"trash":self.trash_list()?}))
     }

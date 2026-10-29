@@ -32,10 +32,12 @@ export const tr: Record<string, string> = {
   'Trash': 'Kenara konanlar', 'Keyboard shortcuts': 'Klavye kısayolları', 'LOCAL FILES. YOUR WORDS.': 'YEREL DOSYALAR. SİZİN KELİMELERİNİZ.',
 
   // Writing area
-  'SENT TO SITE': 'SİTEYE GÖNDERİLDİ', 'BLOG POST': 'BLOG YAZISI', 'Project actions': 'Proje işlemleri', 'Writing mode': 'Yazma modu', 'Underlines': 'Alt çizgiler',
+  'BLOG POST': 'BLOG YAZISI', 'Project actions': 'Proje işlemleri', 'Writing mode': 'Yazma modu', 'Underlines': 'Alt çizgiler',
   'Research (Ctrl+Alt+R)': 'Araştırma (Ctrl+Alt+R)', 'Move writing to trash': 'Yazıyı kenara koy', 'Archive': 'Arşivle', 'Export': 'Dışa aktar', 'Snapshots': 'Sürümler',
   'Start a rewrite': 'Yeniden yazmaya başla', 'Snapshot kept. Ready to rewrite.': 'Sürüm saklandı. Yeniden yazmaya hazır.', 'Before rewriting: {title}': 'Yeniden yazmadan önce: {title}',
-  'Send to site': 'Siteye gönder', 'Sent to site': 'Siteye gönderildi',
+  'Publish to my site': 'Siteme yayımla', 'On my site': 'Sitemde', 'ON MY SITE': 'SİTEMDE', 'Publish to my site (when set up)': 'Siteme yayımla (ayarlandıysa)',
+  'Publish to my site (advanced)': 'Siteme yayımla (ileri düzey)', 'Site repository folder': 'Site deposu klasörü', 'Leave empty if you do not have one': 'Yoksa boş bırakın',
+  'For a blog kept in a local Git repository that has a check:content script. Yazı writes the post and its images on a new branch and makes a local commit; you push it yourself. Needs Node.js 22. Leave empty to hide Publish to my site.': 'check:content betiği olan yerel bir Git deposunda tutulan bir blog için. Yazı, yazıyı ve görsellerini yeni bir dala yazar ve yerel bir commit yapar; push işlemini siz yaparsınız. Node.js 22 gerekir. Siteme yayımla seçeneğini gizlemek için boş bırakın.',
   'MAKE A LITTLE SPACE. WRITE.': 'BİRAZ YER AÇ. YAZ.', 'Title': 'Başlık', 'PLACE': 'YER', 'Somewhere': 'Bir yerde', 'DATE': 'TARİH', 'TAGS': 'ETİKETLER',
   'Add tags, separated by commas': 'Virgülle ayırarak etiket ekleyin', 'LANGUAGE': 'DİL', 'Detect per paragraph': 'Paragraf paragraf algıla',
   'SINGLE TEXT': 'TEK METİN', 'OPENING': 'AÇILIŞ', 'Single text': 'Tek metin', 'Opening': 'Açılış', 'the text': 'metin', 'Section title': 'Bölüm başlığı',
@@ -81,8 +83,7 @@ export const tr: Record<string, string> = {
 
   // Settings
   'Make yourself at home': 'Kendinizi evinizde hissedin', 'Interface language': 'Arayüz dili', 'Same as Windows': 'Windows ile aynı', 'Menus and messages only. The language you write in is set per project.': 'Yalnızca menüler ve iletiler. Yazdığınız dil her projede ayrı seçilir.',
-  'Appearance': 'Görünüm', 'Warm paper': 'Sıcak kâğıt', 'After hours': 'Mesai sonrası', 'Site repository': 'Site deposu',
-  'The local duruduygu.com repository. Node.js 22 and its npm dependencies are needed for sending.': 'Yerel duruduygu.com deposu. Göndermek için Node.js 22 ve npm bağımlılıkları gerekir.',
+  'Appearance': 'Görünüm', 'Warm paper': 'Sıcak kâğıt', 'After hours': 'Mesai sonrası',
   'Check for a new version when Yazı starts': 'Yazı açılırken yeni sürüm var mı bak', 'Asks GitHub for the latest release; nothing about you or your writing is sent. Yazı always asks before installing.': 'GitHub’a en son sürümü sorar; sizinle ya da yazınızla ilgili hiçbir şey gönderilmez. Yazı kurmadan önce her zaman sorar.',
   'Check for updates': 'Güncellemeleri denetle', 'Version {version} is available.': '{version} sürümü hazır.', 'You have the latest version.': 'En son sürümü kullanıyorsunuz.', 'Could not check for updates: {reason}': 'Güncellemeler denetlenemedi: {reason}',
   'Yazı {version} is ready. Installing restarts Yazı; your writing is saved first.': 'Yazı {version} hazır. Kurulum Yazı’yı yeniden başlatır; yazınız önce kaydedilir.', 'Install and restart': 'Kur ve yeniden başlat', 'Installing…': 'Kuruluyor…',
