@@ -2,6 +2,7 @@
 mod ai;
 mod ai_complete;
 mod ai_search;
+mod search_service;
 mod storage;
 use serde_json::{json, Value};
 use std::{io::Write, path::PathBuf, process::{Command, Stdio}, sync::{Arc, Mutex}};
@@ -158,6 +159,10 @@ fn ai_set_key(provider: String, key: String) -> Result<()> { ai::set_key(ai::Pro
 #[tauri::command]
 fn ai_forget_key(provider: String) -> Result<()> { ai::forget_key(ai::ProviderKind::parse(&provider)?) }
 #[tauri::command]
+fn search_set_key(service: String, key: String) -> Result<()> { ai::set_named_key(search_service::SearchKind::parse(&service)?.key_name().ok_or("This service needs no key")?, &key) }
+#[tauri::command]
+fn search_forget_key(service: String) -> Result<()> { ai::forget_named_key(search_service::SearchKind::parse(&service)?.key_name().ok_or("This service needs no key")?) }
+#[tauri::command]
 async fn ai_test(state: tauri::State<'_, AppState>) -> Result<String> {
     let config = { let store = state.0.lock().map_err(|e| e.to_string())?; ai::load(&store.root)? };
     let key = ai::get_key(config.provider)?;
@@ -170,7 +175,12 @@ async fn ai_search(state: tauri::State<'_, AppState>, request: Value) -> Result<
     ai_search::check(&request)?;
     let (config, root) = { let store = state.0.lock().map_err(|e| e.to_string())?; (ai::load(&store.root)?, store.root.clone()) };
     if !config.enabled { return Err("Turn on AI in Settings → AI first.".into()); }
-    if !ai::capabilities(&config).native_search { return Err("Search with AI is not available for this provider. Choose one in Settings → AI.".into()); }
+    let service = ai::search_service(&config)?;
+    let native = ai::capabilities(&config).native_search && !config.search.always && request.via != "service";
+    if !native {
+        let Some((search, search_key)) = service else { return Err("This AI cannot search the web itself. Add a search service in Settings → AI, or choose Gemini or Claude.".into()) };
+        return search_with_service(&state, &config, &root, &search, search_key.as_deref(), &request).await;
+    }
     let key = ai::get_key(config.provider)?.ok_or("Add an API key in Settings → AI first.")?;
     let outcome = ai_search::run(&config, &key, &request).await;
     let (spent, cost) = bill(&state, &config, &root, &request.month, &outcome.model, &outcome.spend)?;
@@ -178,6 +188,24 @@ async fn ai_search(state: tauri::State<'_, AppState>, request: Value) -> Result<
         Ok((candidates, dropped)) => Ok(json!({ "candidates": candidates, "dropped": dropped, "usage": spent })),
         Err(message) => Err(attempt_cost(message, &outcome.spend, cost)),
     }
+}
+// Results from the search service, ranked and summarised by the selected model. If the model fails or
+// answers in the wrong shape, the results still arrive in the service's order, without AI summaries.
+async fn search_with_service(state: &tauri::State<'_, AppState>, config: &ai::AiConfig, root: &std::path::Path, search: &search_service::SearchConfig, search_key: Option<&str>, request: &ai_search::SearchRequest) -> Result<Value> {
+    let key = ai::get_key(config.provider)?;
+    if ai::capabilities(config).key_required && key.is_none() { return Err("Add an API key in Settings → AI first.".into()); }
+    let hits = search_service::fetch(search, search_key, request).await?;
+    let via = search.provider.label();
+    if hits.is_empty() { return Ok(json!({ "candidates": [], "dropped": 0, "via": via, "ranked": true, "usage": { "inputTokens": 0, "outputTokens": 0, "webSearches": 1, "costUsd": null, "monthCostUsd": 0.0, "overLimit": false, "model": config.model } })); }
+    let (system, prompt) = search_service::ranking_prompt(request, &hits);
+    let reply = ai_complete::complete(config, key.as_deref(), &system, &prompt, 2000).await;
+    let (spent, _) = bill(state, config, root, &request.month, &reply.model, &reply.spend)?;
+    let count = request.count as usize;
+    let (candidates, problem) = match &reply.result {
+        Ok(answer) => match search_service::ranked(answer, &hits, count) { Some(c) => (c, None), None => (search_service::unranked(&hits, count), Some(format!("{} did not answer in the expected form.", reply.model))) },
+        Err(message) => (search_service::unranked(&hits, count), Some(message.trim_start_matches("[billing] ").to_string())),
+    };
+    Ok(json!({ "candidates": candidates, "dropped": 0, "via": via, "ranked": problem.is_none(), "rankProblem": problem, "usage": spent }))
 }
 // Adds one request to this month's usage and describes what it spent.
 fn bill(state: &tauri::State<'_, AppState>, config: &ai::AiConfig, root: &std::path::Path, month: &str, model: &str, spend: &ai_search::Spend) -> Result<(Value, Option<f64>)> {
@@ -232,6 +260,6 @@ fn main() {
             }
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![library, save_project, save_idea, save_settings, import_image, image_data, trash, restore, site_action, export_action, backup_action, research_action, ai_status, ai_save, ai_set_key, ai_forget_key, ai_test, ai_search, ai_ask_unsourced])
+        .invoke_handler(tauri::generate_handler![library, save_project, save_idea, save_settings, import_image, image_data, trash, restore, site_action, export_action, backup_action, research_action, ai_status, ai_save, ai_set_key, ai_forget_key, ai_test, ai_search, ai_ask_unsourced, search_set_key, search_forget_key])
         .run(tauri::generate_context!()).expect("Could not start Yazı");
 }

@@ -3,7 +3,7 @@ import type { FormEvent } from 'react'
 import { api, desktop } from '../shared/api'
 import type { Research } from '../shared/types'
 import { localDay } from '../projects/writing-log'
-import { AI_STUDIO_BILLING, ai, aiError, costNote, money } from '../settings/ai'
+import { AI_STUDIO_BILLING, ai, aiError, costNote, money, searchRoute, serviceLabel } from '../settings/ai'
 import type { AiAnswer, AiProvider, AiSearchResult, AiStatus } from '../settings/ai'
 import { AiCandidates } from './AiCandidates'
 import type { Annotations } from './useResearch'
@@ -24,7 +24,7 @@ export function RequestPanel({ projectId, projectTitle, language, suggestTopic, 
   const latest = made?.request ?? requests[requests.length - 1]
   const arrived = latest ? research?.sources.filter(s => s.origin === 'inbox' && s.addedAt >= latest.createdAt).length ?? 0 : 0
   const month = localDay().slice(0, 7), config = aiStatus?.config
-  const aiOn = !!config?.enabled, canSearch = aiOn && !!aiStatus?.capabilities.nativeSearch && (!!aiStatus?.hasKey[config!.provider] || !aiStatus?.capabilities.keyRequired)
+  const aiOn = !!config?.enabled, route = searchRoute(aiStatus), canSearch = !!route
   // Text from the Sources box that is not an address arrives here as the topic.
   useEffect(() => { if (prefill) void openForm(prefill.topic) }, [prefill?.at])
   async function openForm(topic?: string) {
@@ -41,14 +41,14 @@ export function RequestPanel({ projectId, projectTitle, language, suggestTopic, 
     setWorking(true); setProblem(''); setCopied('')
     try { setMade(await api.research(projectId, 'add-request', { ...form, projectTitle })); setForm(null) } catch (error) { setProblem(message(error)) } finally { setWorking(false) }
   }
-  async function searchWithAi(confirmed = false) {
+  async function searchWithAi(confirmed = false, via?: 'service') {
     if (!form || working) return
     setWorking(true); setProblem(''); setProblemCode('')
     try {
       // Settings may have changed while this form stayed open. Use the provider and limit now saved.
       const latest = await ai.status(); setAiStatus(latest)
       const current = latest.config
-      if (!current.enabled || !latest.capabilities.nativeSearch || latest.capabilities.keyRequired && !latest.hasKey[current.provider]) {
+      if (!searchRoute(latest) || via && !latest.searchReady) {
         setConfirmOver(false)
         throw new Error('AI settings changed. Check Settings → AI or save a request instead.')
       }
@@ -56,7 +56,7 @@ export function RequestPanel({ projectId, projectTitle, language, suggestTopic, 
         setConfirmOver(true); return
       }
       setConfirmOver(false); setFound(null)
-      const result = await ai.search({ ...form, topic: form.topic.trim(), angle: form.angle.trim(), projectTitle, month })
+      const result = await ai.search({ ...form, topic: form.topic.trim(), angle: form.angle.trim(), projectTitle, month, ...(via ? { via } : {}) })
       setFound({ topic: form.topic.trim(), provider: current.provider, result }); setForm(null)
     } catch (error) { const e = aiError(error); setProblem(e.text); setProblemCode(e.code) }
     finally { setWorking(false); void ai.status().then(setAiStatus).catch(() => {}) }
@@ -95,11 +95,12 @@ export function RequestPanel({ projectId, projectTitle, language, suggestTopic, 
         {canSearch && <button type="button" className="accent-button" disabled={working || !form.topic.trim()} onClick={() => void searchWithAi()}>{working ? 'Searching the web…' : 'Search with AI'}</button>}
         <button className={canSearch ? 'outline-button' : 'accent-button'} disabled={working || !form.topic.trim()}>{canSearch ? 'Save a request instead' : working ? 'Saving…' : 'Save request'}</button>
         <button type="button" disabled={working} onClick={() => setForm(null)}>Cancel</button></div>
-      {canSearch && <p className="quiet request-ai-note">Search with AI uses {aiStatus!.price?.label ?? config!.model}. You choose which sources to keep; Yazı then saves the real pages.</p>}
-      {aiOn && !canSearch && <p className="quiet request-ai-note">{aiStatus?.capabilities.nativeSearch ? 'Add an API key in Settings → AI to search with AI.' : 'Searching the web needs Gemini (paid key) or Claude in Settings → AI.'}</p>}
+      {route === 'native' && <p className="quiet request-ai-note">Search with AI uses {aiStatus!.price?.label ?? config!.model}. You choose which sources to keep; Yazı then saves the real pages.</p>}
+      {route === 'service' && <p className="quiet request-ai-note">{serviceLabel(aiStatus)} finds the pages; {aiStatus!.price?.label ?? config!.model} ranks and summarises them. You choose which sources to keep; Yazı then saves the real pages.</p>}
+      {aiOn && !canSearch && <p className="quiet request-ai-note">{aiStatus?.capabilities.keyRequired && !aiStatus.hasKey[config!.provider] ? 'Add an API key in Settings → AI to search with AI.' : 'Searching the web needs Gemini (with billing), Claude, or a search service such as Tavily in Settings → AI.'}</p>}
     </form>}
     {problem && <p className="research-problem" role="alert">{problem}</p>}
-    {problemCode === 'no-search-quota' && form && <div className="problem-actions"><button type="button" className="outline-button" disabled={working} onClick={() => void askUnsourced()}>{working ? 'Asking…' : 'Ask without web search'}</button><button type="button" className="popover-text" onClick={() => void api.openLink(AI_STUDIO_BILLING)}>Turn on billing ↗</button><button type="button" className="popover-text" onClick={openSettings}>Choose another provider</button></div>}
+    {problemCode === 'no-search-quota' && form && <div className="problem-actions">{aiStatus?.searchReady && <button type="button" className="outline-button" disabled={working} onClick={() => void searchWithAi(true, 'service')}>Search with {serviceLabel(aiStatus)} instead</button>}<button type="button" className="outline-button" disabled={working} onClick={() => void askUnsourced()}>{working ? 'Asking…' : 'Ask without web search'}</button><button type="button" className="popover-text" onClick={() => void api.openLink(AI_STUDIO_BILLING)}>Turn on billing ↗</button><button type="button" className="popover-text" onClick={openSettings}>Choose another provider</button></div>}
     {problemCode === 'billing' && <div className="problem-actions"><button type="button" className="popover-text" onClick={() => void api.openLink(AI_STUDIO_BILLING)}>Open AI Studio billing ↗</button></div>}
     {unsourced && <div className="ai-unsourced" role="region" aria-label="Answer without web search">
       <p className="unsourced-label"><span className="ai-label">AI · unsourced</span> No web search was used: this comes from the model's own knowledge. Check every claim before you use it.</p>

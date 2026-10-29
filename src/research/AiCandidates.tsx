@@ -36,11 +36,12 @@ export function AiCandidates({ projectId, topic, provider, result, reload, saveA
   }
   const { usage } = result, open = result.candidates.filter(c => !['kept', 'discarded'].includes(cards[c.url]?.state ?? 'open')).length
   return <div className="ai-candidates" aria-label="Sources found by AI">
+    {result.via && <p className="search-via">{result.ranked === false ? `Found with ${result.via}, in its own order. ${result.rankProblem ?? ''} The text under each page is ${result.via}'s snippet, not AI.` : `Found with ${result.via}; ranked and summarised by ${usage.model}.`}</p>}
     <p className="ai-spend">This search: {usage.inputTokens.toLocaleString()} in / {usage.outputTokens.toLocaleString()} out tokens · {usage.webSearches} web {usage.webSearches === 1 ? 'search' : 'searches'}{usage.costUsd !== null ? ` · about ${money(usage.costUsd)}${costNote(provider)}` : ''} · this month about {money(usage.monthCostUsd)}{usage.overLimit ? ' · over your monthly limit' : ''}</p>
     {result.dropped > 0 && <p className="quiet">{result.dropped === 1 ? 'One suggestion was' : `${result.dropped} suggestions were`} left out because the address was not among the search results.</p>}
     {!result.candidates.length && <p className="quiet">No sources came back. Try a broader topic.</p>}
     {result.candidates.map(candidate => { const card = cards[candidate.url] ?? { state: 'open' }; return card.state === 'discarded' ? null : <article key={candidate.url} className={`ai-candidate ${card.state}`}>
-      <div className="source-kind"><span className="ai-label">AI found</span><span className="type-chip">{candidate.type}</span>{candidate.published && <span>{candidate.published}</span>}</div>
+      <div className="source-kind"><span className="ai-label">{result.via ? result.via : 'AI found'}</span><span className="type-chip">{candidate.type}</span>{candidate.published && <span>{candidate.published}</span>}</div>
       <h4>{candidate.title || candidate.site}</h4>
       <p className="source-url">{candidate.url}</p>
       {candidate.summary && <p className="ai-summary"><span className="ai-label">AI</span> {candidate.summary}</p>}

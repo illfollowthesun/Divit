@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import { desktop } from '../shared/api'
 import { localDay } from '../projects/writing-log'
-import { ai, compatiblePresets, localPresets, providers, usageLine } from './ai'
-import type { AiConfig, AiModel, AiProvider, AiStatus } from './ai'
+import { ai, compatiblePresets, localPresets, providers, searchServices, usageLine } from './ai'
+import type { AiConfig, AiModel, AiProvider, AiStatus, SearchService } from './ai'
 
 const message = (e: unknown) => e instanceof Error ? e.message : String(e)
 const priceLabel = (m: AiModel, provider: AiProvider) => {
@@ -13,7 +13,7 @@ const priceLabel = (m: AiModel, provider: AiProvider) => {
 // Settings → AI. Off by default; Yazı works fully without it.
 export function AiSettings() {
   const [status, setStatus] = useState<AiStatus | null>(null), [form, setForm] = useState<AiConfig | null>(null)
-  const [key, setKey] = useState(''), [working, setWorking] = useState(false), [note, setNote] = useState(''), [problem, setProblem] = useState('')
+  const [key, setKey] = useState(''), [searchKey, setSearchKey] = useState(''), [working, setWorking] = useState(false), [note, setNote] = useState(''), [problem, setProblem] = useState('')
   useEffect(() => { if (desktop) void ai.status().then(next => { setStatus(next); setForm(next.config) }).catch(error => setProblem(message(error))) }, [])
   async function run(action: () => Promise<string | void>) {
     setWorking(true); setProblem(''); setNote('')
@@ -26,6 +26,9 @@ export function AiSettings() {
   const model = models?.find(m => m.id === form.model), provider = providers.find(p => p.id === form.provider)!
   const saved = JSON.stringify(form) === JSON.stringify(status.config), over = form.monthlyLimitUsd !== null && status.config.usage.month === month && status.config.usage.costUsd >= form.monthlyLimitUsd
   const presets = form.provider === 'local' ? localPresets : compatiblePresets
+  const search = form.search, service = searchServices.find(s => s.id === search.provider)!
+  const keyedService = search.provider === 'tavily' || search.provider === 'brave' ? search.provider : null
+  const hasSearchKey = keyedService ? status.hasSearchKey[keyedService] : false
   function choose(next: AiProvider) {
     const list = next === 'gemini' ? status!.models.gemini : next === 'anthropic' ? status!.models.anthropic : null
     const keep = next === status!.config.provider
@@ -48,6 +51,14 @@ export function AiSettings() {
         {hasKey && <p className="ai-key-stored">A key is stored in Windows Credential Manager. <button type="button" className="popover-text" disabled={working} onClick={() => void run(async () => { await ai.forgetKey(form.provider); setStatus({ ...status, hasKey: { ...status.hasKey, [form.provider]: false } }); return 'The key was removed from this computer.' })}>Remove key</button></p>}
         <div className="ai-key-row"><input type="password" autoComplete="off" spellCheck={false} aria-label="API key" placeholder={hasKey ? 'Paste a new key to replace it' : 'Paste the API key'} value={key} onChange={event => setKey(event.target.value)}/><button type="button" className="outline-button" disabled={working || !key.trim()} onClick={() => void run(async () => { await ai.setKey(form.provider, key); setKey(''); setStatus({ ...status, hasKey: { ...status.hasKey, [form.provider]: true } }); return 'Key stored in Windows Credential Manager.' })}>Store key</button></div>
         <small>The key stays in Windows Credential Manager. It is never saved in your projects, backups or exports.</small></div>
+      <fieldset className="search-service"><legend>Web search service (optional)</legend>
+        <label className="field"><span id="search-service-label">Search service</span><select aria-labelledby="search-service-label" aria-describedby="search-service-note" value={search.provider} onChange={event => { setForm({ ...form, search: { ...search, provider: event.target.value as SearchService } }); setSearchKey('') }}>{searchServices.map(s => <option key={s.id} value={s.id}>{s.label}</option>)}</select><small id="search-service-note">{service.note} {search.provider !== 'none' && 'The service finds pages; your AI model ranks and summarises them. Results are labelled with the service’s name.'}</small></label>
+        {search.provider === 'searxng' && <label className="field">SearXNG address<input placeholder="http://localhost:8080" value={search.searxngUrl} onChange={event => setForm({ ...form, search: { ...search, searxngUrl: event.target.value } })}/></label>}
+        {keyedService && <div className="field ai-key"><span>{service.label.replace(/ \(.*\)$/, '')} key</span>
+          {hasSearchKey && <p className="ai-key-stored">A key is stored in Windows Credential Manager. <button type="button" className="popover-text" disabled={working} onClick={() => void run(async () => { await ai.forgetSearchKey(keyedService); const next = await ai.status(); setStatus(next); return 'The search key was removed from this computer.' })}>Remove search key</button></p>}
+          <div className="ai-key-row"><input type="password" autoComplete="off" spellCheck={false} aria-label="Search service key" placeholder={hasSearchKey ? 'Paste a new key to replace it' : 'Paste the key'} value={searchKey} onChange={event => setSearchKey(event.target.value)}/><button type="button" className="outline-button" disabled={working || !searchKey.trim()} onClick={() => void run(async () => { await ai.setSearchKey(keyedService, searchKey); setSearchKey(''); const next = await ai.status(); setStatus(next); return 'Search key stored in Windows Credential Manager.' })}>Store search key</button></div></div>}
+        {search.provider !== 'none' && <label className="acknowledge"><input type="checkbox" checked={search.always} onChange={event => setForm({ ...form, search: { ...search, always: event.target.checked } })}/> Use it even when the AI can search the web itself</label>}
+      </fieldset>
       <label className="field">Monthly soft limit (USD)<input type="number" min="0" step="1" placeholder="No limit" value={form.monthlyLimitUsd ?? ''} onChange={event => setForm({ ...form, monthlyLimitUsd: event.target.value === '' ? null : Number(event.target.value) })}/><small>Yazı warns when this month's estimated cost reaches it; it never stops you.</small></label>
       <p className={`ai-usage ${over ? 'over' : ''}`}>{usageLine(status.config.usage, month, status.config.provider)}{over && ' · over your monthly limit'}</p>
       <p className="quiet ai-billing">Paid usage is billed by the provider on this API key, separately from any subscription. A local model means nothing leaves this computer (except pages you fetch). Cloud providers receive the topic and source text you send.</p>

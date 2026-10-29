@@ -13,7 +13,8 @@ const MAX_REQUESTS: usize = 4;
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct SearchRequest { pub topic: String, #[serde(default)] pub angle: String, pub language: String, pub count: u32, #[serde(default)] pub project_title: String, pub month: String }
+// `via: "service"` asks for the search service even when the model could search itself (Gemini without search quota).
+pub struct SearchRequest { pub topic: String, #[serde(default)] pub angle: String, pub language: String, pub count: u32, #[serde(default)] pub project_title: String, pub month: String, #[serde(default)] pub via: String }
 
 #[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
@@ -222,7 +223,7 @@ async fn search(config: &AiConfig, key: &str, request: &SearchRequest, spend: &m
 #[cfg(test)]
 mod tests {
     use super::*;
-    fn request(count: u32) -> SearchRequest { SearchRequest { topic: "Kış vapur tarifesi".into(), angle: "Sabah ilk sefer".into(), language: "tr".into(), count, project_title: "Son Vapur".into(), month: "2026-10".into() } }
+    fn request(count: u32) -> SearchRequest { SearchRequest { topic: "Kış vapur tarifesi".into(), angle: "Sabah ilk sefer".into(), language: "tr".into(), count, project_title: "Son Vapur".into(), month: "2026-10".into(), via: String::new() } }
     fn sonnet() -> &'static ModelInfo { &ai::ANTHROPIC_MODELS[0] }
 
     #[test]

@@ -1,6 +1,7 @@
 // In-app AI. Keys live in Windows Credential Manager and never reach the webview, project files,
 // backups or exports. Settings (provider, model, usage) live in Documents/Yazi/ai.json without the key.
 // Every request is started by the writer; nothing runs in the background.
+use crate::search_service::{self, SearchConfig, SearchKind};
 use crate::storage::{atomic, Result};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
@@ -73,9 +74,11 @@ pub struct AiConfig {
     pub enabled: bool, pub provider: ProviderKind, pub model: String, pub base_url: String, pub monthly_limit_usd: Option<f64>,
     // If Claude declines a request, let Anthropic retry it on its recommended fallback model. Off unless the writer turns it on.
     pub fallbacks: bool, pub usage: Usage,
+    // A search service for models that cannot search the web themselves.
+    pub search: SearchConfig,
 }
 impl Default for AiConfig {
-    fn default() -> Self { Self { enabled: false, provider: ProviderKind::Gemini, model: GEMINI_MODELS[0].id.into(), base_url: String::new(), monthly_limit_usd: None, fallbacks: false, usage: Usage::default() } }
+    fn default() -> Self { Self { enabled: false, provider: ProviderKind::Gemini, model: GEMINI_MODELS[0].id.into(), base_url: String::new(), monthly_limit_usd: None, fallbacks: false, usage: Usage::default(), search: SearchConfig::default() } }
 }
 
 pub fn catalog(kind: ProviderKind) -> &'static [ModelInfo] {
@@ -127,20 +130,33 @@ pub fn validate(mut next: AiConfig, current: &AiConfig) -> Result<AiConfig> {
     // Only Claude models with a server-side fallback can use one.
     if !model_info(next.provider, &next.model).is_some_and(|m| m.fallbacks) { next.fallbacks = false; }
     next.usage = current.usage.clone();
+    next.search = search_service::validate(next.search)?;
     Ok(next)
 }
 
-fn entry(kind: ProviderKind) -> Result<keyring::Entry> { keyring::Entry::new(KEYRING_SERVICE, kind.key_name()).map_err(|e| format!("Windows Credential Manager is not available: {e}")) }
-pub fn set_key(kind: ProviderKind, key: &str) -> Result<()> {
+fn entry(name: &str) -> Result<keyring::Entry> { keyring::Entry::new(KEYRING_SERVICE, name).map_err(|e| format!("Windows Credential Manager is not available: {e}")) }
+pub fn set_named_key(name: &str, key: &str) -> Result<()> {
     let key = key.trim();
     if key.is_empty() || key.len() > 500 || key.chars().any(char::is_whitespace) { return Err("Paste the whole API key, without spaces.".into()); }
-    entry(kind)?.set_password(key).map_err(|e| format!("The key could not be stored: {e}"))
+    entry(name)?.set_password(key).map_err(|e| format!("The key could not be stored: {e}"))
 }
-pub fn get_key(kind: ProviderKind) -> Result<Option<String>> {
-    match entry(kind)?.get_password() { Ok(key) => Ok(Some(key)), Err(keyring::Error::NoEntry) => Ok(None), Err(e) => Err(format!("The key could not be read: {e}")) }
+pub fn get_named_key(name: &str) -> Result<Option<String>> {
+    match entry(name)?.get_password() { Ok(key) => Ok(Some(key)), Err(keyring::Error::NoEntry) => Ok(None), Err(e) => Err(format!("The key could not be read: {e}")) }
 }
-pub fn forget_key(kind: ProviderKind) -> Result<()> {
-    match entry(kind)?.delete_credential() { Ok(()) | Err(keyring::Error::NoEntry) => Ok(()), Err(e) => Err(format!("The key could not be removed: {e}")) }
+pub fn forget_named_key(name: &str) -> Result<()> {
+    match entry(name)?.delete_credential() { Ok(()) | Err(keyring::Error::NoEntry) => Ok(()), Err(e) => Err(format!("The key could not be removed: {e}")) }
+}
+pub fn set_key(kind: ProviderKind, key: &str) -> Result<()> { set_named_key(kind.key_name(), key) }
+pub fn get_key(kind: ProviderKind) -> Result<Option<String>> { get_named_key(kind.key_name()) }
+pub fn forget_key(kind: ProviderKind) -> Result<()> { forget_named_key(kind.key_name()) }
+// The chosen search service and its key, if it can be used now.
+pub fn search_service(config: &AiConfig) -> Result<Option<(SearchConfig, Option<String>)>> {
+    let search = &config.search;
+    Ok(match search.provider {
+        SearchKind::None => None,
+        SearchKind::Searxng => if search.searxng_url.is_empty() { None } else { Some((search.clone(), None)) },
+        kind => get_named_key(kind.key_name().unwrap_or_default())?.map(|key| (search.clone(), Some(key))),
+    })
 }
 
 // What one request cost at list price, if the served model is known. Claude searches cost the same
@@ -244,8 +260,10 @@ pub fn describe_test(config: &AiConfig, body: &str) -> Result<String> {
 pub fn status(config: &AiConfig) -> Result<Value> {
     let mut stored = serde_json::Map::new();
     for kind in ProviderKind::ALL { stored.insert(serde_json::to_value(kind).unwrap().as_str().unwrap().to_string(), json!(get_key(kind)?.is_some())); }
+    let search_keys = json!({ "tavily": get_named_key("search-tavily")?.is_some(), "brave": get_named_key("search-brave")?.is_some() });
     Ok(json!({
         "config": config, "capabilities": capabilities(config), "hasKey": stored,
+        "hasSearchKey": search_keys, "searchReady": search_service(config)?.is_some(),
         "models": { "gemini": GEMINI_MODELS, "anthropic": ANTHROPIC_MODELS },
         "price": model_info(config.provider, &config.model),
     }))
