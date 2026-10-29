@@ -4,6 +4,7 @@
 .backup-actions button{font-size:11px}
 .backup-status{font:12px 'IBM Plex Sans';color:var(--accent);margin:17px 0 10px}
 .backup-settings .quiet{font-size:11px;margin-bottom:0}
+.help-feedback{margin-top:16px;padding-top:12px;border-top:1px solid var(--line)}
 .update-banner{display:flex;align-items:center;gap:10px;padding:8px 16px;background:var(--chrome);border-bottom:1px solid var(--line);font-size:13px}
 .update-banner span{flex:1}
 .settings-updates{margin:14px 0;font-size:13px}

@@ -48,6 +48,7 @@ export async function desktopBridge(page: Page, options: BridgeOptions) {
             const result = await response.json(); if (!response.ok) throw result.error; return result
           }
           case 'backup_action': return { enabled: false, lastBackupAt: null }
+          case 'plugin:app|version': return '0.1.0-beta.1'
           case 'plugin:updater|check': return options.update ?? null
           default: return null
         }
