@@ -119,6 +119,12 @@ export async function research(request, runtime = {}) {
     if (!source) throw new Error('This source is no longer saved.')
     if (patch.status !== undefined) { if (!statuses.includes(patch.status)) throw new Error('Invalid source status.'); source.status = patch.status }
     if (patch.scopeId !== undefined) { if (patch.scopeId !== null && !validId(patch.scopeId)) throw new Error('Invalid section.'); source.scopeId = patch.scopeId }
+    if (patch.addUse !== undefined) {
+      const use = patch.addUse
+      if (!use || use.sectionId !== null && !validId(use.sectionId)) throw new Error('Invalid quote location.')
+      source.usedIn = [...(source.usedIn ?? []), { sectionId: use.sectionId, at: String(use.at), highlightId: validId(use.highlightId) ? use.highlightId : undefined }]
+      source.status = 'used'
+    }
     if (patch.usedIn !== undefined) { if (!Array.isArray(patch.usedIn) || patch.usedIn.some(u => u.sectionId !== null && !validId(u.sectionId))) throw new Error('Invalid quote location.'); source.usedIn = patch.usedIn.map(u => ({ sectionId: u.sectionId, at: String(u.at), highlightId: validId(u.highlightId) ? u.highlightId : undefined })) }
     await saveIndex(paths, index)
     return source

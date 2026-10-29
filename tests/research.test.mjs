@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import { mkdtemp, mkdir, readFile, readdir } from 'node:fs/promises'
 import { join } from 'node:path'
 import { parseSource, serializeSource, normalizeUrl, cleanMeta } from '../scripts/research-format.mjs'
-import { research, fetchPage } from '../scripts/research-bridge.mjs'
+import { research, fetchPage, queued } from '../scripts/research-bridge.mjs'
 import { createServer } from 'node:http'
 await mkdir('.tmp', { recursive: true })
 test('pages are fetched with their declared charset, redirects followed and limits enforced', async t => {
@@ -112,4 +112,13 @@ test('a search request is saved as a readable file with the inbox path and sourc
   assert.deepEqual((await research({ ...p, action: 'load' })).requests, [{ id: result.request.id, topic: 'Kış vapur tarifesi', angle: 'Sabah ilk sefer', language: 'tr', count: 3, createdAt: '2026-10-29T10:00:00.000Z' }])
   assert.equal((await research({ ...p, action: 'add-request', topic: 'x', count: 99 })).request.count, 20)
   await assert.rejects(research({ ...p, action: 'add-request', topic: '  ' }), /Name the topic/)
+})
+test('quick successive quotes are all recorded and mark the source as quoted', async () => {
+  const p = await project()
+  const { source } = await research({ ...p, action: 'add-source', meta: { title: 'Ferry' }, text: 'Text.' })
+  await Promise.all([1, 2, 3].map(n => queued({ ...p, action: 'update-source', sourceId: source.id, patch: { addUse: { sectionId: null, at: `2026-10-29T10:0${n}:00Z`, highlightId: n === 2 ? 'h-2' : 'not valid!' } } })))
+  const saved = (await research({ ...p, action: 'load' })).sources[0]
+  assert.equal(saved.status, 'used')
+  assert.deepEqual(saved.usedIn.map(u => [u.at, u.highlightId]), [['2026-10-29T10:01:00Z', undefined], ['2026-10-29T10:02:00Z', 'h-2'], ['2026-10-29T10:03:00Z', undefined]])
+  await assert.rejects(research({ ...p, action: 'update-source', sourceId: source.id, patch: { addUse: { sectionId: '../x', at: '' } } }), /quote location/)
 })

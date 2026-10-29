@@ -47,10 +47,10 @@ export function ResearchDrawer({ projectId, projectTitle, language, suggestTopic
     if (!confirmed && words > LONG_QUOTE_WORDS) { setPending({ quote, source, highlightId, words }); return }
     setPending(null); setProblem(''); setNotice('')
     if (!insert(insertAs, quote, source)) { setProblem('Open the text you are writing, then insert.'); return }
-    try {
-      await api.research(projectId, 'update-source', { sourceId: source.id, patch: { status: 'used', usedIn: [...source.usedIn, { sectionId, at: new Date().toISOString(), highlightId }] } })
-      await reload(); setNotice(`Quote inserted with its source${insertAs === 'footnote' ? ' as a footnote' : ''}.`)
-    } catch (error) { setProblem(message(error)) }
+    setNotice(`Quote inserted with its source${insertAs === 'footnote' ? ' as a footnote' : ''}.`)
+    // The bridge appends the use, so quick successive inserts are all recorded.
+    try { await api.research(projectId, 'update-source', { sourceId: source.id, patch: { addUse: { sectionId, at: new Date().toISOString(), highlightId } } }); await reload() }
+    catch (error) { setProblem(`The quote is in your text, but marking the source as quoted failed: ${message(error)}`) }
   }
   const fresh = newInboxCount(research)
   return <aside id="research-drawer" className="research-drawer" aria-label="Research" onKeyDown={event => { if (event.key === 'Escape') { event.stopPropagation(); if (pending) setPending(null); else if (open) setOpenId(null); else close() } }}>
