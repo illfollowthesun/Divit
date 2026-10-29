@@ -55,6 +55,7 @@ export const tr: Record<string, string> = {
   'A PLACE FOR IMAGES': 'GÖRSELLER İÇİN BİR YER', 'Keep the originals. Prepare a lighter, private copy when sending to your site.': 'Asılları saklayın. Sitenize gönderirken daha hafif ve gizli bir kopya hazırlanır.',
   '＋ Add images': '＋ Görsel ekle', 'A SECOND PAIR OF EYES': 'İKİNCİ BİR GÖZ', 'Your voice stays yours.': 'Sesiniz sizin kalır.',
   'For now, a small pause:': 'Şimdilik küçük bir mola:', 'Is the opening yours?': 'Açılış sizin mi?', 'Is there a detail only you noticed?': 'Yalnızca sizin fark ettiğiniz bir ayrıntı var mı?', 'Does the ending need to explain?': 'Sonun açıklama yapması gerekiyor mu?',
+  'Review mode (Ctrl 2) underlines spelling, checked on this computer. Sources and AI search live in Research (Ctrl Alt R). Nothing here changes your text.': 'İncele modu (Ctrl 2) yazım hatalarının altını çizer; denetim bu bilgisayarda yapılır. Kaynaklar ve yapay zekâ araması Araştırma’dadır (Ctrl Alt R). Burada hiçbir şey metninizi değiştirmez.',
   'No AI request is made.': 'Hiçbir yapay zekâ isteği yapılmaz.', 'Take your time. It’s your page.': 'Acele etmeyin. Bu sizin sayfanız.',
   'Loading image…': 'Görsel yükleniyor…', 'Insert in text': 'Metne ekle', 'Move to trash': 'Kenara koy', 'Move {name} to trash': '{name} görselini kenara koy',
 

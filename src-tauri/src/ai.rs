@@ -76,9 +76,12 @@ pub struct AiConfig {
     pub fallbacks: bool, pub usage: Usage,
     // A search service for models that cannot search the web themselves.
     pub search: SearchConfig,
+    // The old one-word choice from settings.json ("aiProvider"), kept after it was carried over.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub legacy_provider: Option<String>,
 }
 impl Default for AiConfig {
-    fn default() -> Self { Self { enabled: false, provider: ProviderKind::Gemini, model: GEMINI_MODELS[0].id.into(), base_url: String::new(), monthly_limit_usd: None, fallbacks: false, usage: Usage::default(), search: SearchConfig::default() } }
+    fn default() -> Self { Self { enabled: false, provider: ProviderKind::Gemini, model: GEMINI_MODELS[0].id.into(), base_url: String::new(), monthly_limit_usd: None, fallbacks: false, usage: Usage::default(), search: SearchConfig::default(), legacy_provider: None } }
 }
 
 pub fn catalog(kind: ProviderKind) -> &'static [ModelInfo] {
@@ -109,9 +112,26 @@ pub fn base_url(config: &AiConfig) -> String {
 pub fn load(root: &Path) -> Result<AiConfig> {
     match std::fs::read_to_string(root.join("ai.json")) {
         Ok(text) => serde_json::from_str(&text).map_err(|_| "ai.json could not be read. AI settings were not changed.".into()),
-        Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(AiConfig::default()),
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => match migrate_legacy(root) {
+            Some(config) => { save(root, &config)?; Ok(config) }
+            None => Ok(AiConfig::default()),
+        },
         Err(e) => Err(e.to_string()),
     }
+}
+// Before ai.json existed, settings.json held a one-word "aiProvider" ('claude-code' | 'anthropic' | 'ollama').
+// It is carried over once, AI stays off, and settings.json itself is left as it is.
+pub fn migrate_legacy(root: &Path) -> Option<AiConfig> {
+    let settings: Value = serde_json::from_str(&std::fs::read_to_string(root.join("settings.json")).ok()?).ok()?;
+    let legacy = settings["aiProvider"].as_str()?.to_string();
+    let mut config = AiConfig::default();
+    match legacy.as_str() {
+        "anthropic" => { config.provider = ProviderKind::Anthropic; config.model = ANTHROPIC_MODELS[0].id.into(); }
+        "ollama" => { config.provider = ProviderKind::Local; config.base_url = "http://localhost:11434/v1".into(); config.model = String::new(); }
+        _ => {} // Claude Code was never connected; Gemini stays the default.
+    }
+    config.legacy_provider = Some(legacy);
+    Some(config)
 }
 pub fn save(root: &Path, config: &AiConfig) -> Result<()> { atomic(&root.join("ai.json"), &serde_json::to_vec_pretty(config).map_err(|e| e.to_string())?) }
 
@@ -130,6 +150,7 @@ pub fn validate(mut next: AiConfig, current: &AiConfig) -> Result<AiConfig> {
     // Only Claude models with a server-side fallback can use one.
     if !model_info(next.provider, &next.model).is_some_and(|m| m.fallbacks) { next.fallbacks = false; }
     next.usage = current.usage.clone();
+    next.legacy_provider = current.legacy_provider.clone();
     next.search = search_service::validate(next.search)?;
     Ok(next)
 }
@@ -317,6 +338,24 @@ mod tests {
         assert_eq!(cost(ProviderKind::Anthropic, "claude-opus-4-8", "2026-10", 1, 1, 1), None);
         let mut local = config(ProviderKind::Local, "llama3", "http://localhost:11434/v1");
         assert_eq!(record(&mut local, "2026-10", "llama3", 500, 50, 0), None); assert_eq!(local.usage.unpriced_calls, 1);
+    }
+    #[test]
+    fn the_old_ai_provider_setting_is_carried_over_once_without_touching_settings_json() {
+        for (old, provider, model, base) in [("anthropic", ProviderKind::Anthropic, "claude-sonnet-5-5", ""), ("ollama", ProviderKind::Local, "", "http://localhost:11434/v1"), ("claude-code", ProviderKind::Gemini, "gemini-3.8-flash", "")] {
+            let dir = tempfile::tempdir().unwrap();
+            let settings = format!(r#"{{"schemaVersion":1,"theme":"dark","aiProvider":"{old}","siteRepo":"C:\\Sites\\blog"}}"#);
+            std::fs::write(dir.path().join("settings.json"), &settings).unwrap();
+            let loaded = load(dir.path()).unwrap();
+            assert_eq!((loaded.provider, loaded.model.as_str(), loaded.base_url.as_str(), loaded.enabled, loaded.legacy_provider.as_deref()), (provider, model, base, false, Some(old)));
+            assert_eq!(std::fs::read_to_string(dir.path().join("settings.json")).unwrap(), settings);
+            let mut written: AiConfig = serde_json::from_str(&std::fs::read_to_string(dir.path().join("ai.json")).unwrap()).unwrap();
+            assert_eq!(written, loaded);
+            written.enabled = true; save(dir.path(), &written).unwrap();
+            assert!(load(dir.path()).unwrap().enabled, "after the first run ai.json is the only source");
+        }
+        let empty = tempfile::tempdir().unwrap();
+        assert_eq!(load(empty.path()).unwrap(), AiConfig::default());
+        assert!(!empty.path().join("ai.json").exists());
     }
     #[test]
     fn capabilities_follow_the_provider() {
