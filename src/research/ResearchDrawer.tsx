@@ -1,38 +1,16 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { api } from '../shared/api'
 import type { Research, ResearchSource } from '../shared/types'
 import { readablePage } from './readable'
-import { textBlocks } from './blocks'
+import { SourceReader } from './SourceReader'
+import type { Annotations } from './useResearch'
 
 const message = (e: unknown) => e instanceof Error ? e.message : String(e)
 const types = ['news', 'article', 'blog', 'paper', 'other'] as const
 export const newInboxCount = (research: Research | null) => research?.sources.filter(s => s.origin === 'inbox' && s.status === 'unread').length ?? 0
 
-function SourceReader({ projectId, source, back, reload }: { projectId: string; source: ResearchSource; back: () => void; reload: () => Promise<unknown> }) {
-  const [text, setText] = useState<string | null>(null), [problem, setProblem] = useState('')
-  const heading = useRef<HTMLHeadingElement>(null)
-  useEffect(() => {
-    let active = true
-    void api.research<{ text: string }>(projectId, 'read-source', { sourceId: source.id }).then(result => { if (active) setText(result.text) }).catch(error => { if (active) setProblem(message(error)) })
-    if (source.status === 'unread') void api.research(projectId, 'update-source', { sourceId: source.id, patch: { status: 'read' } }).then(reload).catch(() => {})
-    heading.current?.focus()
-    return () => { active = false }
-  }, [projectId, source.id])
-  const blocks = useMemo(() => text === null ? [] : textBlocks(text), [text])
-  return <article className="source-reader" aria-label={`Source: ${source.title}`}>
-    <button className="text-link source-back" onClick={back}>← All sources</button>
-    <div className="source-kind"><span className="type-chip">{source.type}</span>{source.origin === 'inbox' && <span>from the inbox</span>}{source.origin === 'ai-found' && <span className="ai-label">AI found</span>}</div>
-    <h3 ref={heading} tabIndex={-1}>{source.title}</h3>
-    <p className="source-meta">{[source.site, source.author, source.published ?? (source.saved && `saved ${source.saved}`)].filter(Boolean).join(' · ')}</p>
-    {source.url && <p className="source-url" title="Original address">{source.url}</p>}
-    {source.summary && <p className="source-summary">{source.summary}</p>}
-    {problem && <p className="research-problem" role="alert">{problem}</p>}
-    {text === null && !problem ? <p className="quiet">Opening the saved copy…</p> : <div className="source-text">{blocks.map(block => { const Tag = block.kind === 'quote' ? 'blockquote' : block.kind === 'code' ? 'pre' : block.kind; return <Tag key={block.from} data-from={block.from}>{text!.slice(block.from, block.to)}</Tag> })}</div>}
-  </article>
-}
-
-export function ResearchDrawer({ projectId, research, reload, close }: { projectId: string; research: Research | null; reload: () => Promise<unknown>; close: () => void }) {
+export function ResearchDrawer({ projectId, research, reload, saveAnnotations, close }: { projectId: string; research: Research | null; reload: () => Promise<unknown>; saveAnnotations: (change: (current: Annotations) => Partial<Annotations>) => Promise<void>; close: () => void }) {
   const [url, setUrl] = useState(''), [working, setWorking] = useState(false), [problem, setProblem] = useState(''), [notice, setNotice] = useState('')
   const [query, setQuery] = useState(''), [type, setType] = useState('all'), [status, setStatus] = useState('all'), [openId, setOpenId] = useState<string | null>(null)
   const field = useRef<HTMLInputElement>(null)
@@ -55,7 +33,7 @@ export function ResearchDrawer({ projectId, research, reload, close }: { project
   const fresh = newInboxCount(research)
   return <aside id="research-drawer" className="research-drawer" aria-label="Research" onKeyDown={event => { if (event.key === 'Escape') { event.stopPropagation(); if (open) setOpenId(null); else close() } }}>
     <div className="research-head"><div className="section-label">RESEARCH <span>{sources.length}</span></div>{fresh > 0 && <span className="research-new">{fresh} new</span>}<button className="research-close" onClick={close} aria-label="Close research">×</button></div>
-    {open ? <SourceReader projectId={projectId} source={open} back={() => setOpenId(null)} reload={reload}/> : <>
+    {open ? <SourceReader projectId={projectId} source={open} back={() => setOpenId(null)} reload={reload} highlights={research?.highlights ?? []} save={saveAnnotations}/> : <>
       <form className="add-url" onSubmit={event => void addUrl(event)}><label className="sr-only" htmlFor="research-url">Web address to save</label><input id="research-url" ref={field} type="url" inputMode="url" placeholder="Paste a link to keep a readable copy" value={url} disabled={working} onChange={event => setUrl(event.target.value)}/><button className="outline-button" disabled={working || !url.trim()}>{working ? 'Saving…' : 'Add'}</button></form>
       {problem && <p className="research-problem" role="alert">{problem}</p>}
       <p className="research-notice" role="status">{notice}</p>

@@ -40,3 +40,23 @@
 .research-head .section-label span{margin-left:8px}
 .research-drawer .source-back{display:block;align-self:flex-start;text-align:left;margin:0;font:12px 'IBM Plex Sans',sans-serif;color:var(--muted)}
 .research-drawer .source-back:hover{color:var(--text)}
+/* Highlights: four muted tints; a note adds a small underline. */
+.source-reader{position:relative}
+.source-text{outline:none}
+.hl{color:inherit;border-radius:2px;padding:1px 0;cursor:pointer}
+.hl-1{background:#efe2b8}.hl-2{background:#d8e3cf}.hl-3{background:#d5e1ea}.hl-4{background:#edd8d2}
+:root[data-theme=dark] .hl-1{background:#5a5032}:root[data-theme=dark] .hl-2{background:#3d4b38}:root[data-theme=dark] .hl-3{background:#34444f}:root[data-theme=dark] .hl-4{background:#553c37}
+.hl.has-note{text-decoration:underline dotted var(--muted);text-underline-offset:4px}
+.hl:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.highlight-lost{font-size:12px}
+.highlight-popover{position:absolute;z-index:5;transform:translateY(-100%);width:260px;background:var(--paper);border-radius:6px;box-shadow:0 8px 26px #2224;padding:8px;font:12px 'IBM Plex Sans',sans-serif}
+.highlight-popover p{margin:2px 4px;color:var(--muted)}
+.highlight-colors{display:flex;align-items:center;gap:6px}
+.swatch{width:22px;height:22px;padding:0;border-radius:50%;border:2px solid transparent}
+.swatch[aria-pressed=true]{border-color:var(--accent)}
+.swatch:hover,.swatch:focus-visible{border-color:var(--muted)}
+.popover-text{font-size:12px;padding:5px 7px;color:var(--accent);margin-left:auto}
+.popover-text.danger{color:var(--error)}
+.highlight-note textarea{width:100%;margin-top:8px;font:13px/1.4 'IBM Plex Sans',sans-serif;resize:vertical}
+.popover-actions{display:flex;justify-content:space-between;gap:6px;margin-top:4px}
+.popover-actions .popover-text{margin-left:0}
