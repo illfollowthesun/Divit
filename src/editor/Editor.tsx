@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react'
 import { EditorView, keymap, placeholder } from '@codemirror/view'
 import type { ViewUpdate } from '@codemirror/view'
 import { Compartment, EditorState } from '@codemirror/state'
-import { checkIssues, enableChecks } from './check-issues'
+import { checkIssues, enableChecks, clearCheckIssues } from './check-issues'
 import type { IgnoreRule } from '../modes/issues'
 import type { CheckLanguage, Issue } from '../modes/checker'
 import type { SpellLanguage } from '../spell/words'
@@ -65,8 +65,8 @@ export function Editor({ id, body, onChange, onReady, typewriter = false, checki
     return () => { editor.current = null; ready.current(null); view.destroy() }
   }, [id])
   useEffect(() => { editor.current?.dispatch({ effects: [enableChecks.of(checking), checkConfig.current.reconfigure(checking ? spellCheck({ language: () => spelling.current.language, accepted: lang => spelling.current.accepted(lang), issues: (issues, checking) => spelling.current.issues?.(issues, checking), rules: () => spelling.current.rules, add: (word, lang) => spelling.current.add?.(word, lang), ignore: word => spelling.current.ignore?.(word), error: message => spelling.current.error?.(message) }) : [])] }) }, [checking, id])
-  useEffect(() => { editor.current?.dispatch({ effects: languageConfig.current.reconfigure(attributes(language)) }) }, [language])
-  useEffect(() => { editor.current?.dispatch({ effects: refreshSpelling.of(null) }) }, [language, dictionary, ignored, cards, ignoreRules])
+  useEffect(() => { editor.current?.dispatch({ effects: [languageConfig.current.reconfigure(attributes(language)), clearCheckIssues.of(null), refreshSpelling.of(null)] }) }, [language, id])
+  useEffect(() => { editor.current?.dispatch({ effects: refreshSpelling.of(null) }) }, [dictionary, ignored, cards, ignoreRules])
   useEffect(() => { editor.current?.dispatch({ effects: cardConfig.current.reconfigure(cardLinks(() => cardsRef.current ?? [], id => cardOpen.current?.(id))) }) }, [cards])
   useEffect(() => {
     const view = editor.current

@@ -6,6 +6,7 @@ import { mapIssues, sameOccurrence } from '../modes/issues.ts'
 export const setCheckIssues = StateEffect.define<Issue[]>()
 export const ignoreCheckIssue = StateEffect.define<Issue>()
 export const enableChecks = StateEffect.define<boolean>()
+export const clearCheckIssues = StateEffect.define<null>()
 
 export const checkIssues = StateField.define<{ issues: Issue[]; ignored: Issue[]; enabled: boolean }>({
   create: () => ({ issues: [], ignored: [], enabled: false }),
@@ -17,6 +18,7 @@ export const checkIssues = StateField.define<{ issues: Issue[]; ignored: Issue[]
       ignored = mapIssues(ignored, transaction.changes, text)
     }
     for (const effect of transaction.effects) {
+      if (effect.is(clearCheckIssues)) issues = []
       if (effect.is(enableChecks)) { enabled = effect.value; if (!enabled) issues = [] }
       if (effect.is(ignoreCheckIssue)) { ignored = [...ignored, effect.value]; issues = issues.filter(issue => !sameOccurrence(issue, effect.value)) }
       if (effect.is(setCheckIssues)) issues = enabled ? effect.value.filter(issue => !ignored.some(item => sameOccurrence(item, issue))) : []

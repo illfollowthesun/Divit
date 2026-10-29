@@ -2,10 +2,23 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { ChangeSet, EditorState } from '@codemirror/state'
 import { mapIssues, ruleFor, ignoredByRule } from '../src/modes/issues.ts'
-import { checkIssues, enableChecks, setCheckIssues, ignoreCheckIssue, acceptCheckIssue } from '../src/editor/check-issues.ts'
+import { checkIssues, enableChecks, setCheckIssues, ignoreCheckIssue, acceptCheckIssue, clearCheckIssues } from '../src/editor/check-issues.ts'
 
 const issue = (from = 4) => ({ id: 'one', from, to: from + 9, original: 'misspelld', language: 'en', engine: 'hunspell', rule: 'unknown-word', type: 'spelling', message: 'Spelling' })
 const initial = 'The misspelld word. Another misspelld word.'
+
+test('changing the checker language clears stale issues without losing occurrence ignores or text', () => {
+  let state = EditorState.create({ doc: initial, extensions: [checkIssues] })
+  state = state.update({ effects: [enableChecks.of(true), setCheckIssues.of([issue(), { ...issue(28), id: 'two' }])] }).state
+  state = state.update({ effects: ignoreCheckIssue.of(issue()) }).state
+  state = state.update({ effects: clearCheckIssues.of(null) }).state
+  assert.deepEqual(state.field(checkIssues).issues, [])
+  assert.equal(state.field(checkIssues).ignored.length, 1)
+  assert.equal(state.doc.toString(), initial)
+  const turkish = { ...issue(), id: 'turkish', language: 'tr' }
+  state = state.update({ effects: setCheckIssues.of([turkish]) }).state
+  assert.deepEqual(state.field(checkIssues).issues, [turkish])
+})
 function mapped(text, items, change) {
   const changes = ChangeSet.of(change, text.length)
   const updated = changes.apply(EditorState.create({ doc: text }).doc).toString()

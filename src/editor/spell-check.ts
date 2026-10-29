@@ -4,7 +4,7 @@ import { StateEffect, StateField } from '@codemirror/state'
 import { syntaxTree, ensureSyntaxTree } from '@codemirror/language'
 import type { SyntaxNode } from '@lezer/common'
 import { suggestions } from '../spell/spell-client'
-import { checkIssues, setCheckIssues, ignoreCheckIssue } from './check-issues'
+import { checkIssues, setCheckIssues, ignoreCheckIssue, clearCheckIssues } from './check-issues'
 import { ignoredByRule } from '../modes/issues'
 import type { IgnoreRule } from '../modes/issues'
 import { localChecker } from '../modes/local-checker'
@@ -37,6 +37,7 @@ function replace(view: EditorView, hit: Hit, text: string) {
 const popover = StateField.define<Popover | null>({
   create: () => null,
   update(value, tr) {
+    if (tr.effects.some(effect => effect.is(clearCheckIssues))) return null
     for (const effect of tr.effects) if (effect.is(openPopover)) return effect.value
     if (!value || tr.docChanged) return null
     const head = tr.state.selection.main.head
@@ -61,7 +62,7 @@ async function openMenu(view: EditorView, spelling: Spelling, hit: Hit, x: numbe
   const doc = view.state.doc
   let options: string[] = []
   try { options = await suggestions(hit.language, hit.word) } catch (error) { if (activeViews.has(view) && alive()) spelling.error(failure(error)) }
-  if (view.state.doc !== doc || !activeViews.has(view) || !alive()) return
+  if (view.state.doc !== doc || !activeViews.has(view) || !alive() || !view.state.field(checkIssues).issues.some(issue => issue.id === hit.id)) return
   const menu = document.createElement('div'); menu.className = 'spell-menu'; menu.setAttribute('role', 'menu'); menu.setAttribute('aria-label', `Spelling: ${hit.word}`)
   const item = (label: string, run: () => void, disabled = false) => { const node = button(label, () => { close(); run() }); node.setAttribute('role', 'menuitem'); node.disabled = disabled; menu.append(node) }
   const separator = () => { const node = document.createElement('div'); node.setAttribute('role', 'separator'); menu.append(node) }
@@ -101,6 +102,7 @@ export function spellCheck(spelling: Spelling) {
     timer = 0; generation = 0; destroyed = false
     constructor(readonly view: EditorView) { activeViews.add(view); this.schedule() }
     update(update: ViewUpdate) {
+      if (update.transactions.some(tr => tr.effects.some(e => e.is(clearCheckIssues)))) closeMenu()
       if (update.docChanged || update.transactions.some(tr => tr.effects.some(e => e.is(refreshSpelling)))) {
         this.schedule()
       } else if (update.transactions.some(tr => tr.effects.some(e => e.is(setCheckIssues) || e.is(ignoreCheckIssue)))) this.report(false)
@@ -110,7 +112,7 @@ export function spellCheck(spelling: Spelling) {
     }
     schedule() {
       clearTimeout(this.timer)
-      const generation = ++this.generation, doc = this.view.state.doc
+      const generation = ++this.generation, doc = this.view.state.doc, language = spelling.language()
       // Notify React outside CodeMirror's update, including on initial creation.
       this.report(true)
       this.timer = window.setTimeout(() => {
@@ -119,8 +121,8 @@ export function spellCheck(spelling: Spelling) {
           for (let node: SyntaxNode | null = tree.resolveInner(from, 1); node; node = node.parent) if (skipped.has(node.name)) return false
           return true
         }
-        void localChecker.check({ text: doc.toString(), language: spelling.language(), accepted: spelling.accepted, prose }).then(issues => {
-          if (this.destroyed || generation !== this.generation || doc !== this.view.state.doc) return
+        void localChecker.check({ text: doc.toString(), language, accepted: spelling.accepted, prose }).then(issues => {
+          if (this.destroyed || generation !== this.generation || doc !== this.view.state.doc || language !== spelling.language()) return
           this.view.dispatch({ effects: setCheckIssues.of(issues.filter(issue => !ignoredByRule(issue, spelling.rules())).map(issue => ({ ...issue, id: issue.id + ':' + generation }))) })
         }).catch(error => { if (!this.destroyed && generation === this.generation) { spelling.issues([], false); spelling.error(failure(error)) } })
       }, 200)
