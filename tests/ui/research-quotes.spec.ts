@@ -63,6 +63,13 @@ test('Insert quote always carries the citation, as a quote block or footnote, wa
   await drawer.getByRole('tab', { name: /Highlights/ }).click()
   await expect(drawer.locator('.highlight-item')).toHaveText(/İlk vapur 06:10/)
   await drawer.getByLabel('Insert as').selectOption('footnote')
+  // Register before inserting: saving the draft does not wait for research usage writes.
+  const highlightedUse = page.waitForResponse(response => {
+    const request = response.request()
+    if (new URL(response.url()).pathname !== '/__yazi/research' || request.method() !== 'POST') return false
+    const payload = request.postDataJSON()
+    return payload.projectId === id && payload.action === 'update-source' && typeof payload.patch?.addUse?.highlightId === 'string'
+  })
   await drawer.getByRole('button', { name: /^Insert quote: İlk vapur/ }).click()
   await expect(drawer.getByRole('status')).toHaveText('Quote inserted with its source as a footnote.')
   await page.keyboard.press('Control+s'); await expect(page.locator('.editor-footer [role=status]')).toHaveText('All changes saved')
@@ -71,6 +78,9 @@ test('Insert quote always carries the citation, as a quote block or footnote, wa
   expect(body.endsWith('\n\n[^1]: İskele notları, Şehir Günlüğü (2026-10-20), https://example.com/iskele')).toBe(true)
   expect(body.startsWith('My opening line.')).toBe(true)
 
+  const savedUse = await highlightedUse
+  expect(savedUse.ok()).toBe(true)
+  expect(await savedUse.finished()).toBeNull()
   const index = JSON.parse(await readFile(join(researchFolder(id), 'research.json'), 'utf8'))
   expect(index.sources[0].status).toBe('used')
   expect(index.sources[0].usedIn.map((u: { sectionId: string | null; highlightId?: string }) => [u.sectionId, !!u.highlightId])).toEqual([[null, false], [null, true]])
