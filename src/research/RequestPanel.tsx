@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import { api, desktop } from '../shared/api'
 import type { Research } from '../shared/types'
@@ -14,7 +14,7 @@ const message = (e: unknown) => e instanceof Error ? e.message : String(e)
 
 // "Search about this topic": with AI connected, a web search the writer starts; without it, a request
 // file plus a ready-to-paste prompt, answered by whoever writes source files into the inbox.
-export function RequestPanel({ projectId, projectTitle, language, suggestTopic, research, reload, saveAnnotations }: { projectId: string; projectTitle: string; language: 'en' | 'tr'; suggestTopic: () => string; research: Research | null; reload: () => Promise<unknown>; saveAnnotations: (change: (current: Annotations) => Partial<Annotations>) => Promise<void> }) {
+export function RequestPanel({ projectId, projectTitle, language, suggestTopic, research, reload, saveAnnotations, prefill }: { prefill?: { topic: string; at: number } | null; projectId: string; projectTitle: string; language: 'en' | 'tr'; suggestTopic: () => string; research: Research | null; reload: () => Promise<unknown>; saveAnnotations: (change: (current: Annotations) => Partial<Annotations>) => Promise<void> }) {
   const [form, setForm] = useState<Form | null>(null)
   const [made, setMade] = useState<{ request: ResearchRequest; prompt: string; path: string } | null>(null)
   const [working, setWorking] = useState(false), [problem, setProblem] = useState(''), [copied, setCopied] = useState<'yes' | 'failed' | ''>('')
@@ -24,13 +24,15 @@ export function RequestPanel({ projectId, projectTitle, language, suggestTopic, 
   const arrived = latest ? research?.sources.filter(s => s.origin === 'inbox' && s.addedAt >= latest.createdAt).length ?? 0 : 0
   const month = localDay().slice(0, 7), config = aiStatus?.config
   const aiOn = !!config?.enabled, canSearch = aiOn && !!aiStatus?.capabilities.nativeSearch && (!!aiStatus?.hasKey[config!.provider] || !aiStatus?.capabilities.keyRequired)
-  async function openForm() {
+  // Text from the Sources box that is not an address arrives here as the topic.
+  useEffect(() => { if (prefill) void openForm(prefill.topic) }, [prefill?.at])
+  async function openForm(topic?: string) {
     if (working) return
     setWorking(true); setProblem(''); setConfirmOver(false)
     if (desktop) {
       try { setAiStatus(await ai.status()) } catch { setAiStatus(null) }
     }
-    setForm({ topic: suggestTopic(), angle: '', language, count: 5 }); setWorking(false)
+    setFound(null); setForm({ topic: topic ?? suggestTopic(), angle: '', language, count: 5 }); setWorking(false)
   }
   async function save(event: FormEvent) {
     event.preventDefault()

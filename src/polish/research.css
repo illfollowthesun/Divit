@@ -7,6 +7,8 @@
 .research-close{margin-left:auto;font-size:18px;line-height:1;padding:4px 9px;color:var(--muted)}
 .add-url{display:flex;gap:8px}
 .add-url input{flex:1;font-size:13px}
+.add-url-hint{font-size:12px;margin:6px 0 0}
+.add-url-hint .text-link{font-size:inherit;padding:0}
 .research-problem{color:var(--error);font-size:12px;margin:10px 0 0;white-space:pre-wrap}
 .research-notice{font-size:12px;color:var(--muted);min-height:18px;margin:8px 0 6px}
 .source-filters{display:grid;grid-template-columns:1fr auto auto;gap:6px;margin-bottom:10px}

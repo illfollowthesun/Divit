@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
-import { api } from '../shared/api'
+import { api, desktop } from '../shared/api'
+import { ai } from '../settings/ai'
+import { asUrl } from './source-input'
 import type { Research, ResearchSource } from '../shared/types'
 import { readablePage } from './readable'
 import { SourceReader } from './SourceReader'
@@ -17,13 +19,17 @@ type Tab = typeof tabs[number]
 export type InsertQuote = (kind: 'quote' | 'footnote', quote: string, source: ResearchSource) => boolean
 export const newInboxCount = (research: Research | null) => research?.sources.filter(s => s.origin === 'inbox' && s.status === 'unread').length ?? 0
 
-export function ResearchDrawer({ projectId, projectTitle, language, suggestTopic, research, reload, saveAnnotations, close, insert, sectionId, placeName }: { projectId: string; projectTitle: string; language: 'en' | 'tr'; suggestTopic: () => string; research: Research | null; reload: () => Promise<unknown>; saveAnnotations: (change: (current: Annotations) => Partial<Annotations>) => Promise<void>; close: () => void; insert: InsertQuote; sectionId: string | null; placeName: (sectionId: string | null) => string }) {
+export function ResearchDrawer({ projectId, projectTitle, language, suggestTopic, research, reload, saveAnnotations, close, insert, sectionId, placeName, openSettings }: { projectId: string; projectTitle: string; language: 'en' | 'tr'; suggestTopic: () => string; research: Research | null; reload: () => Promise<unknown>; saveAnnotations: (change: (current: Annotations) => Partial<Annotations>) => Promise<void>; close: () => void; insert: InsertQuote; sectionId: string | null; placeName: (sectionId: string | null) => string; openSettings: () => void }) {
   const [tab, setTab] = useState<Tab>('Sources'), [insertAs, setInsertAs] = useState<'quote' | 'footnote'>('quote')
   const [url, setUrl] = useState(''), [working, setWorking] = useState(false), [problem, setProblem] = useState(''), [notice, setNotice] = useState('')
   const [query, setQuery] = useState(''), [type, setType] = useState('all'), [status, setStatus] = useState('all')
   const [openId, setOpenId] = useState<string | null>(null), [focusId, setFocusId] = useState<string | undefined>()
   const [pending, setPending] = useState<{ quote: string; source: ResearchSource; highlightId?: string; words: number } | null>(null)
+  const [aiOn, setAiOn] = useState(false), [prefill, setPrefill] = useState<{ topic: string; at: number } | null>(null)
   const field = useRef<HTMLInputElement>(null)
+  const address = asUrl(url), isTopic = !!url.trim() && !address
+  // Asked again each time the box turns into a topic: Settings may have changed meanwhile.
+  useEffect(() => { if (isTopic && desktop) void ai.status().then(status => setAiOn(status.config.enabled)).catch(() => setAiOn(false)) }, [isTopic])
   useEffect(() => { field.current?.focus() }, [])
   useEffect(() => { setOpenId(null); setPending(null) }, [projectId])
   const sources = research?.sources ?? [], open = sources.find(s => s.id === openId)
@@ -32,9 +38,10 @@ export function ResearchDrawer({ projectId, projectTitle, language, suggestTopic
   async function addUrl(event: FormEvent) {
     event.preventDefault()
     if (working || !url.trim()) return
+    if (!address) { setPrefill({ topic: url.trim(), at: Date.now() }); setUrl(''); return }
     setWorking(true); setProblem(''); setNotice('')
     try {
-      const page = await api.research<{ html: string; url: string; contentType: string }>(projectId, 'fetch-page', { url: url.trim() })
+      const page = await api.research<{ html: string; url: string; contentType: string }>(projectId, 'fetch-page', { url: address })
       const { meta, text } = readablePage(page.html, page.url, page.contentType)
       const result = await api.research<{ source: ResearchSource; duplicate: boolean }>(projectId, 'add-source', { meta, text, origin: 'url' })
       await reload(); setUrl('')
@@ -62,8 +69,9 @@ export function ResearchDrawer({ projectId, projectTitle, language, suggestTopic
       <div className="research-tabs" role="tablist" aria-label="Research tabs">{tabs.map(name => <button key={name} role="tab" id={`research-tab-${name}`} aria-selected={tab === name} aria-controls="research-panel" className={tab === name ? 'active' : ''} onClick={() => setTab(name)}>{name}{name === 'Highlights' && research?.highlights.length ? <span> {research.highlights.length}</span> : null}</button>)}</div>
       <div id="research-panel" role="tabpanel" aria-labelledby={`research-tab-${tab}`}>
         {tab === 'Sources' && <>
-          <form className="add-url" onSubmit={event => void addUrl(event)}><label className="sr-only" htmlFor="research-url">Web address to save</label><input id="research-url" ref={field} type="url" inputMode="url" placeholder="Paste a link to keep a readable copy" value={url} disabled={working} onChange={event => setUrl(event.target.value)}/><button className="outline-button" disabled={working || !url.trim()}>{working ? 'Saving…' : 'Add'}</button></form>
-          <RequestPanel key={projectId} projectId={projectId} projectTitle={projectTitle} language={language} suggestTopic={suggestTopic} research={research} reload={reload} saveAnnotations={saveAnnotations}/>
+          <form className="add-url" onSubmit={event => void addUrl(event)}><label className="sr-only" htmlFor="research-url">Web address to save, or a topic to search</label><input id="research-url" ref={field} type="text" placeholder="Paste a link, or type a topic" value={url} disabled={working} onChange={event => setUrl(event.target.value)} aria-describedby={isTopic ? 'research-url-hint' : undefined}/><button className="outline-button" disabled={working || !url.trim()}>{working ? 'Saving…' : isTopic ? aiOn ? 'Search this with AI' : 'Search' : 'Add'}</button></form>
+          {isTopic && <p id="research-url-hint" className="quiet add-url-hint">{aiOn ? 'Not a web address, so it will be searched as a topic.' : <>Not a web address. <button type="button" className="text-link" onClick={openSettings}>Turn on AI in Settings to search</button>, or press Search to save a request.</>}</p>}
+          <RequestPanel key={projectId} prefill={prefill} projectId={projectId} projectTitle={projectTitle} language={language} suggestTopic={suggestTopic} research={research} reload={reload} saveAnnotations={saveAnnotations}/>
           {sources.length > 0 && <div className="source-filters"><label className="sr-only" htmlFor="source-search">Find a source</label><input id="source-search" placeholder="Find a source…" value={query} onChange={event => setQuery(event.target.value)}/><select aria-label="Source type" value={type} onChange={event => setType(event.target.value)}><option value="all">All types</option>{types.map(t => <option key={t} value={t}>{t}</option>)}</select><select aria-label="Reading status" value={status} onChange={event => setStatus(event.target.value)}><option value="all">Any status</option><option value="unread">Unread</option><option value="read">Read</option><option value="used">Quoted</option></select></div>}
           <div className="source-list">{shown.map(source => <button key={source.id} className={`source-row ${source.status}`} onClick={() => openSource(source.id)}>
             <span className="source-title">{source.status === 'unread' && <span className="unread-dot" aria-label="Unread"/>}{source.title}</span>
