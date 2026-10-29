@@ -11,9 +11,11 @@ export function previewResearch() {
       if (req.headers.origin && req.headers.origin !== `http://${req.headers.host}`) return send(403, { error: 'Use the local preview window.' })
       if (req.method !== 'POST' || req.headers['x-yazi-preview'] !== '1') return send(405, { error: 'Use the research panel in the preview.' })
       try {
-        let raw = '', length = 0
-        for await (const chunk of req) { length += chunk.length; if (length > 3 * 1024 * 1024) return send(413, { error: 'This source is too large for the preview.' }); raw += chunk }
-        send(200, await queued({ ...JSON.parse(raw), dataRoot: previewDataRoot, createProject: true }))
+        // Join raw bytes before decoding so a Turkish letter split across chunks stays intact.
+        const chunks = []; let length = 0
+        for await (const chunk of req) { length += chunk.length; if (length > 3 * 1024 * 1024) return send(413, { error: 'This source is too large for the preview.' }); chunks.push(chunk) }
+        const body = JSON.parse(Buffer.concat(chunks).toString('utf8'))
+        send(200, await queued({ ...body, dataRoot: previewDataRoot, createProject: true }))
       } catch (error) { send(400, { error: error.message }) }
     })
   } }

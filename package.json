@@ -24,6 +24,7 @@
     "@fontsource/ibm-plex-mono": "^5.2.0",
     "@fontsource/ibm-plex-sans": "^5.2.0",
     "@fontsource/newsreader": "^5.2.0",
+    "@mozilla/readability": "^0.6.0",
     "@tauri-apps/api": "^2.9.0",
     "@tauri-apps/plugin-dialog": "^2.4.0",
     "dictionary-en-gb": "^3.0.0",
@@ -32,7 +33,8 @@
     "marked": "^16.4.0",
     "nspell": "^2.1.5",
     "react": "^19.2.0",
-    "react-dom": "^19.2.0"
+    "react-dom": "^19.2.0",
+    "turndown": "^7.2.4"
   },
   "devDependencies": {
     "@playwright/test": "^1.56.0",
@@ -40,6 +42,7 @@
     "@types/nspell": "^2.1.6",
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
+    "@types/turndown": "^5.0.6",
     "@vitejs/plugin-react": "^5.0.4",
     "typescript": "~5.9.3",
     "vite": "^7.1.12"

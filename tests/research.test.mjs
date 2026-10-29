@@ -3,8 +3,33 @@ import assert from 'node:assert/strict'
 import { mkdtemp, mkdir, readFile, readdir } from 'node:fs/promises'
 import { join } from 'node:path'
 import { parseSource, serializeSource, normalizeUrl, cleanMeta } from '../scripts/research-format.mjs'
-import { research } from '../scripts/research-bridge.mjs'
+import { research, fetchPage } from '../scripts/research-bridge.mjs'
+import { createServer } from 'node:http'
 await mkdir('.tmp', { recursive: true })
+test('pages are fetched with their declared charset, redirects followed and limits enforced', async t => {
+  const turkish = Buffer.from([0x49, 0x73, 0x74, 0x61, 0x6e, 0x62, 0x75, 0x6c, 0x27, 0x64, 0x61, 0x20, 0xfd, 0xfe, 0xf0]) // "Istanbul'da ışğ" in windows-1254
+  const server = createServer((req, res) => {
+    if (req.url === '/tr') { res.writeHead(200, { 'Content-Type': 'text/html; charset=windows-1254' }); res.end(Buffer.concat([Buffer.from('<p>'), turkish, Buffer.from('</p>')])) }
+    else if (req.url === '/meta') { res.writeHead(200, { 'Content-Type': 'text/html' }); res.end(Buffer.concat([Buffer.from('<meta charset="windows-1254"><p>'), turkish])) }
+    else if (req.url === '/move') { res.writeHead(301, { Location: '/tr' }); res.end() }
+    else if (req.url === '/pdf') { res.writeHead(200, { 'Content-Type': 'application/pdf' }); res.end('%PDF') }
+    else if (req.url === '/big') { res.writeHead(200, { 'Content-Type': 'text/html' }); res.end(Buffer.alloc(6 * 1024 * 1024, 32)) }
+    else if (req.url === '/slow') { setTimeout(() => res.end('late'), 2000) }
+    else { res.writeHead(404); res.end() }
+  }).listen(0, '127.0.0.1')
+  t.after(() => server.close())
+  await new Promise(resolve => server.once('listening', resolve))
+  const base = `http://127.0.0.1:${server.address().port}`
+  assert.equal((await fetchPage(`${base}/tr`)).html, "<p>Istanbul'da ışğ</p>")
+  assert.match((await fetchPage(`${base}/meta`)).html, /ışğ$/)
+  const moved = await fetchPage(`${base}/move`); assert.equal(moved.url, `${base}/tr`)
+  await assert.rejects(fetchPage(`${base}/pdf`), /PDFs/)
+  await assert.rejects(fetchPage(`${base}/big`), /too large/)
+  await assert.rejects(fetchPage(`${base}/missing`), /error \(404\)/)
+  await assert.rejects(fetchPage(`${base}/slow`, { timeoutMs: 200 }), /too long/)
+  await assert.rejects(fetchPage('file:///C:/Windows/win.ini'), /Only http/)
+  await assert.rejects(fetchPage('not a url'), /full web address/)
+})
 async function project() {
   const dataRoot = await mkdtemp(join(process.cwd(), '.tmp/research-')), projectId = 'project-1'
   await mkdir(join(dataRoot, 'projects', projectId), { recursive: true })

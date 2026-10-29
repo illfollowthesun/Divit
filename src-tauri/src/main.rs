@@ -102,7 +102,7 @@ async fn export_action(app: tauri::AppHandle, state: tauri::State<'_, AppState>,
     call_bridge(&app, "export-bridge.mjs", request).await
 }
 
-const RESEARCH_ACTIONS: [&str; 7] = ["load", "read-source", "add-source", "update-source", "save-annotations", "scan-inbox", "pending"];
+const RESEARCH_ACTIONS: [&str; 8] = ["load", "read-source", "add-source", "update-source", "save-annotations", "scan-inbox", "pending", "fetch-page"];
 #[tauri::command]
 async fn research_action(app: tauri::AppHandle, state: tauri::State<'_, AppState>, project_id: String, action: String, payload: Option<Value>) -> Result<Value> {
     if !RESEARCH_ACTIONS.contains(&action.as_str()) { return Err("Invalid research action".into()); }
@@ -110,6 +110,11 @@ async fn research_action(app: tauri::AppHandle, state: tauri::State<'_, AppState
     let shared = state.0.clone();
     let script = bridge_path(&app, "research-bridge.mjs")?;
     tauri::async_runtime::spawn_blocking(move || -> Result<Value> {
+        if action == "fetch-page" {
+            // A slow page must not hold the storage lock while the writer keeps typing.
+            let url = payload.as_ref().and_then(|p| p["url"].as_str()).ok_or("Paste a web address first.")?.to_string();
+            return run_bridge(script, json!({"action":"fetch-page","url":url}));
+        }
         let store = shared.lock().map_err(|e| e.to_string())?;
         let project = store.root.join("projects").join(&key);
         if !project.is_dir() { return Err("This project is no longer in the library.".into()); }

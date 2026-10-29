@@ -76,7 +76,29 @@ async function scanInbox(paths, index, now, settleMs) {
   return { imported, duplicates, invalid }
 }
 
+// The only network call besides AI requests the writer starts: fetching a page the writer pasted.
+const MAX_PAGE = 5 * 1024 * 1024
+function charset(contentType, head) {
+  const declared = /charset=["']?([\w-]+)/i.exec(contentType)?.[1] ?? /<meta[^>]+charset=["']?([\w-]+)/i.exec(head)?.[1]
+  try { return new TextDecoder(declared ?? 'utf-8') } catch { return new TextDecoder('utf-8') }
+}
+export async function fetchPage(url, runtime = {}) {
+  let parsed; try { parsed = new URL(String(url).trim()) } catch { throw new Error('Paste a full web address, starting with https://.') }
+  if (!['http:', 'https:'].includes(parsed.protocol)) throw new Error('Only http and https pages can be saved.')
+  let response
+  try { response = await fetch(parsed, { redirect: 'follow', signal: AbortSignal.timeout(runtime.timeoutMs ?? 15000), headers: { 'User-Agent': 'Yazi/0.1 (private research copy)', Accept: 'text/html,application/xhtml+xml,text/plain;q=0.9' } }) }
+  catch (error) { throw new Error(error.name === 'TimeoutError' ? 'The page took too long to answer. Try again later.' : 'The page could not be reached. Check the address and your connection.') }
+  if (!response.ok) throw new Error(`The page answered with an error (${response.status}).`)
+  const contentType = response.headers.get('content-type') ?? ''
+  if (!/text\/html|application\/xhtml|text\/plain/i.test(contentType)) throw new Error(/pdf/i.test(contentType) ? 'PDFs cannot be saved this way yet. Save the text into the inbox instead.' : 'This address is not a web page.')
+  const chunks = []; let size = 0
+  for await (const chunk of response.body) { size += chunk.length; if (size > MAX_PAGE) throw new Error('This page is too large to save (over 5 MB).'); chunks.push(chunk) }
+  const bytes = Buffer.concat(chunks)
+  return { html: charset(contentType, bytes.subarray(0, 2048).toString('latin1')).decode(bytes), url: response.url || parsed.href, contentType }
+}
+
 export async function research(request, runtime = {}) {
+  if (request.action === 'fetch-page') return await fetchPage(request.url, runtime)
   const paths = await folders(request), now = runtime.now ?? new Date()
   if (request.action === 'load') return await loadIndex(paths)
   if (request.action === 'pending') return (await inboxFiles(paths.inbox)).length
@@ -111,7 +133,12 @@ export async function research(request, runtime = {}) {
 }
 // One request at a time per process (the preview server); the desktop app also holds its storage lock.
 let queue = Promise.resolve()
-export function queued(request, runtime) { const next = queue.then(() => research(request, runtime)); queue = next.catch(() => {}); return next }
+export function queued(request, runtime) {
+  // Reads never wait behind writes: every write is an atomic rename, so a reader sees a whole file.
+  // A slow page fetch must not hold up saving either.
+  if (['fetch-page', 'pending', 'load', 'read-source'].includes(request.action)) return research(request, runtime)
+  const next = queue.then(() => research(request, runtime)); queue = next.catch(() => {}); return next
+}
 
 if (process.argv[1] && resolve(process.argv[1]) === resolve(fileURLToPath(import.meta.url))) {
   let raw = ''; for await (const chunk of process.stdin) raw += chunk
