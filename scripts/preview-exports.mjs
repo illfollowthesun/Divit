@@ -11,9 +11,10 @@ export function previewExports() {
       try {
         if (req.method === 'GET') return send(200, await exportTools())
         if (req.method !== 'POST' || req.headers['x-yazi-preview'] !== '1') return send(405, { error: 'Use Export in the preview.' })
-        let raw = '', length = 0
-        for await (const chunk of req) { length += chunk.length; if (length > 20 * 1024 * 1024) return send(413, { error: 'This preview export is too large. Use the desktop app.' }); raw += chunk }
-        const request = JSON.parse(raw)
+        // Join raw bytes before decoding so a Turkish letter split across chunks stays intact.
+        const chunks = []; let length = 0
+        for await (const chunk of req) { length += chunk.length; if (length > 20 * 1024 * 1024) return send(413, { error: 'This preview export is too large. Use the desktop app.' }); chunks.push(chunk) }
+        const request = JSON.parse(Buffer.concat(chunks).toString('utf8'))
         const result = await exportDocument({ project: request.project, images: request.images, format: request.format, outputRoot: resolve('.tmp/preview-exports') })
         res.setHeader('Content-Type', result.format === 'markdown' ? 'text/markdown; charset=utf-8' : 'application/octet-stream')
         res.setHeader('Content-Disposition', `attachment; filename="${result.filename}"`)
