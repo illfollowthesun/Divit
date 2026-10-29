@@ -8,64 +8,99 @@ use std::{path::Path, time::Duration};
 
 pub const ANTHROPIC_VERSION: &str = "2026-10-21";
 const ANTHROPIC_URL: &str = "https://api.anthropic.com/v1";
+pub const GEMINI_URL: &str = "https://generativelanguage.googleapis.com/v1beta";
 const OPENAI_URL: &str = "https://api.openai.com/v1";
 const KEYRING_SERVICE: &str = "com.firextream.yazi";
 
+// Listed in the order Settings shows them: the free and private options first.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
-pub enum ProviderKind { #[default] Anthropic, Openai, OpenaiCompatible }
+pub enum ProviderKind { #[default] Gemini, Local, Anthropic, Openai, OpenaiCompatible }
 impl ProviderKind {
     pub fn parse(value: &str) -> Result<Self> {
-        match value { "anthropic" => Ok(Self::Anthropic), "openai" => Ok(Self::Openai), "openai-compatible" => Ok(Self::OpenaiCompatible), _ => Err("Unknown AI provider".into()) }
+        match value {
+            "gemini" => Ok(Self::Gemini), "local" => Ok(Self::Local), "anthropic" => Ok(Self::Anthropic),
+            "openai" => Ok(Self::Openai), "openai-compatible" => Ok(Self::OpenaiCompatible), _ => Err("Unknown AI provider".into()),
+        }
     }
-    fn key_name(self) -> &'static str { match self { Self::Anthropic => "ai-anthropic", Self::Openai => "ai-openai", Self::OpenaiCompatible => "ai-openai-compatible" } }
+    fn key_name(self) -> &'static str {
+        match self { Self::Gemini => "ai-gemini", Self::Local => "ai-local", Self::Anthropic => "ai-anthropic", Self::Openai => "ai-openai", Self::OpenaiCompatible => "ai-openai-compatible" }
+    }
+    const ALL: [ProviderKind; 5] = [Self::Gemini, Self::Local, Self::Anthropic, Self::Openai, Self::OpenaiCompatible];
 }
 
 #[derive(Debug, Serialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
-pub struct Capabilities { pub native_search: bool, pub deep_research: bool, pub streaming: bool, pub local: bool }
+pub struct Capabilities { pub native_search: bool, pub deep_research: bool, pub streaming: bool, pub local: bool, pub key_required: bool }
 
 #[derive(Clone, Debug, Serialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
-pub struct ModelInfo { pub id: &'static str, pub label: &'static str, pub input_per_mtok: f64, pub output_per_mtok: f64 }
+pub struct ModelInfo {
+    pub id: &'static str, pub label: &'static str, pub input_per_mtok: f64, pub output_per_mtok: f64,
+    // Some prices change: (prompt tokens above which, or month from which; input, output).
+    pub long_prompt: Option<(u64, f64, f64)>, pub from_month: Option<(&'static str, f64, f64)>,
+    pub web_search_tool: &'static str, pub fallbacks: bool,
+}
+const fn claude(id: &'static str, label: &'static str, input: f64, output: f64, long_prompt: Option<(u64, f64, f64)>, web_search_tool: &'static str, fallbacks: bool) -> ModelInfo {
+    ModelInfo { id, label, input_per_mtok: input, output_per_mtok: output, long_prompt, from_month: None, web_search_tool, fallbacks }
+}
+const fn gemini(id: &'static str, label: &'static str, input: f64, output: f64, from_month: Option<(&'static str, f64, f64)>) -> ModelInfo {
+    ModelInfo { id, label, input_per_mtok: input, output_per_mtok: output, long_prompt: None, from_month, web_search_tool: "google_search", fallbacks: false }
+}
 
-// Anthropic first-party prices in USD per million tokens. Other providers are billed at their own
-// rates, which Yazı does not know, so their cost is shown as unknown.
-pub const ANTHROPIC_MODELS: [ModelInfo; 4] = [
-    ModelInfo { id: "claude-opus-5-5", label: "Claude Opus 5.5", input_per_mtok: 4.0, output_per_mtok: 20.0 },
-    ModelInfo { id: "claude-sonnet-5-5", label: "Claude Sonnet 5.5", input_per_mtok: 2.0, output_per_mtok: 10.0 },
-    ModelInfo { id: "claude-haiku-5-5", label: "Claude Haiku 5.5", input_per_mtok: 0.10, output_per_mtok: 0.50 },
-    ModelInfo { id: "claude-fable-5-1", label: "Claude Fable 5.1", input_per_mtok: 10.0, output_per_mtok: 50.0 },
+// Verified 2026-10-29: https://platform.claude.com/docs/en/about-claude/pricing
+// Anthropic first-party prices in USD per million tokens.
+pub const ANTHROPIC_MODELS: [ModelInfo; 3] = [
+    claude("claude-sonnet-5-5", "Claude Sonnet 5.5", 2.0, 10.0, None, "web_search_20260209", true),
+    claude("claude-haiku-5-5", "Claude Haiku 5.5 (lowest cost)", 0.10, 0.50, Some((100_000, 0.50, 2.50)), "web_search_20250305", false),
+    claude("claude-opus-5-5", "Claude Opus 5.5", 4.0, 20.0, None, "web_search_20260209", true),
 ];
+// Verified 2026-10-29: https://ai.google.dev/gemini-api/docs/pricing
+// Gemini paid-tier token prices. Search charges are excluded: the shared account allowance is unknown.
+pub const GEMINI_MODELS: [ModelInfo; 2] = [
+    gemini("gemini-3.8-flash", "Gemini 3.8 Flash", 0.75, 3.75, Some(("2027-01", 1.50, 7.50))),
+    gemini("gemini-3.5-flash-lite", "Gemini 3.5 Flash-Lite (lowest cost)", 0.30, 2.50, None),
+];
+pub const WEB_SEARCH_USD: f64 = 0.01; // Claude: $10 per 1,000 searches. Gemini: 5,000 a month free on paid keys, not priced here.
 
 #[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
-pub struct Usage { pub month: String, pub calls: u64, pub input_tokens: u64, pub output_tokens: u64, pub cost_usd: f64, pub unpriced_calls: u64 }
+pub struct Usage { pub month: String, pub calls: u64, pub input_tokens: u64, pub output_tokens: u64, pub web_searches: u64, pub cost_usd: f64, pub unpriced_calls: u64 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
-pub struct AiConfig { pub enabled: bool, pub provider: ProviderKind, pub model: String, pub base_url: String, pub monthly_limit_usd: Option<f64>, pub usage: Usage }
+pub struct AiConfig {
+    pub enabled: bool, pub provider: ProviderKind, pub model: String, pub base_url: String, pub monthly_limit_usd: Option<f64>,
+    // If Claude declines a request, let Anthropic retry it on its recommended fallback model. Off unless the writer turns it on.
+    pub fallbacks: bool, pub usage: Usage,
+}
 impl Default for AiConfig {
-    fn default() -> Self { Self { enabled: false, provider: ProviderKind::Anthropic, model: ANTHROPIC_MODELS[0].id.into(), base_url: String::new(), monthly_limit_usd: None, usage: Usage::default() } }
+    fn default() -> Self { Self { enabled: false, provider: ProviderKind::Gemini, model: GEMINI_MODELS[0].id.into(), base_url: String::new(), monthly_limit_usd: None, fallbacks: false, usage: Usage::default() } }
 }
 
+pub fn catalog(kind: ProviderKind) -> &'static [ModelInfo] {
+    match kind { ProviderKind::Gemini => &GEMINI_MODELS, ProviderKind::Anthropic => &ANTHROPIC_MODELS, _ => &[] }
+}
+pub fn model_info(kind: ProviderKind, model: &str) -> Option<&'static ModelInfo> { catalog(kind).iter().find(|m| m.id == model) }
+
 pub fn capabilities(config: &AiConfig) -> Capabilities {
+    let base = Capabilities { native_search: false, deep_research: false, streaming: true, local: false, key_required: true };
     match config.provider {
-        ProviderKind::Anthropic => Capabilities { native_search: true, deep_research: false, streaming: true, local: false },
-        // Search through these providers is not wired up yet; summarize, ask and angles work.
-        ProviderKind::Openai => Capabilities { native_search: false, deep_research: false, streaming: true, local: false },
-        ProviderKind::OpenaiCompatible => Capabilities { native_search: false, deep_research: false, streaming: true, local: is_local(&config.base_url) },
+        ProviderKind::Gemini | ProviderKind::Anthropic => Capabilities { native_search: true, ..base },
+        ProviderKind::Local => Capabilities { local: true, key_required: false, ..base },
+        // Search through these providers is not wired up; summarize, ask and angles work.
+        ProviderKind::Openai | ProviderKind::OpenaiCompatible => base,
     }
 }
-fn is_local(url: &str) -> bool {
-    let host = url.split("://").nth(1).unwrap_or("").split(['/', ':']).next().unwrap_or("");
-    matches!(host, "localhost" | "127.0.0.1" | "[::1]")
+pub fn is_local(url: &str) -> bool {
+    reqwest::Url::parse(url).is_ok_and(|url| url.username().is_empty() && url.password().is_none()
+        && matches!(url.host_str(), Some("localhost" | "127.0.0.1" | "[::1]" | "::1")))
 }
 pub fn base_url(config: &AiConfig) -> String {
-    match config.provider { ProviderKind::Anthropic => ANTHROPIC_URL.into(), ProviderKind::Openai => OPENAI_URL.into(), ProviderKind::OpenaiCompatible => config.base_url.trim_end_matches('/').into() }
-}
-pub fn price(config: &AiConfig) -> Option<&'static ModelInfo> {
-    if config.provider == ProviderKind::Anthropic { ANTHROPIC_MODELS.iter().find(|m| m.id == config.model) } else { None }
+    match config.provider {
+        ProviderKind::Gemini => GEMINI_URL.into(), ProviderKind::Anthropic => ANTHROPIC_URL.into(), ProviderKind::Openai => OPENAI_URL.into(),
+        ProviderKind::Local | ProviderKind::OpenaiCompatible => config.base_url.trim_end_matches('/').into(),
+    }
 }
 
 pub fn load(root: &Path) -> Result<AiConfig> {
@@ -82,16 +117,18 @@ pub fn validate(mut next: AiConfig, current: &AiConfig) -> Result<AiConfig> {
     next.model = next.model.trim().to_string();
     next.base_url = next.base_url.trim().to_string();
     if next.model.is_empty() || next.model.len() > 200 || next.model.chars().any(char::is_whitespace) { return Err("Choose a model name without spaces.".into()); }
-    if next.provider == ProviderKind::Anthropic && !ANTHROPIC_MODELS.iter().any(|m| m.id == next.model) { return Err("Choose one of the listed Claude models.".into()); }
-    if next.provider == ProviderKind::OpenaiCompatible {
-        let ok = next.base_url.starts_with("https://") || next.base_url.starts_with("http://") && is_local(&next.base_url);
-        if !ok { return Err("The base URL must start with https:// (http:// only for localhost).".into()); }
-    } else { next.base_url = String::new(); }
+    if !catalog(next.provider).is_empty() && model_info(next.provider, &next.model).is_none() { return Err("Choose one of the listed models.".into()); }
+    match next.provider {
+        ProviderKind::Local => if !(next.base_url.starts_with("http://") || next.base_url.starts_with("https://")) || !is_local(&next.base_url) { return Err("A local model's address starts with http://localhost or http://127.0.0.1.".into()); },
+        ProviderKind::OpenaiCompatible => if !next.base_url.starts_with("https://") { return Err("The service address must start with https://. For a model on this computer, choose Local model.".into()); },
+        _ => next.base_url = String::new(),
+    }
     if let Some(limit) = next.monthly_limit_usd { if !(limit.is_finite() && limit > 0.0 && limit <= 100_000.0) { return Err("The monthly limit must be a positive amount in dollars.".into()); } }
+    // Only Claude models with a server-side fallback can use one.
+    if !model_info(next.provider, &next.model).is_some_and(|m| m.fallbacks) { next.fallbacks = false; }
     next.usage = current.usage.clone();
     Ok(next)
 }
-
 
 fn entry(kind: ProviderKind) -> Result<keyring::Entry> { keyring::Entry::new(KEYRING_SERVICE, kind.key_name()).map_err(|e| format!("Windows Credential Manager is not available: {e}")) }
 pub fn set_key(kind: ProviderKind, key: &str) -> Result<()> {
@@ -106,6 +143,30 @@ pub fn forget_key(kind: ProviderKind) -> Result<()> {
     match entry(kind)?.delete_credential() { Ok(()) | Err(keyring::Error::NoEntry) => Ok(()), Err(e) => Err(format!("The key could not be removed: {e}")) }
 }
 
+// What one request cost at list price, if the served model is known. Claude searches cost the same
+// on every model; Gemini searches are left out (5,000 a month are free on paid keys).
+pub fn cost(kind: ProviderKind, model: &str, month: &str, input_tokens: u64, output_tokens: u64, web_searches: u64) -> Option<f64> {
+    let m = model_info(kind, model)?;
+    let (mut input, mut output) = (m.input_per_mtok, m.output_per_mtok);
+    if let Some((above, i, o)) = m.long_prompt { if input_tokens > above { (input, output) = (i, o); } }
+    if let Some((from, i, o)) = m.from_month { if month >= from { (input, output) = (i, o); } }
+    let searches = if kind == ProviderKind::Anthropic { web_searches as f64 * WEB_SEARCH_USD } else { 0.0 };
+    Some((input_tokens as f64 * input + output_tokens as f64 * output) / 1_000_000.0 + searches)
+}
+// Adds one request to this month's usage (a new month starts from zero) and returns its cost, if known.
+pub fn record(config: &mut AiConfig, month: &str, model: &str, input_tokens: u64, output_tokens: u64, web_searches: u64) -> Option<f64> {
+    if config.usage.month != month { config.usage = Usage { month: month.into(), ..Usage::default() }; }
+    let spent = cost(config.provider, model, month, input_tokens, output_tokens, web_searches);
+    let usage = &mut config.usage;
+    usage.calls += 1; usage.input_tokens += input_tokens; usage.output_tokens += output_tokens; usage.web_searches += web_searches;
+    match spent { Some(c) => usage.cost_usd += c, None => usage.unpriced_calls += 1 }
+    spent
+}
+// A soft limit: Yazı warns, the writer decides.
+pub fn over_limit(config: &AiConfig, month: &str) -> bool {
+    config.usage.month == month && config.monthly_limit_usd.is_some_and(|limit| config.usage.cost_usd >= limit)
+}
+
 // Turns an HTTP failure into a sentence for the writer. The key is never part of the message.
 pub fn friendly_error(status: u16, body: &str) -> String {
     let detail = serde_json::from_str::<Value>(body).ok().and_then(|v| v["error"]["message"].as_str().or(v["message"].as_str()).map(|s| s.chars().take(240).collect::<String>()));
@@ -115,30 +176,31 @@ pub fn friendly_error(status: u16, body: &str) -> String {
         403 => "This key is not allowed to use that model or feature.",
         404 => "The model was not found, or this key cannot use it.",
         413 => "The request was too large for the provider.",
-        429 => "The provider's rate limit was reached. Wait a minute and try again.",
+        429 => "The provider's rate limit or free quota was reached. Wait a minute and try again.",
         500..=599 => "The AI service is busy or having trouble. Try again shortly.",
         _ => "The AI request failed.",
     };
     match detail { Some(d) if !d.is_empty() => format!("{base} ({status}: {d})"), _ => format!("{base} ({status})") }
 }
 
-pub fn client() -> Result<reqwest::Client> {
-    reqwest::Client::builder().timeout(Duration::from_secs(120)).connect_timeout(Duration::from_secs(15)).user_agent("Yazi/0.1").build().map_err(|e| e.to_string())
+pub fn client(seconds: u64) -> Result<reqwest::Client> {
+    reqwest::Client::builder().timeout(Duration::from_secs(seconds)).connect_timeout(Duration::from_secs(15)).user_agent("Yazi/0.1").build().map_err(|e| e.to_string())
 }
-fn network(error: reqwest::Error) -> String {
+pub fn network(error: reqwest::Error) -> String {
     if error.is_timeout() { "The AI service took too long to answer. Nothing was changed.".into() } else { "The AI service could not be reached. Check your connection.".into() }
 }
 
 // "Test connection" reads the model's listing, which costs no tokens.
 pub async fn test(config: &AiConfig, key: Option<&str>) -> Result<String> {
-    let http = client()?;
+    let http = client(30)?;
     let base = base_url(config);
     let request = match config.provider {
+        ProviderKind::Gemini => http.get(format!("{base}/models/{}", config.model)).header("x-goog-api-key", key.ok_or("Add a Gemini API key first.")?),
         ProviderKind::Anthropic => http.get(format!("{base}/models/{}", config.model)).header("x-api-key", key.ok_or("Add an Anthropic API key first.")?).header("anthropic-version", ANTHROPIC_VERSION),
         ProviderKind::Openai => http.get(format!("{base}/models")).bearer_auth(key.ok_or("Add an OpenAI API key first.")?),
-        ProviderKind::OpenaiCompatible => { let r = http.get(format!("{base}/models")); match key { Some(k) => r.bearer_auth(k), None => r } }
+        ProviderKind::Local | ProviderKind::OpenaiCompatible => { let r = http.get(format!("{base}/models")); match key { Some(k) => r.bearer_auth(k), None => r } }
     };
-    let response = request.send().await.map_err(network)?;
+    let response = request.send().await.map_err(|e| if config.provider == ProviderKind::Local { "Nothing answered at that address. Is Ollama or LM Studio running?".to_string() } else { network(e) })?;
     let status = response.status().as_u16();
     let body = response.text().await.map_err(network)?;
     if !(200..300).contains(&status) { return Err(friendly_error(status, &body)); }
@@ -148,6 +210,7 @@ pub fn describe_test(config: &AiConfig, body: &str) -> Result<String> {
     let value: Value = serde_json::from_str(body).map_err(|_| "The provider answered with something that is not JSON.".to_string())?;
     Ok(match config.provider {
         ProviderKind::Anthropic => format!("Connected. {} is available.", value["display_name"].as_str().unwrap_or(&config.model)),
+        ProviderKind::Gemini => format!("Connected. {} is available.", value["displayName"].as_str().unwrap_or(&config.model)),
         _ => {
             let listed = value["data"].as_array().map(|models| models.iter().any(|m| m["id"].as_str() == Some(&config.model))).unwrap_or(false);
             if listed { format!("Connected. {} is available.", config.model) } else { format!("Connected, but {} was not in the provider's model list. Check the name.", config.model) }
@@ -157,11 +220,12 @@ pub fn describe_test(config: &AiConfig, body: &str) -> Result<String> {
 
 // What Settings shows: never a key, only whether one is stored for each provider.
 pub fn status(config: &AiConfig) -> Result<Value> {
-    let stored = |kind| get_key(kind).map(|key| key.is_some());
+    let mut stored = serde_json::Map::new();
+    for kind in ProviderKind::ALL { stored.insert(serde_json::to_value(kind).unwrap().as_str().unwrap().to_string(), json!(get_key(kind)?.is_some())); }
     Ok(json!({
-        "config": config, "capabilities": capabilities(config),
-        "hasKey": { "anthropic": stored(ProviderKind::Anthropic)?, "openai": stored(ProviderKind::Openai)?, "openai-compatible": stored(ProviderKind::OpenaiCompatible)? },
-        "models": ANTHROPIC_MODELS, "price": price(config),
+        "config": config, "capabilities": capabilities(config), "hasKey": stored,
+        "models": { "gemini": GEMINI_MODELS, "anthropic": ANTHROPIC_MODELS },
+        "price": model_info(config.provider, &config.model),
     }))
 }
 
@@ -171,39 +235,65 @@ mod tests {
     fn config(provider: ProviderKind, model: &str, base: &str) -> AiConfig { AiConfig { provider, model: model.into(), base_url: base.into(), ..AiConfig::default() } }
 
     #[test]
-    fn defaults_to_anthropic_opus_and_is_off() {
+    fn defaults_to_gemini_flash_with_ai_off_and_fallbacks_off() {
         let c = AiConfig::default();
-        assert!(!c.enabled); assert_eq!(c.provider, ProviderKind::Anthropic); assert_eq!(c.model, "claude-opus-5-5");
-        let parsed: AiConfig = serde_json::from_str(r#"{"provider":"openai-compatible","model":"llama3"}"#).unwrap();
-        assert_eq!(parsed.provider, ProviderKind::OpenaiCompatible); assert!(!parsed.enabled);
+        assert!(!c.enabled); assert!(!c.fallbacks); assert_eq!(c.provider, ProviderKind::Gemini); assert_eq!(c.model, "gemini-3.8-flash");
+        assert_eq!(ANTHROPIC_MODELS[0].id, "claude-sonnet-5-5"); assert_eq!(ANTHROPIC_MODELS[1].id, "claude-haiku-5-5");
+        let parsed: AiConfig = serde_json::from_str(r#"{"provider":"local","model":"llama3","baseUrl":"http://localhost:11434/v1"}"#).unwrap();
+        assert_eq!(parsed.provider, ProviderKind::Local); assert!(!parsed.enabled);
     }
     #[test]
-    fn validation_keeps_usage_and_rejects_unsafe_urls() {
+    fn validation_keeps_usage_rejects_unsafe_urls_and_unknown_models() {
         let mut current = AiConfig::default(); current.usage.calls = 7;
-        let mut form = config(ProviderKind::Anthropic, " claude-sonnet-5-5 ", "https://ignored.example"); form.usage.calls = 0;
+        let mut form = config(ProviderKind::Anthropic, " claude-sonnet-5-5 ", "https://ignored.example"); form.usage.calls = 0; form.fallbacks = true;
         let ok = validate(form, &current).unwrap();
-        assert_eq!((ok.model.as_str(), ok.base_url.as_str(), ok.usage.calls), ("claude-sonnet-5-5", "", 7));
+        assert_eq!((ok.model.as_str(), ok.base_url.as_str(), ok.usage.calls, ok.fallbacks), ("claude-sonnet-5-5", "", 7, true));
+        let mut haiku = config(ProviderKind::Anthropic, "claude-haiku-5-5", ""); haiku.fallbacks = true;
+        assert!(!validate(haiku, &current).unwrap().fallbacks, "Haiku has no server-side fallback");
+        let mut flash = config(ProviderKind::Gemini, "gemini-3.8-flash", ""); flash.fallbacks = true;
+        assert!(!validate(flash, &current).unwrap().fallbacks);
+        assert!(validate(config(ProviderKind::Gemini, "gemini-1.0-pro", ""), &current).is_err());
         assert!(validate(config(ProviderKind::Anthropic, "gpt-4o", ""), &current).is_err());
-        assert!(validate(config(ProviderKind::OpenaiCompatible, "llama3", "http://evil.example/v1"), &current).is_err());
-        assert!(validate(config(ProviderKind::OpenaiCompatible, "llama3", "http://localhost:11434/v1"), &current).is_ok());
+        assert!(validate(config(ProviderKind::Local, "llama3", "http://localhost:11434/v1"), &current).is_ok());
+        assert!(validate(config(ProviderKind::Local, "llama3", "http://evil.example/v1"), &current).is_err());
+        assert!(validate(config(ProviderKind::Local, "llama3", "http://localhost:11434@evil.example/v1"), &current).is_err());
+        assert!(validate(config(ProviderKind::Local, "llama3", "http://[::1]:11434/v1"), &current).is_ok());
+        assert!(validate(config(ProviderKind::OpenaiCompatible, "llama3", "http://localhost:11434/v1"), &current).is_err());
         assert!(validate(config(ProviderKind::OpenaiCompatible, "deepseek-chat", "https://api.deepseek.com/v1"), &current).is_ok());
         assert!(validate(config(ProviderKind::Openai, "two words", ""), &current).is_err());
         let mut limited = config(ProviderKind::Anthropic, "claude-opus-5-5", ""); limited.monthly_limit_usd = Some(-1.0);
         assert!(validate(limited, &current).is_err());
     }
     #[test]
-    fn capabilities_follow_the_provider_and_local_urls() {
+    fn usage_rolls_over_monthly_and_prices_follow_model_tier_and_date() {
+        let mut c = config(ProviderKind::Anthropic, "claude-sonnet-5-5", ""); c.monthly_limit_usd = Some(0.05);
+        let spent = record(&mut c, "2026-10", "claude-sonnet-5-5", 20_000, 1_000, 2).unwrap();
+        assert!((spent - 0.07).abs() < 1e-9); assert!(over_limit(&c, "2026-10")); assert!(!over_limit(&c, "2026-11"));
+        record(&mut c, "2026-11", "claude-sonnet-5-5", 1_000, 0, 0);
+        assert_eq!((c.usage.month.as_str(), c.usage.calls, c.usage.input_tokens), ("2026-11", 1, 1_000));
+        assert!((cost(ProviderKind::Anthropic, "claude-haiku-5-5", "2026-10", 200_000, 1_000, 0).unwrap() - 0.1025).abs() < 1e-9);
+        assert!((cost(ProviderKind::Gemini, "gemini-3.8-flash", "2026-12", 1_000_000, 0, 3).unwrap() - 0.75).abs() < 1e-9, "Gemini searches are not priced");
+        assert!((cost(ProviderKind::Gemini, "gemini-3.8-flash", "2027-01", 1_000_000, 0, 0).unwrap() - 1.50).abs() < 1e-9);
+        assert_eq!(cost(ProviderKind::Anthropic, "claude-opus-4-8", "2026-10", 1, 1, 1), None);
+        let mut local = config(ProviderKind::Local, "llama3", "http://localhost:11434/v1");
+        assert_eq!(record(&mut local, "2026-10", "llama3", 500, 50, 0), None); assert_eq!(local.usage.unpriced_calls, 1);
+    }
+    #[test]
+    fn capabilities_follow_the_provider() {
         assert!(capabilities(&AiConfig::default()).native_search);
-        assert!(capabilities(&config(ProviderKind::OpenaiCompatible, "m", "http://127.0.0.1:1234/v1")).local);
-        assert!(!capabilities(&config(ProviderKind::OpenaiCompatible, "m", "https://openrouter.ai/api/v1")).local);
-        assert_eq!(base_url(&config(ProviderKind::OpenaiCompatible, "m", "http://localhost:11434/v1/")), "http://localhost:11434/v1");
+        let local = capabilities(&config(ProviderKind::Local, "m", "http://127.0.0.1:1234/v1"));
+        assert!(local.local && !local.key_required && !local.native_search);
+        assert!(!capabilities(&config(ProviderKind::OpenaiCompatible, "m", "https://openrouter.ai/api/v1")).native_search);
+        assert_eq!(base_url(&config(ProviderKind::Local, "m", "http://localhost:11434/v1/")), "http://localhost:11434/v1");
+        assert_eq!(base_url(&AiConfig::default()), "https://generativelanguage.googleapis.com/v1beta");
     }
     #[test]
     fn errors_are_sentences_without_secrets() {
         let body = r#"{"type":"error","error":{"type":"rate_limit_error","message":"Number of requests has exceeded your rate limit"}}"#;
-        assert_eq!(friendly_error(429, body), "The provider's rate limit was reached. Wait a minute and try again. (429: Number of requests has exceeded your rate limit)");
+        assert_eq!(friendly_error(429, body), "The provider's rate limit or free quota was reached. Wait a minute and try again. (429: Number of requests has exceeded your rate limit)");
+        let gemini = r#"{"error":{"code":400,"message":"API key not valid. Please pass a valid API key.","status":"INVALID_ARGUMENT"}}"#;
+        assert_eq!(friendly_error(400, gemini), "The AI request failed. (400: API key not valid. Please pass a valid API key.)");
         assert!(friendly_error(529, "not json").starts_with("The AI service is busy"));
-        assert_eq!(friendly_error(401, ""), "The API key was not accepted. Check it in Settings → AI. (401)");
     }
     // Touches the real Windows Credential Manager under a separate test name; run with --ignored.
     #[test]
@@ -217,8 +307,9 @@ mod tests {
     }
     #[test]
     fn test_results_name_the_model() {
-        assert_eq!(describe_test(&AiConfig::default(), r#"{"id":"claude-opus-5-5","display_name":"Claude Opus 5.5"}"#).unwrap(), "Connected. Claude Opus 5.5 is available.");
-        let local = config(ProviderKind::OpenaiCompatible, "llama3", "http://localhost:11434/v1");
+        assert_eq!(describe_test(&config(ProviderKind::Anthropic, "claude-sonnet-5-5", ""), r#"{"id":"claude-sonnet-5-5","display_name":"Claude Sonnet 5.5"}"#).unwrap(), "Connected. Claude Sonnet 5.5 is available.");
+        assert_eq!(describe_test(&AiConfig::default(), r#"{"name":"models/gemini-3.8-flash","displayName":"Gemini 3.8 Flash"}"#).unwrap(), "Connected. Gemini 3.8 Flash is available.");
+        let local = config(ProviderKind::Local, "llama3", "http://localhost:11434/v1");
         assert!(describe_test(&local, r#"{"data":[{"id":"llama3"}]}"#).unwrap().starts_with("Connected. llama3"));
         assert!(describe_test(&local, r#"{"data":[{"id":"qwen"}]}"#).unwrap().contains("was not in the provider's model list"));
     }

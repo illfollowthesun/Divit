@@ -1,4 +1,13 @@
 import { test, expect } from '@playwright/test'
+import { desktopBridge, nativeCalls } from './desktop-bridge'
+
+test('Gemini model labels follow the published January price change', async ({ page }) => {
+  await page.clock.setFixedTime(new Date('2027-01-15T12:00:00Z'))
+  await desktopBridge(page, { config: { enabled: true } })
+  await page.goto('/'); await page.getByRole('button', { name: 'Open settings' }).click()
+  const model = page.getByRole('dialog').getByLabel('Model', { exact: true })
+  await expect(model.locator('option').first()).toHaveText('Gemini 3.8 Flash · $1.5 / $7.5 per million tokens in / out on paid keys')
+})
 
 test('in the browser preview, AI settings only explain that AI runs from the desktop app', async ({ page }) => {
   await page.goto('/'); await page.getByRole('button', { name: 'Open settings' }).click()
@@ -8,63 +17,50 @@ test('in the browser preview, AI settings only explain that AI runs from the des
   await expect(apiKey).toHaveCount(0)
 })
 
-// Stands in for the Tauri bridge so the desktop form can be exercised: it records every native call.
-test('desktop AI settings send the key only to Credential Manager and never keep it in the form', async ({ page }) => {
-  await page.addInitScript(() => {
-    const w = window as unknown as Record<string, unknown>, calls: { cmd: string; args: Record<string, unknown> }[] = []
-    let config = { enabled: false, provider: 'anthropic', model: 'claude-opus-5-5', baseUrl: '', monthlyLimitUsd: null as number | null, usage: { month: new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 7), calls: 3, inputTokens: 12000, outputTokens: 800, costUsd: 0.064, unpricedCalls: 0 } }
-    const keys: Record<string, boolean> = { anthropic: false, openai: false, 'openai-compatible': false }
-    const models = [{ id: 'claude-opus-5-5', label: 'Claude Opus 5.5', inputPerMtok: 4, outputPerMtok: 20 }, { id: 'claude-sonnet-5-5', label: 'Claude Sonnet 5.5', inputPerMtok: 2, outputPerMtok: 10 }]
-    const status = () => ({ config, capabilities: { nativeSearch: true, deepResearch: false, streaming: true, local: false }, hasKey: { ...keys }, models, price: models[0] })
-    const library = { projects: [], ideas: [], images: [], trash: [], dataRoot: 'C:/Users/writer/Documents/Yazi', settings: { schemaVersion: 1, theme: 'light', siteRepo: '', aiProvider: 'claude-code' } }
-    w.__aiCalls = calls; w.isTauri = true
-    w.__TAURI_INTERNALS__ = {
-      transformCallback: () => Math.floor(Math.random() * 1e9), unregisterCallback: () => {}, convertFileSrc: (p: string) => p,
-      invoke: async (cmd: string, args: Record<string, unknown> = {}) => {
-        calls.push({ cmd, args: JSON.parse(JSON.stringify(args)) })
-        if (cmd === 'library') return library
-        if (cmd === 'ai_status') return status()
-        if (cmd === 'ai_save') { config = { ...(args.config as typeof config), usage: config.usage }; return status() }
-        if (cmd === 'ai_set_key') { keys[args.provider as string] = true; return null }
-        if (cmd === 'ai_forget_key') { keys[args.provider as string] = false; return null }
-        if (cmd === 'ai_test') return 'Connected. Claude Opus 5.5 is available.'
-        if (cmd === 'backup_action') return { enabled: false, lastBackupAt: null }
-        return null
-      },
-    }
-  })
+test('Gemini comes first, then local models; keys go only to Credential Manager; Claude fallbacks are an opt-in', async ({ page }) => {
+  const month = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 7)
+  await desktopBridge(page, { config: { usage: { month, calls: 3, inputTokens: 12000, outputTokens: 800, webSearches: 2, costUsd: 0.064, unpricedCalls: 0 } }, testMessage: 'Connected. Gemini 3.8 Flash is available.' })
   await page.goto('/'); await page.getByRole('button', { name: 'Open settings' }).click()
   const section = page.getByRole('dialog').locator('.ai-settings')
   const apiKey = section.locator('.ai-key').getByLabel('API key', { exact: true })
   await expect(section.getByLabel('Use AI in Yazı')).not.toBeChecked()
   await expect(apiKey).toHaveCount(0) // hidden while AI is off
+  await expect(section).toContainText('subscriptions cannot be used here')
   await section.getByLabel('Use AI in Yazı').check()
-  await expect(section.getByLabel('Provider')).toHaveValue('anthropic')
-  await expect(section.getByLabel('Model')).toHaveValue('claude-opus-5-5')
-  await expect(section.getByLabel('Model').locator('option').first()).toHaveText('Claude Opus 5.5 · $4 / $20 per million tokens in / out')
+
+  const provider = section.getByLabel('Provider')
+  await expect(provider.locator('option')).toHaveText(['Google Gemini (free tier, easiest)', 'Local model: Ollama or LM Studio (free, private)', 'Anthropic (Claude)', 'OpenAI', 'Other OpenAI-compatible service'])
+  const model = section.getByLabel('Model', { exact: true })
+  await expect(provider).toHaveValue('gemini'); await expect(model).toHaveValue('gemini-3.8-flash')
+  await expect(section).toContainText('aistudio.google.com'); await expect(section).toContainText('searching the web needs a paid key')
+  await expect(section.locator('.ai-usage')).toHaveText('This month: 3 requests · 12,000 in / 800 out tokens · 2 web searches · about $0.06 if billed (free-tier keys are not charged; search charges excluded)')
   await expect(section.getByRole('button', { name: 'Test connection' })).toBeDisabled()
 
-  const secret = 'sk-ant-test-0123456789'
+  const secret = 'AIzaSy-test-0123456789'
   await apiKey.fill(secret); await section.getByRole('button', { name: 'Store key' }).click()
   await expect(section.getByRole('status')).toHaveText('Key stored in Windows Credential Manager.')
-  await expect(apiKey).toHaveValue('')
-  await expect(section).toContainText('A key is stored in Windows Credential Manager.')
-
-  await section.getByLabel('Model').selectOption('claude-sonnet-5-5'); await section.getByLabel('Monthly soft limit (USD)').fill('5')
-  await section.getByRole('button', { name: 'Save AI settings' }).click()
-  await expect(section.getByRole('status')).toHaveText('AI settings saved.')
+  await expect(apiKey).toHaveValue(''); await expect(section).toContainText('A key is stored in Windows Credential Manager.')
+  await section.getByRole('button', { name: 'Save AI settings' }).click(); await expect(section.getByRole('status')).toHaveText('AI settings saved.')
   await section.getByRole('button', { name: 'Test connection' }).click()
-  await expect(section.getByRole('status')).toHaveText('Connected. Claude Opus 5.5 is available.')
-  await expect(section.locator('.ai-usage')).toHaveText('This month: 3 requests · 12,000 in / 800 out tokens · about $0.06')
-  await expect(section).toContainText('separately from any Claude or ChatGPT subscription')
+  await expect(section.getByRole('status')).toHaveText('Connected. Gemini 3.8 Flash is available.')
 
-  await section.getByLabel('Provider').selectOption('openai-compatible')
-  await expect(section.getByLabel('Service address')).toBeVisible(); await expect(section.getByLabel('Model')).toHaveValue('')
+  await provider.selectOption('local')
+  await expect(section.getByLabel('Service address')).toHaveValue('http://localhost:11434/v1')
+  await expect(section).toContainText('nothing you send leaves it'); await expect(section).toContainText('usually not needed for a local model')
 
-  const calls: { cmd: string; args: Record<string, unknown> }[] = await page.evaluate(() => (window as unknown as { __aiCalls: never }).__aiCalls)
-  const withSecret = calls.filter(call => JSON.stringify(call.args).includes(secret)).map(call => call.cmd)
-  expect(withSecret).toEqual(['ai_set_key'])
-  const saved = calls.find(call => call.cmd === 'ai_save')!.args.config as Record<string, unknown>
-  expect([saved.enabled, saved.provider, saved.model, saved.monthlyLimitUsd]).toEqual([true, 'anthropic', 'claude-sonnet-5-5', 5])
+  await provider.selectOption('anthropic')
+  await expect(model).toHaveValue('claude-sonnet-5-5')
+  await expect(model.locator('option')).toHaveText(['Claude Sonnet 5.5 · $2 / $10 per million tokens in / out', 'Claude Haiku 5.5 (lowest cost) · $0.1 / $0.5 per million tokens in / out', 'Claude Opus 5.5 · $4 / $20 per million tokens in / out'])
+  const fallbacks = section.getByLabel(/retry it on Anthropic's recommended fallback model/)
+  await expect(fallbacks).not.toBeChecked(); await expect(fallbacks).toBeEnabled()
+  await fallbacks.check(); await model.selectOption('claude-haiku-5-5')
+  await expect(fallbacks).not.toBeChecked(); await expect(fallbacks).toBeDisabled(); await expect(section).toContainText('(not available for this model)')
+  await model.selectOption('claude-sonnet-5-5'); await fallbacks.check(); await section.getByLabel('Monthly soft limit (USD)').fill('5')
+  await section.getByRole('button', { name: 'Save AI settings' }).click(); await expect(section.getByRole('status')).toHaveText('AI settings saved.')
+
+  const calls = await nativeCalls(page)
+  expect(calls.filter(call => JSON.stringify(call.args).includes(secret)).map(call => call.cmd)).toEqual(['ai_set_key'])
+  const saved = calls.filter(call => call.cmd === 'ai_save').map(call => call.args.config as Record<string, unknown>)
+  expect(saved.map(c => [c.provider, c.model, c.fallbacks, c.monthlyLimitUsd])).toEqual([['gemini', 'gemini-3.8-flash', false, null], ['anthropic', 'claude-sonnet-5-5', true, 5]])
   expect(await page.evaluate(secret => document.documentElement.outerHTML.includes(secret) || JSON.stringify(localStorage).includes(secret), secret)).toBe(false)
 })
