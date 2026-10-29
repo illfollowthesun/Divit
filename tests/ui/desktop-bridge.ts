@@ -5,7 +5,7 @@ import type { Page } from '@playwright/test'
 // really fetched and saved. Every native call is recorded on window.__calls.
 export type BridgeOptions = {
   config: Record<string, unknown>; keys?: Record<string, boolean>; projects?: Record<string, unknown>[]
-  search?: unknown; searchError?: string; testMessage?: string
+  search?: unknown; searchError?: string; testMessage?: string; answer?: unknown
 }
 export async function desktopBridge(page: Page, options: BridgeOptions) {
   await page.addInitScript((options: BridgeOptions) => {
@@ -37,6 +37,7 @@ export async function desktopBridge(page: Page, options: BridgeOptions) {
           case 'ai_forget_key': keys[args.provider as string] = false; return null
           case 'ai_test': return options.testMessage ?? 'Connected.'
           case 'ai_search': if (options.searchError) throw options.searchError; return options.search
+          case 'ai_ask_unsourced': return options.answer
           case 'research_action': {
             const response = await fetch('/__yazi/research', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Yazi-Preview': '1' }, body: JSON.stringify({ ...(args.payload as object), projectId: args.projectId, action: args.action }) })
             const result = await response.json(); if (!response.ok) throw result.error; return result

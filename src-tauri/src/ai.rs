@@ -183,6 +183,28 @@ pub fn friendly_error(status: u16, body: &str) -> String {
     match detail { Some(d) if !d.is_empty() => format!("{base} ({status}: {d})"), _ => format!("{base} ({status})") }
 }
 
+// Errors the Research panel can act on start with "[code] "; the panel strips the code and offers the next step.
+pub fn coded(code: &str, message: &str) -> String { format!("[{code}] {message}") }
+// Gemini reports a per-minute limit and an empty quota with the same 429 and "exceeded your current quota";
+// only the quota details tell them apart.
+pub fn gemini_error(status: u16, body: &str, searching: bool) -> String {
+    let lower = body.to_ascii_lowercase();
+    match status {
+        402 => coded("billing", "Billing on this key's Google project is not active yet. Turn it on in Google AI Studio, then try again."),
+        429 if lower.contains("perminute") => {
+            let wait = serde_json::from_str::<Value>(body).ok().and_then(|v| v["error"]["details"].as_array().and_then(|d| d.iter().find_map(|d| d["retryDelay"].as_str().map(String::from))));
+            match wait.and_then(|w| w.trim_end_matches('s').parse::<f64>().ok()) {
+                Some(s) => format!("Gemini's per-minute limit was reached. Wait {} seconds and try again.", s.ceil().max(1.0)),
+                None => "Gemini's per-minute limit was reached. Wait a minute and try again.".into(),
+            }
+        }
+        429 if lower.contains("exceeded your current quota") => if searching {
+            coded("no-search-quota", "This Gemini key has no quota for web search. Its free tier probably includes no Google Search quota. Turn on billing for the key, choose another provider in Settings → AI, or ask without web search.")
+        } else { "This Gemini key has used up its quota for now. Wait until it resets, or turn on billing for the key in Google AI Studio.".into() },
+        _ => friendly_error(status, body),
+    }
+}
+
 pub fn client(seconds: u64) -> Result<reqwest::Client> {
     reqwest::Client::builder().timeout(Duration::from_secs(seconds)).connect_timeout(Duration::from_secs(15)).user_agent("Yazi/0.1").build().map_err(|e| e.to_string())
 }
@@ -203,7 +225,7 @@ pub async fn test(config: &AiConfig, key: Option<&str>) -> Result<String> {
     let response = request.send().await.map_err(|e| if config.provider == ProviderKind::Local { "Nothing answered at that address. Is Ollama or LM Studio running?".to_string() } else { network(e) })?;
     let status = response.status().as_u16();
     let body = response.text().await.map_err(network)?;
-    if !(200..300).contains(&status) { return Err(friendly_error(status, &body)); }
+    if !(200..300).contains(&status) { return Err(if config.provider == ProviderKind::Gemini { gemini_error(status, &body, false).trim_start_matches("[billing] ").to_string() } else { friendly_error(status, &body) }); }
     describe_test(config, &body)
 }
 pub fn describe_test(config: &AiConfig, body: &str) -> Result<String> {
@@ -294,6 +316,17 @@ mod tests {
         let gemini = r#"{"error":{"code":400,"message":"API key not valid. Please pass a valid API key.","status":"INVALID_ARGUMENT"}}"#;
         assert_eq!(friendly_error(400, gemini), "The AI request failed. (400: API key not valid. Please pass a valid API key.)");
         assert!(friendly_error(529, "not json").starts_with("The AI service is busy"));
+    }
+    #[test]
+    fn gemini_quota_billing_and_rate_limits_are_told_apart() {
+        let quota = r#"{"error":{"code":429,"message":"You exceeded your current quota, please check your plan and billing details.","status":"RESOURCE_EXHAUSTED","details":[{"@type":"type.googleapis.com/google.rpc.QuotaFailure","violations":[{"quotaMetric":"generativelanguage.googleapis.com/search_grounding_requests","quotaId":"SearchGroundingRequestsPerDayPerProject-FreeTier","quotaValue":"0"}]}]}}"#;
+        let searching = gemini_error(429, quota, true);
+        assert!(searching.starts_with("[no-search-quota] ") && searching.contains("ask without web search") && !searching.to_lowercase().contains("grounding"));
+        assert!(gemini_error(429, quota, false).starts_with("This Gemini key has used up its quota"));
+        let minute = r#"{"error":{"code":429,"message":"You exceeded your current quota, please check your plan and billing details.","details":[{"@type":"type.googleapis.com/google.rpc.QuotaFailure","violations":[{"quotaId":"GenerateRequestsPerMinutePerProjectPerModel-FreeTier"}]},{"@type":"type.googleapis.com/google.rpc.RetryInfo","retryDelay":"22.4s"}]}}"#;
+        assert_eq!(gemini_error(429, minute, true), "Gemini's per-minute limit was reached. Wait 23 seconds and try again.");
+        assert!(gemini_error(402, r#"{"error":{"code":402}}"#, true).starts_with("[billing] Billing on this key's Google project is not active yet."));
+        assert!(gemini_error(401, "{}", true).starts_with("The API key was not accepted."));
     }
     // Touches the real Windows Credential Manager under a separate test name; run with --ignored.
     #[test]

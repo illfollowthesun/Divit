@@ -3,8 +3,8 @@ import type { FormEvent } from 'react'
 import { api, desktop } from '../shared/api'
 import type { Research } from '../shared/types'
 import { localDay } from '../projects/writing-log'
-import { ai, money } from '../settings/ai'
-import type { AiProvider, AiSearchResult, AiStatus } from '../settings/ai'
+import { AI_STUDIO_BILLING, ai, aiError, costNote, money } from '../settings/ai'
+import type { AiAnswer, AiProvider, AiSearchResult, AiStatus } from '../settings/ai'
 import { AiCandidates } from './AiCandidates'
 import type { Annotations } from './useResearch'
 
@@ -14,10 +14,11 @@ const message = (e: unknown) => e instanceof Error ? e.message : String(e)
 
 // "Search about this topic": with AI connected, a web search the writer starts; without it, a request
 // file plus a ready-to-paste prompt, answered by whoever writes source files into the inbox.
-export function RequestPanel({ projectId, projectTitle, language, suggestTopic, research, reload, saveAnnotations, prefill }: { prefill?: { topic: string; at: number } | null; projectId: string; projectTitle: string; language: 'en' | 'tr'; suggestTopic: () => string; research: Research | null; reload: () => Promise<unknown>; saveAnnotations: (change: (current: Annotations) => Partial<Annotations>) => Promise<void> }) {
+export function RequestPanel({ projectId, projectTitle, language, suggestTopic, research, reload, saveAnnotations, prefill, openSettings }: { prefill?: { topic: string; at: number } | null; openSettings: () => void; projectId: string; projectTitle: string; language: 'en' | 'tr'; suggestTopic: () => string; research: Research | null; reload: () => Promise<unknown>; saveAnnotations: (change: (current: Annotations) => Partial<Annotations>) => Promise<void> }) {
   const [form, setForm] = useState<Form | null>(null)
   const [made, setMade] = useState<{ request: ResearchRequest; prompt: string; path: string } | null>(null)
-  const [working, setWorking] = useState(false), [problem, setProblem] = useState(''), [copied, setCopied] = useState<'yes' | 'failed' | ''>('')
+  const [working, setWorking] = useState(false), [problem, setProblem] = useState(''), [problemCode, setProblemCode] = useState(''), [copied, setCopied] = useState<'yes' | 'failed' | ''>('')
+  const [unsourced, setUnsourced] = useState<{ topic: string; provider: AiProvider; reply: AiAnswer; saved: boolean } | null>(null)
   const [aiStatus, setAiStatus] = useState<AiStatus | null>(null), [found, setFound] = useState<{ topic: string; provider: AiProvider; result: AiSearchResult } | null>(null), [confirmOver, setConfirmOver] = useState(false)
   const requests = (research as (Research & { requests?: ResearchRequest[] }) | null)?.requests ?? []
   const latest = made?.request ?? requests[requests.length - 1]
@@ -28,7 +29,7 @@ export function RequestPanel({ projectId, projectTitle, language, suggestTopic, 
   useEffect(() => { if (prefill) void openForm(prefill.topic) }, [prefill?.at])
   async function openForm(topic?: string) {
     if (working) return
-    setWorking(true); setProblem(''); setConfirmOver(false)
+    setWorking(true); setProblem(''); setProblemCode(''); setConfirmOver(false); setUnsourced(null)
     if (desktop) {
       try { setAiStatus(await ai.status()) } catch { setAiStatus(null) }
     }
@@ -42,7 +43,7 @@ export function RequestPanel({ projectId, projectTitle, language, suggestTopic, 
   }
   async function searchWithAi(confirmed = false) {
     if (!form || working) return
-    setWorking(true); setProblem('')
+    setWorking(true); setProblem(''); setProblemCode('')
     try {
       // Settings may have changed while this form stayed open. Use the provider and limit now saved.
       const latest = await ai.status(); setAiStatus(latest)
@@ -57,14 +58,33 @@ export function RequestPanel({ projectId, projectTitle, language, suggestTopic, 
       setConfirmOver(false); setFound(null)
       const result = await ai.search({ ...form, topic: form.topic.trim(), angle: form.angle.trim(), projectTitle, month })
       setFound({ topic: form.topic.trim(), provider: current.provider, result }); setForm(null)
-    } catch (error) { setProblem(message(error)) }
+    } catch (error) { const e = aiError(error); setProblem(e.text); setProblemCode(e.code) }
     finally { setWorking(false); void ai.status().then(setAiStatus).catch(() => {}) }
+  }
+  // Offered when web search is not available on the key: the model's own knowledge, labelled unsourced.
+  async function askUnsourced() {
+    if (!form || working) return
+    setWorking(true); setProblem(''); setProblemCode('')
+    try {
+      const provider = (await ai.status()).config.provider
+      const reply = await ai.askUnsourced({ ...form, topic: form.topic.trim(), angle: form.angle.trim(), projectTitle, month })
+      setUnsourced({ topic: form.topic.trim(), provider, reply, saved: false }); setForm(null)
+    } catch (error) { const e = aiError(error); setProblem(e.text); setProblemCode(e.code === 'no-search-quota' ? '' : e.code) }
+    finally { setWorking(false); void ai.status().then(setAiStatus).catch(() => {}) }
+  }
+  async function keepUnsourced() {
+    if (!unsourced) return
+    const now = new Date().toISOString()
+    try {
+      await saveAnnotations(current => ({ notes: [...current.notes, { id: crypto.randomUUID(), title: `Unsourced AI answer: ${unsourced.topic}`, body: `${unsourced.reply.answer}\n\n_No web search was used (${unsourced.reply.usage.model}). Check every claim before you rely on it._`, createdAt: now, updatedAt: now }] }))
+      setUnsourced({ ...unsourced, saved: true })
+    } catch (error) { setProblem(message(error)) }
   }
   async function copy() {
     try { await navigator.clipboard.writeText(made!.prompt); setCopied('yes') } catch { setCopied('failed') }
   }
   return <div className="request-panel">
-    {!form && !found && <button className="outline-button search-topic" disabled={working} onClick={() => void openForm()}>Search about this topic</button>}
+    {!form && !found && !unsourced && <button className="outline-button search-topic" disabled={working} onClick={() => void openForm()}>Search about this topic</button>}
     {form && <form className="request-form" onSubmit={event => void save(event)} aria-label="Search about this topic">
       <label className="field">Topic<input autoFocus value={form.topic} onChange={event => setForm({ ...form, topic: event.target.value })}/></label>
       <label className="field">Angle<input placeholder="Optional: what you want to know" value={form.angle} onChange={event => setForm({ ...form, angle: event.target.value })}/></label>
@@ -79,8 +99,16 @@ export function RequestPanel({ projectId, projectTitle, language, suggestTopic, 
       {aiOn && !canSearch && <p className="quiet request-ai-note">{aiStatus?.capabilities.nativeSearch ? 'Add an API key in Settings → AI to search with AI.' : 'Searching the web needs Gemini (paid key) or Claude in Settings → AI.'}</p>}
     </form>}
     {problem && <p className="research-problem" role="alert">{problem}</p>}
+    {problemCode === 'no-search-quota' && form && <div className="problem-actions"><button type="button" className="outline-button" disabled={working} onClick={() => void askUnsourced()}>{working ? 'Asking…' : 'Ask without web search'}</button><button type="button" className="popover-text" onClick={() => void api.openLink(AI_STUDIO_BILLING)}>Turn on billing ↗</button><button type="button" className="popover-text" onClick={openSettings}>Choose another provider</button></div>}
+    {problemCode === 'billing' && <div className="problem-actions"><button type="button" className="popover-text" onClick={() => void api.openLink(AI_STUDIO_BILLING)}>Open AI Studio billing ↗</button></div>}
+    {unsourced && <div className="ai-unsourced" role="region" aria-label="Answer without web search">
+      <p className="unsourced-label"><span className="ai-label">AI · unsourced</span> No web search was used: this comes from the model's own knowledge. Check every claim before you use it.</p>
+      <div className="unsourced-text">{unsourced.reply.answer}</div>
+      <p className="ai-spend">{unsourced.reply.usage.inputTokens.toLocaleString()} in / {unsourced.reply.usage.outputTokens.toLocaleString()} out tokens{unsourced.reply.usage.costUsd !== null ? ` · about ${money(unsourced.reply.usage.costUsd)}${costNote(unsourced.provider)}` : ''}</p>
+      <div className="highlight-actions">{unsourced.saved ? <span className="used-label">Saved to Notes</span> : <button className="popover-text" onClick={() => void keepUnsourced()}>Save to Notes</button>}<button className="popover-text" onClick={() => setUnsourced(null)}>Done</button></div>
+    </div>}
     {found && <AiCandidates projectId={projectId} topic={found.topic} provider={found.provider} result={found.result} reload={reload} saveAnnotations={saveAnnotations} close={() => setFound(null)}/>}
-    {latest && !form && !found && <div className="request-status" aria-live="polite">
+    {latest && !form && !found && !unsourced && <div className="request-status" aria-live="polite">
       <p><strong>{latest.topic}</strong> · {arrived ? `${arrived} ${arrived === 1 ? 'source' : 'sources'} arrived` : 'Waiting for sources…'}</p>
       {made && made.request.id === latest.id && <>
         <p className="quiet">Ask Claude in chat to answer the request. The sources land in this project's inbox and appear here.</p>

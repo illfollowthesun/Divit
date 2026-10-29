@@ -11,6 +11,14 @@ export type AiStatus = { config: AiConfig; capabilities: AiCapabilities; hasKey:
 export type AiCandidate = { title: string; url: string; site: string; published: string; type: 'news' | 'article' | 'blog' | 'paper' | 'other'; summary: string; excerpt: string }
 export type AiSpend = { inputTokens: number; outputTokens: number; webSearches: number; costUsd: number | null; monthCostUsd: number; overLimit: boolean; model: string }
 export type AiSearchResult = { candidates: AiCandidate[]; dropped: number; usage: AiSpend }
+export type AiAnswer = { answer: string; usage: AiSpend }
+export type AiRequest = { topic: string; angle: string; language: 'en' | 'tr'; count: number; projectTitle: string; month: string }
+// Native errors the panel can act on start with "[code] ". The code picks the offered next step.
+export function aiError(error: unknown) {
+  const text = error instanceof Error ? error.message : String(error), code = /^\[([a-z-]+)\] /.exec(text)
+  return code ? { code: code[1], text: text.slice(code[0].length) } : { code: '', text }
+}
+export const AI_STUDIO_BILLING = 'https://aistudio.google.com/apikey'
 
 // Free and private options first: no subscription can be used, only an API key or a local model.
 export const providers: { id: AiProvider; label: string; note: string }[] = [
@@ -33,7 +41,8 @@ export const ai = {
   setKey: (provider: AiProvider, key: string): Promise<void> => desktop ? invoke('ai_set_key', { provider, key }) : needsDesktop(),
   forgetKey: (provider: AiProvider): Promise<void> => desktop ? invoke('ai_forget_key', { provider }) : needsDesktop(),
   test: (): Promise<string> => desktop ? invoke('ai_test') : needsDesktop(),
-  search: (request: { topic: string; angle: string; language: 'en' | 'tr'; count: number; projectTitle: string; month: string }): Promise<AiSearchResult> => desktop ? invoke('ai_search', { request }) : needsDesktop(),
+  search: (request: AiRequest): Promise<AiSearchResult> => desktop ? invoke('ai_search', { request }) : needsDesktop(),
+  askUnsourced: (request: AiRequest): Promise<AiAnswer> => desktop ? invoke('ai_ask_unsourced', { request }) : needsDesktop(),
 }
 export const money = (usd: number) => `$${usd < 0.01 ? usd.toFixed(4) : usd.toFixed(2)}`
 // Gemini prices are paid-tier list prices; a free-tier key is not charged for tokens.

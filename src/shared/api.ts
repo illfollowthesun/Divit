@@ -17,6 +17,11 @@ function savePreview<T extends Project | Idea>(collection: 'projects' | 'ideas',
   persist(lib); return result
 }
 export const api = {
+  // Web pages open in the writer's own browser, never inside the app.
+  openLink: async (url: string) => {
+    if (!desktop) { window.open(url, '_blank', 'noopener'); return }
+    const { openUrl } = await import('@tauri-apps/plugin-opener'); await openUrl(url)
+  },
   backup: async (reason: 'status' | 'daily' | 'close' | 'manual'): Promise<BackupInfo> => {
     if (desktop) return invoke('backup_action', { reason })
     if (reason === 'manual') throw new Error('Backups use the Documents folder in the desktop app.')

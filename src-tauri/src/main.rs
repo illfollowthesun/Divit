@@ -1,5 +1,6 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 mod ai;
+mod ai_complete;
 mod ai_search;
 mod storage;
 use serde_json::{json, Value};
@@ -172,22 +173,43 @@ async fn ai_search(state: tauri::State<'_, AppState>, request: Value) -> Result<
     if !ai::capabilities(&config).native_search { return Err("Search with AI is not available for this provider. Choose one in Settings → AI.".into()); }
     let key = ai::get_key(config.provider)?.ok_or("Add an API key in Settings → AI first.")?;
     let outcome = ai_search::run(&config, &key, &request).await;
-    let (cost, month_cost, over) = {
-        let store = state.0.lock().map_err(|e| e.to_string())?;
-        // Re-read: Settings may have been saved while the search ran.
-        let mut current = ai::load(&root)?;
-        // Bill against the provider that handled this request, even if Settings changed meanwhile.
-        let mut billing = config.clone();
-        billing.usage = current.usage.clone();
-        let cost = ai::record(&mut billing, &request.month, &outcome.model, outcome.spend.input_tokens, outcome.spend.output_tokens, outcome.spend.web_searches);
-        current.usage = billing.usage;
-        ai::save(&store.root, &current)?;
-        (cost, current.usage.cost_usd, ai::over_limit(&current, &request.month))
-    };
-    let spent = json!({ "inputTokens": outcome.spend.input_tokens, "outputTokens": outcome.spend.output_tokens, "webSearches": outcome.spend.web_searches, "costUsd": cost, "monthCostUsd": month_cost, "overLimit": over, "model": outcome.model });
+    let (spent, cost) = bill(&state, &config, &root, &request.month, &outcome.model, &outcome.spend)?;
     match outcome.result {
         Ok((candidates, dropped)) => Ok(json!({ "candidates": candidates, "dropped": dropped, "usage": spent })),
-        Err(message) => Err(if outcome.spend.input_tokens > 0 { format!("{message} (This attempt used {} tokens{}.)", outcome.spend.input_tokens + outcome.spend.output_tokens, cost.map(|c| format!(", about ${c:.2}")).unwrap_or_default()) } else { message }),
+        Err(message) => Err(attempt_cost(message, &outcome.spend, cost)),
+    }
+}
+// Adds one request to this month's usage and describes what it spent.
+fn bill(state: &tauri::State<'_, AppState>, config: &ai::AiConfig, root: &std::path::Path, month: &str, model: &str, spend: &ai_search::Spend) -> Result<(Value, Option<f64>)> {
+    let store = state.0.lock().map_err(|e| e.to_string())?;
+    // Re-read: Settings may have been saved while the request ran.
+    let mut current = ai::load(root)?;
+    // Bill against the provider that handled this request, even if Settings changed meanwhile.
+    let mut billing = config.clone();
+    billing.usage = current.usage.clone();
+    let cost = ai::record(&mut billing, month, model, spend.input_tokens, spend.output_tokens, spend.web_searches);
+    current.usage = billing.usage;
+    ai::save(&store.root, &current)?;
+    Ok((json!({ "inputTokens": spend.input_tokens, "outputTokens": spend.output_tokens, "webSearches": spend.web_searches, "costUsd": cost, "monthCostUsd": current.usage.cost_usd, "overLimit": ai::over_limit(&current, month), "model": model }), cost))
+}
+fn attempt_cost(message: String, spend: &ai_search::Spend, cost: Option<f64>) -> String {
+    if spend.input_tokens > 0 { format!("{message} (This attempt used {} tokens{}.)", spend.input_tokens + spend.output_tokens, cost.map(|c| format!(", about ${c:.2}")).unwrap_or_default()) } else { message }
+}
+// "Ask without web search": the model's own knowledge, returned for the panel to label as unsourced.
+#[tauri::command]
+async fn ai_ask_unsourced(state: tauri::State<'_, AppState>, request: Value) -> Result<Value> {
+    let request: ai_search::SearchRequest = serde_json::from_value(request).map_err(|_| "Invalid request".to_string())?;
+    ai_search::check(&request)?;
+    let (config, root) = { let store = state.0.lock().map_err(|e| e.to_string())?; (ai::load(&store.root)?, store.root.clone()) };
+    if !config.enabled { return Err("Turn on AI in Settings → AI first.".into()); }
+    let key = ai::get_key(config.provider)?;
+    if ai::capabilities(&config).key_required && key.is_none() { return Err("Add an API key in Settings → AI first.".into()); }
+    let (system, prompt) = ai_complete::unsourced_prompt(&request.topic, &request.angle, &request.language);
+    let reply = ai_complete::complete(&config, key.as_deref(), &system, &prompt, 1500).await;
+    let (spent, cost) = bill(&state, &config, &root, &request.month, &reply.model, &reply.spend)?;
+    match reply.result {
+        Ok(answer) => Ok(json!({ "answer": answer, "usage": spent })),
+        Err(message) => Err(attempt_cost(message, &reply.spend, cost)),
     }
 }
 
@@ -195,6 +217,7 @@ fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_single_instance::init(|app, _, _| { if let Some(window) = app.get_webview_window("main") { let _ = window.set_focus(); } }))
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_opener::init())
         .setup(|app| {
             let root = dirs::document_dir().ok_or("Could not locate your Documents folder")?.join("Yazi");
             app.manage(AppState(Arc::new(Mutex::new(Store::new(root).map_err(std::io::Error::other)?))));
@@ -209,6 +232,6 @@ fn main() {
             }
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![library, save_project, save_idea, save_settings, import_image, image_data, trash, restore, site_action, export_action, backup_action, research_action, ai_status, ai_save, ai_set_key, ai_forget_key, ai_test, ai_search])
+        .invoke_handler(tauri::generate_handler![library, save_project, save_idea, save_settings, import_image, image_data, trash, restore, site_action, export_action, backup_action, research_action, ai_status, ai_save, ai_set_key, ai_forget_key, ai_test, ai_search, ai_ask_unsourced])
         .run(tauri::generate_context!()).expect("Could not start Yazı");
 }

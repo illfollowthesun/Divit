@@ -165,7 +165,7 @@ pub fn gemini_candidates(response: &Value, count: usize) -> Result<Vec<Candidate
             out.push(Candidate { title: site.clone(), url: url.into(), site, summary, kind: "other".into(), ..Candidate::default() });
         }
     }
-    if out.is_empty() { return Err("Gemini answered without citing any pages. Grounding with Google Search needs a paid Gemini API key; the free tier does not include it.".into()); }
+    if out.is_empty() { return Err(ai::coded("no-search-quota", "Gemini answered without citing any pages. Searching the web with Gemini needs billing turned on for the key; the free tier does not include it. Turn on billing, choose another provider in Settings → AI, or ask without web search.")); }
     out.truncate(count);
     Ok(out)
 }
@@ -187,9 +187,8 @@ async fn search_gemini(config: &AiConfig, key: &str, request: &SearchRequest, sp
     let status = response.status().as_u16();
     let text = response.text().await.map_err(|_| "The search answer was cut off. Nothing was saved.".to_string())?;
     if !(200..300).contains(&status) {
-        let message = ai::friendly_error(status, &text);
-        // The free tier has no Google Search grounding; say so instead of a bare quota error.
-        return Err(if matches!(status, 400 | 403 | 429) && text.to_ascii_lowercase().contains("search") { format!("{message} Grounding with Google Search needs a paid Gemini API key; the free tier does not include it.") } else { message });
+        // The free tier has no Google Search quota; say so instead of a bare quota error.
+        return Err(if matches!(status, 400 | 403) && text.to_ascii_lowercase().contains("search") { ai::coded("no-search-quota", &format!("{} Searching the web with Gemini needs billing turned on for the key. Turn on billing, choose another provider in Settings → AI, or ask without web search.", ai::friendly_error(status, &text))) } else { ai::gemini_error(status, &text, true) });
     }
     let value: Value = serde_json::from_str(&text).map_err(|_| "Gemini answered with something that is not JSON.".to_string())?;
     gemini_usage(spend, &value);
@@ -318,7 +317,7 @@ mod tests {
     #[test]
     fn gemini_without_citations_explains_the_paid_key_requirement() {
         let uncited: Value = serde_json::from_str(r#"{"status":"completed","steps":[{"type":"model_output","content":[{"type":"text","text":"Some ideas.","annotations":[]}]}]}"#).unwrap();
-        assert!(gemini_candidates(&uncited, 5).err().unwrap().contains("needs a paid Gemini API key"));
+        assert!(gemini_candidates(&uncited, 5).err().unwrap().starts_with("[no-search-quota] Gemini answered without citing any pages."));
         let failed: Value = serde_json::from_str(r#"{"status":"failed","steps":[]}"#).unwrap();
         assert_eq!(gemini_candidates(&failed, 5).err().unwrap(), "The search did not complete (failed). Try again.");
         let mut partial = gemini_answer(); partial["status"] = json!("incomplete");
