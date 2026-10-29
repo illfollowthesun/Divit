@@ -3,9 +3,10 @@ import { mkdir } from 'node:fs/promises'
 
 test('capture the Phase 2 browser preview and verify the compact writing desk', async ({ page }) => {
   test.setTimeout(60000)
-  const prefix = process.env.YAZI_SCREENSHOT_PREFIX ?? 'polish-after'
+  // Only an explicit capture (YAZI_SCREENSHOT_PREFIX=name) writes into docs/; ordinary test runs keep docs/ untouched.
+  const prefix = process.env.YAZI_SCREENSHOT_PREFIX ?? 'polish-after', root = process.env.YAZI_SCREENSHOT_PREFIX ? 'docs' : test.info().outputPath('docs')
   const errors: string[] = []; page.on('pageerror', error => errors.push(error.message))
-  await mkdir('docs/screenshots', { recursive: true }); await mkdir('docs/examples', { recursive: true })
+  await mkdir(`${root}/screenshots`, { recursive: true }); await mkdir(`${root}/examples`, { recursive: true })
   await page.goto('/'); await page.evaluate(() => localStorage.clear()); await page.reload()
   await page.getByRole('button', { name: /New story or book/ }).click()
   await page.getByLabel('Project type').selectOption('book'); await page.getByLabel('Project title').fill('The Last Ferry')
@@ -27,7 +28,7 @@ test('capture the Phase 2 browser preview and verify the compact writing desk', 
   await page.getByRole('button', { name: 'Save card', exact: true }).click()
   await page.keyboard.press('Control+s'); await expect(page.getByRole('status')).toHaveText('All changes saved')
   await page.evaluate(() => document.fonts.ready.then(() => undefined))
-  await page.screenshot({ path: `docs/screenshots/${prefix}-1440.png` })
+  await page.screenshot({ path: `${root}/screenshots/${prefix}-1440.png` })
 
   await page.locator('.outline-node').filter({ hasText: 'The city before dawn' }).click()
   await page.getByRole('button', { name: 'Start a rewrite', exact: true }).click()
@@ -35,21 +36,21 @@ test('capture the Phase 2 browser preview and verify the compact writing desk', 
   await page.getByRole('button', { name: 'Snapshots', exact: true }).click()
   await expect(page.locator('.snapshot-comparison section').first()).toContainText('Every morning')
   await expect(page.locator('.snapshot-comparison section').last()).toContainText('At six in the morning')
-  await page.screenshot({ path: `docs/screenshots/${prefix}-snapshots.png` })
+  await page.screenshot({ path: `${root}/screenshots/${prefix}-snapshots.png` })
   await page.getByRole('button', { name: 'Close dialog', exact: true }).click()
   await page.locator('.outline-node').filter({ hasText: '06:10' }).click()
   await page.getByRole('button', { name: 'Focus', exact: true }).click(); await page.mouse.move(300, 4); await page.getByRole('button', { name: 'Typewriter', exact: true }).click()
   await expect(page.getByRole('button', { name: 'Typewriter', exact: true })).toHaveAttribute('aria-pressed', 'true')
   await page.mouse.move(800, 500)
   await expect.poll(() => page.locator('.document-toolbar').evaluate(el => getComputedStyle(el).opacity)).toBe('0')
-  await page.screenshot({ path: `docs/screenshots/${prefix}-typewriter.png` })
+  await page.screenshot({ path: `${root}/screenshots/${prefix}-typewriter.png` })
   await page.mouse.move(300, 4); await page.getByRole('button', { name: 'Typewriter', exact: true }).click(); await page.getByRole('button', { name: 'Leave focus', exact: true }).click()
 
   await page.getByRole('button', { name: 'Export', exact: true }).click()
   const download = page.waitForEvent('download'); await page.getByRole('button', { name: 'Export manuscript', exact: true }).click()
-  await (await download).saveAs('docs/examples/the-last-ferry.md')
+  await (await download).saveAs(`${root}/examples/the-last-ferry.md`)
   await expect(page.locator('.export-result')).toContainText('Copy ready')
-  await page.screenshot({ path: `docs/screenshots/${prefix}-export.png` })
+  await page.screenshot({ path: `${root}/screenshots/${prefix}-export.png` })
   await page.getByRole('button', { name: 'Close dialog', exact: true }).click()
   await page.setViewportSize({ width: 960, height: 633 })
   await expect(page.locator('.outline')).toBeVisible()
@@ -57,6 +58,6 @@ test('capture the Phase 2 browser preview and verify the compact writing desk', 
   await page.locator('.paper').evaluate(el => { el.scrollTop = 0 })
   await expect(page.getByRole('button', { name: 'Toggle companion', exact: true })).toBeVisible()
   await expect(page.locator('#writing-companion')).toBeHidden() // wait for the drawer to finish sliding out
-  await page.screenshot({ path: `docs/screenshots/${prefix}-960.png` })
+  await page.screenshot({ path: `${root}/screenshots/${prefix}-960.png` })
   expect(errors).toEqual([])
 })
