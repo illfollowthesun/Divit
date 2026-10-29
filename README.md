@@ -1,195 +1,175 @@
-# Yazı
+<p align="center"><img src="docs/brand/divit.svg" width="96" alt=""></p>
 
-A quiet Windows desktop app for writing. English interface, any writing language. Local Markdown and JSON, no account or cloud sync.
+# Divit
 
-Warm paper, Newsreader, IBM Plex, a little rust. A writing desk, an idea board, and a place for images.
+A quiet Windows app for writing blog posts, stories and books. Your writing stays on your computer as plain Markdown files. Research and AI are there when you ask for them and silent when you don't. The interface is in English or Turkish, and you can write in any language.
 
-## Development
+![Divit in Write mode: only the text on warm paper](docs/screenshots/divit-write.png)
 
-Requires Node.js 22.17+, Rust stable (MSVC), Microsoft C++ Build Tools with the Windows SDK, and WebView2. Install the prerequisites described in the [Tauri Windows guide](https://v2.tauri.app/start/prerequisites/#windows).
+> **Beta.** This is 0.1.0-beta.1. Keep a backup of anything important and [tell us what breaks](https://github.com/Firextream/Divit/issues/new/choose).
 
-To inspect the interface without installing Rust, double-click **`preview.cmd`** from Windows Explorer. It installs the JavaScript packages in this project, checks the frontend build, and opens the browser when the development server is ready. Leave its console window open while using the preview. It needs a network-enabled normal Windows session for the initial package installation; the agent's restricted shell cannot do that download. This launcher is prepared but has not been run end to end here.
+## Download
 
-`node scripts/doctor.mjs` checks the browser prerequisites; `npm.cmd run doctor` also checks Rust and the Windows C++ tools. These checks do not install software or change settings. `run.cmd` and `build.cmd` display missing prerequisites rather than closing on an unexplained error.
+Get the installer from the [latest release](https://github.com/Firextream/Divit/releases/latest):
 
-```powershell
-npm.cmd install
-npm.cmd run desktop
-```
+- **Divit_0.1.0-beta.1_x64-setup.exe** is the usual choice. It installs for your Windows user only and needs no administrator rights.
+- **Divit_0.1.0-beta.1_x64_en-US.msi** is for managed or company PCs.
 
-For an isolated browser preview:
+The installer is **not code-signed** yet, so Windows SmartScreen may warn about an unknown publisher. Choose **More info → Run anyway** if you downloaded it from the release page above. Divit then checks GitHub for updates when it starts and asks before installing one. Updates are signed, and Divit refuses any that are not.
 
-```powershell
-npm.cmd run dev
-```
+Divit runs on Windows 10 and 11 and uses Microsoft Edge WebView2, which Windows already includes.
 
-The preview uses browser storage, clearly labelled in the interface. It cannot write to Documents or publish. Desktop data is not read or changed by the browser preview. Keep browser test images under 3 MB; desktop supports originals up to 100 MB.
+## First steps
 
-```powershell
-npm.cmd test
-npm.cmd run build
-npm.cmd run test:ui
-cargo test --manifest-path src-tauri/Cargo.toml
-npm.cmd run package
-```
+1. **Start writing.** Press **Ctrl N** for a blog post, or **Ctrl Shift N** for a story or a book.
+2. **Bring in what you have.** Press **Ctrl O** (or use **Bring in writing…**) to import `.md`, `.txt` or Word `.docx` files, one at a time or a whole folder. Divit copies them. Your originals are never moved or changed.
+3. **Pick a look.** Choose one of seven calm themes in **Settings → Appearance**, or let **Match Windows** follow your light or dark setting.
+4. **Set a backup folder** in Settings, for example a USB drive or a folder in OneDrive.
 
-The NSIS installer is written to `src-tauri/target/release/bundle/nsis/`. Its shortcut configuration uses Tauri's Windows installer defaults. Installer size and shortcut behavior still need verification on a built installer.
+## Three modes
 
-## Your writing
+| Mode | Keys | What you see |
+|---|---|---|
+| **Write** | Ctrl 1 | Only your text. No menus, no counters, no underlines. Esc takes you back. |
+| **Review** | Ctrl 2 | Spelling underlines (English UK and Turkish), checked on your computer, with suggestions you accept one by one. |
+| **Normal** | Ctrl 3 | Your library, outline, cards, notes, preview and research, all around the page. |
 
-The desktop app resolves your actual Windows Documents folder (including redirected folders) and stores:
+![Review mode with two spelling suggestions](docs/screenshots/divit-review.png)
 
-```text
-Documents/Yazi/
-  settings.json
-  projects/<id>/project.json
-  projects/<id>/draft.md
-  ideas/<id>.json
-  images/<id>/image.json
-  images/<id>/original.<extension>
-  _trash/<entry>/entry.json
-  _trash/<entry>/content
-```
+Stories can be one text or scenes. Books have chapters with scenes. Drag to reorder, keep snapshots before a rewrite, and compare versions side by side. You can set an optional daily word goal in Settings; Divit then shows today's words and how many days in a row you have written. It is off by default and never appears in Write mode.
 
-Records have a `schemaVersion`. Project IDs are stable; changing the title or site address does not move the local draft. `draft.md` contains ordinary Markdown. Local images use `![caption](yazi-image:<id>)`; these references become site paths only during transfer. Writing metadata lives in `project.json`, without duplicating the body there.
+## Export
 
-Autosave serializes writes, drains edits made while saving, flushes before switching drafts and closing the desktop window, and checks the revision against disk before replacing content. The independently tested draft session blocks switching away from unsaved text after an error. Each project uses `.recovery.json` to finish an interrupted two-file save, and `.last-save.json` keeps the most recent full transaction. If recovery would replace different on-disk text, that version is first kept under the project's `.recovered/` folder. These are recovery records, not version history. A disk conflict keeps unsaved text in the editor and displays an error. Copy that text before reloading. A second desktop instance focuses the first one.
-
-Archive and removal move records into `_trash`, with Restore in the UI. There is no permanent-delete action. Images referenced by writing cannot be moved to trash through the UI. Failed image imports remain under `.staging` and do not interrupt the library.
-
-## Send to site
-
-Set the local `modernist-portfolio` folder in Settings. Sending requires Node.js 22 and the site's installed dependencies. The app does not bundle Node or sharp, keeping the writing app small; the editor itself works without them.
-
-1. Finish the title, date, text, address, excerpt and standfirst.
-2. Choose **Send to site**, then **Check repository**.
-3. Review the exact files and `post/<slug>` branch. Confirm with **Create local commit**.
-
-The bridge requires a clean working tree, an unused branch and an unused post address. It checks the content-check command and image destinations before changing the branch, and repeats the repository checks after image preparation. Windows-reserved file names are rejected. The desktop command also checks that the on-disk draft revision matches the text reviewed in the editor. It writes Keystatic-compatible essay frontmatter and only the referenced images. It imports `scripts/lib/exif.mjs` directly from the site repository, without maintaining a second EXIF policy. Original images remain untouched; site JPEGs are oriented and resized to at most 2560 px with the site's camera-field allowlist, ICC profile preservation and post-processing privacy verification.
-
-The bridge executes the site's `check:content` Node command directly, with the same arguments as `npm run check:content` and no shell interpolation. It checks that the package script still matches before proceeding. It commits only the listed files. Commit hooks are disabled for this content-only operation so a hook cannot stage or change unrelated files. Nothing is pushed.
-
-After a successful commit the linked idea becomes Published. The site remains on the new local branch for review. If checking fails, files remain on that branch, no commit is made, and the idea stays a draft. Review or resolve that branch in Git before retrying. A draft already sent cannot be sent again in this first version; revisions to an existing site post are a later workflow.
-
-## Keyboard
-
-| Action | Shortcut |
-|---|---|
-| New writing | Ctrl+N |
-| New story or book | Ctrl+Shift+N |
-| Add chapter / scene | Ctrl+Alt+1 / Ctrl+Alt+2 |
-| Character/place cards | Ctrl+Alt+K |
-| Project notebook | Ctrl+Alt+N |
-| Snapshots | Ctrl+Alt+V |
-| Export story/book | Ctrl+Shift+E |
-| Save now | Ctrl+S |
-| Idea capture | Ctrl+Shift+I |
-| Send to site | Ctrl+Shift+Enter |
-| Focus mode | Ctrl+. |
-| Settings | Ctrl+, |
-| Help | F1 |
-| Leave focus / close dialog | Esc |
-
-All controls are reachable with Tab / Shift+Tab. Markdown undo/redo uses Ctrl+Z / Ctrl+Shift+Z. Native spellcheck is enabled; dedicated English/Turkish style suggestions are not implemented yet. Playwright browser tests cover persistence, idea-to-draft, archive/restore, focus/theme and preview sanitization; the complete browser suite passed using the installed Chrome during phase 2.
-
-## Stories and books
-
-Choose **New story or book** in the library. Blog posts keep their existing single-text/site workflow. Stories can use one text, scenes, or both. Books have an Opening and chapters with scenes. Every section has its own text and editor undo history.
-
-- **Outline:** add chapters/scenes, rename the selected section above its text, drag to reorder or move a scene to another chapter. Up/down buttons provide keyboard-accessible ordering. **Set aside** preserves a section and its descendants; Restore brings them back.
-- **Cards:** character/place cards with age, aliases, impressions and details. Set-aside cards remain recoverable within the project.
-- **Notes:** research notes, a timeline with free-form event times, daily word goals and a local writing log. The log counts increases/decreases in manuscript word count; metadata and snapshot restoration do not earn writing credit. No AI or cloud service is involved.
-- **Typewriter:** keeps the current line near the middle of the writing pane. Toggle with the toolbar or Ctrl+Alt+T. It works with Focus mode.
-- **Start a rewrite:** keeps a snapshot of the selected chapter/scene (or the whole manuscript when Opening/Single text is selected) before returning to the editor. **Snapshots** compares a kept version with current text side by side. Restoring first preserves the current version as another snapshot. Kept versions cannot be edited or deleted through the app.
-- **Export:** copies the whole manuscript in reading order; cards, notes and set-aside writing are excluded. Markdown can be downloaded without extra tools. Installed Pandoc enables DOCX/EPUB and normalized Markdown; PDF additionally needs Typst, XeLaTeX, LuaLaTeX, Tectonic or WeasyPrint on PATH. Typst requires Pandoc 3+. Each export uses a new filename and never overwrites an earlier copy.
-
-In the desktop app, scene/chapter text lives in `projects/<id>/sections/<section-id>.md`. Cards and notes have their own JSON files. Snapshots keep immutable JSON plus readable Markdown under `snapshots/`. Set-aside parts move to `_trash/project-<id>/sections`, `cards`, or `notes`, and are restored from their project UI. Whole-project Trash still works as before. Desktop exports go to `Documents/Yazi/exports/`.
-
-The development browser preview provides the same export dialog through a loopback-only local bridge, returning a browser download. It uses only that isolated preview's project data and images. The static production website build is not a browser-hosted app: use the desktop shell or the development preview for the local export bridge.
-
-![Book outline and character cards](docs/screenshots/phase2-book.png)
-
-[Snapshot comparison](docs/screenshots/phase2-snapshots.png) · [Typewriter](docs/screenshots/phase2-typewriter.png) · [Export](docs/screenshots/phase2-export.png) · [Compact layout](docs/screenshots/phase2-compact.png) · [Exported sample Markdown](docs/examples/the-last-ferry.md)
-
-## Spell check
-
-Each project has a LANGUAGE setting (English or Turkish), saved with the project. Yazı checks spelling itself with Hunspell dictionaries (en-GB and Turkish, both MIT-licensed, bundled with the app) running in a background worker, because the browser's own squiggles cannot be read or offered as suggestions. The Turkish dictionary loads in about a second the first time a Turkish project is open.
-
-- Misspelled words get a red wavy underline. A word is checked only after you finish typing it. Links, code, HTML and images are skipped, and so are character and place card names and aliases.
-- Click an underlined word to see up to three suggestions just above it. Click one to replace that word, or press Esc to close the popover.
-- Right-click an underlined word (or press the context-menu key or Shift F10 on it) for the same suggestions, **Add to dictionary**, **Ignore in this project**, and Cut, Copy and Paste. Everywhere else the normal menu appears.
-- The personal dictionary is stored per language in `Documents/Yazi/settings.json` (`dictionary.en`, `dictionary.tr`). Ignored words are stored in the project (`ignoredWords`).
-- Nothing is ever corrected automatically. The native spellcheck and autocorrect are turned off.
+**Export** (Ctrl Shift E) makes a finished copy of the whole manuscript as **Word (.docx)**, **PDF** or **Markdown**, with no extra software. If you install [Pandoc](https://pandoc.org) (and Typst for PDF), you can choose it for finer typesetting. EPUB needs Pandoc. Each export is a new file in the `exports` folder, so an earlier copy is never overwritten.
 
 ## Research
 
-Open **Research** in the project toolbar (Ctrl Alt R). It works without AI and makes no network call except fetching a page you paste.
+Open **Research** with **Ctrl Alt R**.
 
-- **Sources**: paste a link and Yazı keeps a readable copy (text only; images, embeds and link targets are dropped) that opens offline afterwards. Files dropped into the project's `research/inbox` folder are imported within a second or two; the toolbar shows how many are new. Search and filter by type and reading status (unread, read, quoted).
-- **Search about this topic**: saves a request (topic, angle, language, number of sources) as a file and shows *Waiting for sources…*. **Copy request** puts a ready-to-paste prompt on the clipboard, with the inbox path and the source format. Ask Claude in chat; the sources it writes into the inbox appear in the list.
-- **Reader and highlights**: select words in a source to highlight them in one of four colours or add a note. Highlights survive restarts; if the saved file is edited they follow their quote, and a quote that disappears is kept and marked, never dropped.
-- **Highlights** and **Notes** tabs: every highlight with its note, and free notes for the topic that can link to a highlight. Research notes from the old Notebook tab were copied here; the originals stay in the project file.
-- **Insert quote** (from a highlight or a selection) adds the quote at the cursor with its citation, as a quote block or a footnote, and asks first above 50 words. The source is then marked as quoted, with where it was used.
-- **Export** can end with a *Sources* list of the sources actually quoted, in the order they were first used.
+- **Save sources:** paste a link and Divit keeps a readable, offline copy of the page. You can also drop source files into the project's `research/inbox` folder.
+- **Highlight and note:** select words in a source to highlight them in four colours and add notes. Highlights stay with their quote, even if the file changes.
+- **Quote with citation:** insert a highlight as a quote block or a footnote. The source is marked as quoted, and Export can end with a *Sources* list.
+- **Search a topic:** type a topic instead of a link. With AI on, Divit searches the web and shows candidates. You keep the ones you want, and Divit saves the real page, never the AI's paraphrase. Without AI, it saves a request you can answer yourself.
 
-### Research files
+![Research drawer with a saved source and a highlight](docs/screenshots/divit-research.png)
 
-Each project keeps its research next to the writing, as plain files that stay readable without Yazı:
+## AI (optional, off by default)
 
-```
-Documents/Yazi/projects/<project-id>/research/
-  research.json        index: sources (status, where each was quoted), highlights, notes, AI notes, requests
-  sources/<id>.md      one saved source: frontmatter + the readable text
-  inbox/               drop source files here; Yazı imports them (imported originals move to inbox/_imported)
-  requests/<id>.md     "Search about this topic" requests
-```
+Divit works fully without AI. If you turn it on in **Settings → AI**, it helps only when you click. Its answers are labelled "AI", and it never writes into your text.
 
-A source file (the same format in `inbox/` and `sources/`):
+| Option | Cost | Web search |
+|---|---|---|
+| **Google Gemini** | Free API key from [aistudio.google.com](https://aistudio.google.com); paid use is billed to the key | Needs billing turned on for the key |
+| **Local model** (Ollama, LM Studio) | Free; runs on your PC and nothing leaves it | With a search service (below) |
+| **Anthropic (Claude)** | API key, billed per use | Built in |
+| **OpenAI** or any OpenAI-compatible service (DeepSeek, Kimi, OpenRouter, Groq…) | API key, billed per use | With a search service |
 
-```
+**Free web search for any model:** set a search service in Settings → AI. You can use [Tavily](https://tavily.com) (free monthly allowance), [Brave Search](https://brave.com/search/api) or your own SearXNG server. The service finds the pages and your model ranks and summarises them. Every address comes from the search results.
+
+- **Keys stay in Windows Credential Manager.** They are never written to your projects, backups or exports, and never shown again after you store them.
+- **Costs are visible.** Divit counts tokens and estimates this month's cost at list price. You can set a soft monthly limit, and Divit asks before going over it.
+- **Subscriptions don't apply.** Claude, ChatGPT or Gemini subscriptions cannot be used. AI needs an API key or a local model.
+
+![Settings, AI section](docs/screenshots/divit-settings-ai.png)
+
+## Privacy
+
+- **Your writing stays local.** It lives in `Documents\Divit` (or a folder you choose) as Markdown and JSON. There is no account and no cloud sync.
+- **Only three things go online:**
+  - pages you save as sources;
+  - AI requests you start, if AI is on;
+  - one check per launch for a new version on GitHub, which you can turn off in Settings.
+- **No telemetry.** **Send feedback** and **Report a bug** in Help open a GitHub issue in your browser with only the app and Windows version filled in.
+
+Settings → Your files can move the library to another folder, for example inside OneDrive or Dropbox. Divit copies every file, checks each one, then switches, and keeps the old folder. Have Divit open on only one computer at a time when the library is synced.
+
+## Keyboard
+
+| Action | Keys |
+|---|---|
+| Write / Review / Normal | Ctrl 1 / 2 / 3 |
+| Leave Write mode | Esc |
+| New writing | Ctrl N |
+| New story or book | Ctrl Shift N |
+| Bring in writing | Ctrl O |
+| Add chapter / scene | Ctrl Alt 1 / 2 |
+| Character and place cards | Ctrl Alt K |
+| Project notebook | Ctrl Alt N |
+| Snapshots | Ctrl Alt V |
+| Research | Ctrl Alt R |
+| Export | Ctrl Shift E |
+| Save now | Ctrl S |
+| Catch an idea | Ctrl Shift I |
+| Typewriter mode | Ctrl Alt T |
+| Focus mode | Ctrl . |
+| Settings | Ctrl , |
+| Help, shortcuts and theme | F1 |
+
+Every control is reachable with Tab and Shift Tab. F1 lists the shortcuts in the app.
+
+## Known limitations in this beta
+
+- **Node.js still needed for some features.** Research (saving pages and the inbox), automatic backups and *Publish to my site* run through small helpers that need [Node.js 22](https://nodejs.org). Writing, import, export, themes and AI settings work without it.
+- **Unsigned installer.** It is not code-signed yet (see Download).
+- **English text from the app's core.** Some error messages from the app's core are English even with the Turkish interface.
+
 ---
-title: ...
-url: https://...
-site: ...
-author: ...
-published: 2026-10-20
-saved: 2026-10-29
-type: news | article | blog | paper | other
-topic: <the topic it was searched for>
-summary: 2-3 sentence summary
----
 
-Readable text (Markdown). Keep the original wording; never paraphrase silently.
+## For developers
+
+Divit is a [Tauri 2](https://v2.tauri.app) app: React and CodeMirror in the window, Rust for storage, AI calls and Credential Manager, and a few Node helpers in `scripts/`.
+
+### Build from source
+
+Requires Node.js 22.17+, Rust stable (MSVC), Visual Studio C++ Build Tools with the Windows SDK, and WebView2 (see the [Tauri Windows prerequisites](https://v2.tauri.app/start/prerequisites/#windows)).
+
+```powershell
+npm.cmd install
+npm.cmd run desktop          # run the app
+npm.cmd run dev              # browser preview (browser storage only, clearly labelled)
+npm.cmd test                 # unit tests
+npm.cmd run test:ui          # Playwright tests against the browser preview
+cargo test --manifest-path src-tauri/Cargo.toml
+npm.cmd run package          # NSIS + MSI in src-tauri/target/release/bundle/
 ```
 
-Only `title` is required. Values containing `: `, `#` or quotes are written as double-quoted strings. Sources are deduplicated by URL (ignoring `www.`, tracking parameters, `#fragments` and trailing slashes). Highlights, notes and AI notes live in `research.json`, never in the source text or the manuscript. Saved sources are for the writer's private research; quotes inserted into the text always carry their citation.
+`npm run package` also writes signed updater files, so set `TAURI_SIGNING_PRIVATE_KEY` (the key or its path) and `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` first. Then run `node scripts/updater-manifest.mjs` to write `latest.json` for the release. The public key is in `src-tauri/tauri.conf.json`. The private key never goes into the repository.
 
-## Automatic backups and manual restore
+`node scripts/doctor.mjs` checks the prerequisites without installing anything. `preview.cmd` starts the browser preview from Explorer.
 
-In the desktop app, open Settings and choose a backup folder outside `Documents/Yazi`, such as a USB drive or a folder already managed by OneDrive. Save settings to enable the daily check, or use **Back up now**. Backups run once per local day while the app is open, and again on close after writing has been saved. They use the installed Node.js 22 runtime. The native storage lock serializes the full ZIP against application writes. Settings shows the last successful backup time; a failed backup does not replace that record.
+### Where things live
 
-The newest 14 app-owned ZIPs remain in the selected folder. Older copies move to its `_trash` subfolder, preserving the app's never-delete rule; this does not reclaim their disk space. Unrelated ZIP files are untouched. Archives include the full Yazi folder, including ideas, projects, images, snapshots, recovery files and trash. Unicode filenames/content use standard UTF-8 ZIP entries. Archives over 4 GB or 65535 entries are rejected without replacing an earlier backup. If the backup drive is unavailable on close, writing is saved first and you can reconnect it or explicitly close without a new backup.
+```text
+Documents/Divit/                 (or the folder chosen in Settings → Your files)
+  settings.json                  appearance, language, goal, backup folder, dictionary
+  ai.json                        AI provider, model, search service and usage (never keys)
+  projects/<id>/project.json     metadata
+  projects/<id>/draft.md         the text, plain Markdown
+  projects/<id>/sections/*.md    chapters and scenes
+  projects/<id>/snapshots/       kept versions
+  projects/<id>/research/        research.json, sources/*.md, inbox/, requests/
+  ideas/<id>.json
+  images/<id>/original.<ext>     images referenced as ![caption](yazi-image:<id>)
+  exports/                       finished copies
+  _trash/                        set-aside items; nothing is ever deleted
+```
 
-To restore:
+Before the rename the folder was `Documents\Yazi`. On first start Divit copies it to `Documents\Divit`, checks every file, and keeps the old folder. The `yazi-image:` links inside saved files are kept as they are, so existing writing keeps working.
 
-1. Close Yazı. Copy the current `Documents/Yazi` folder to a separate safe location first.
-2. Extract the selected ZIP into a **new, empty folder** using Windows Extract All. It contains a `Yazi` folder.
-3. Inspect its Markdown/JSON files, images and snapshots before using them. Keep the current and extracted copies separate until verified.
-4. With Yazı closed, rename the current data folder to a dated recovery name, then copy the extracted `Yazi` folder into Documents. Do not merge or overwrite the current copy automatically.
-5. Reopen Yazı and verify the library and backup destination in Settings. Keep the displaced data folder until you have checked everything.
+Saves are serialised and atomic, with recovery files for interrupted two-file saves. A second window focuses the first. A research source file is Markdown with YAML-style front matter (`title`, `url`, `site`, `author`, `published`, `saved`, `type`, `topic`, `summary`), the same format in `inbox/` and `sources/`. The format is documented in `scripts/research-format.mjs`.
 
-The browser preview cannot select or back up the desktop Documents folder. ZIP construction, independent Windows ZIP extraction, daily skipping, forced close copies and 14-copy rotation are tested with disposable fixtures. Native Tauri scheduling/close integration still requires Rust/WebView2 runtime verification.
+### Translations
 
-## Status
+Interface strings are written in English as `t('…')` and looked up in `src/i18n/tr.ts`. `npm test` fails if a string has no Turkish entry or its `{placeholders}` differ. `node --experimental-strip-types scripts/i18n-keys.mjs` lists missing ones.
 
-Phase 1, phase 2 and the phase 2 polish (docs/POLISH_phase2.md, items 1–8) are implemented. The production frontend build, 40 Node tests and 24 browser tests pass. The screenshots and sample Markdown above come from actual browser-preview interactions in an isolated test profile.
+### Themes
 
-Phase 2 polish, before → after: [1440 before](docs/screenshots/polish-before-1440.png) · [1440 after](docs/screenshots/polish-after-1440.png) · [960 before](docs/screenshots/polish-before-960.png) · [960 after](docs/screenshots/polish-after-960.png) · [Snapshot diff](docs/screenshots/polish-after-snapshots.png) · [Typewriter](docs/screenshots/polish-after-typewriter.png) · [Export](docs/screenshots/polish-after-export.png)
+Themes are token sets in `src/themes.ts`, applied to the same CSS variables. `tests/themes.test.mjs` checks WCAG AA contrast for text, muted text, links, buttons, highlights and spelling underlines in every theme.
 
-Not yet verified on the desktop runtime: the Rust side (backup command, window-close permissions) has not been compiled on the current machine, which lacks the Visual Studio C++ build tools. Check backups, closing the window and spelling in `npm run desktop` before relying on them.
+### Publish to my site (advanced)
 
-Rust/MSVC and Pandoc/PDF engines are not installed in the agent environment. Native storage tests and Windows packaging remain unexecuted. Real DOCX/EPUB/PDF rendering remains unverified; process-contract tests are explicitly distinguished from rendering tests. The browser preview's real Markdown download works. See [verification](docs/verification.md). Phase 2's acceptance milestone still requires Emir to finish a story and export a PDF with the actual tools.
+For a blog kept in a local Git repository with a `check:content` script: set the folder in Settings → Publish to my site. Divit writes the post and its resized, privacy-checked images on a new `post/<slug>` branch, runs the site's content check and makes a local commit. It never pushes. The option stays hidden until a folder is set.
 
-The main `.git` directory is read-only in this session. Separate commits for each feature are preserved in the copied local repository `.tools/phase2-history`, with a portable `.tools/yazi-phase2.bundle`. No commits were written into the protected main `.git`, and nothing was pushed. See [portable history](docs/phase2-history.md).
+### Licence
 
-MIT. Font packages include their own open font licenses.
+MIT, see [LICENSE](LICENSE). The bundled fonts and dictionaries carry their own open licences.
