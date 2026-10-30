@@ -15,5 +15,5 @@ test('Help opens feedback and bug issues in the browser with version and Windows
   const urls = (await nativeCalls(page)).filter(c => c.cmd === 'plugin:opener|open_url').map(c => new URL(c.args.url as string))
   expect(urls.map(u => u.searchParams.get('labels'))).toEqual(['bug', 'feedback'])
   expect(urls[0].searchParams.get('body')).toContain('**App version:** 0.1.0-beta.1')
-  for (const url of urls) { expect(url.href.startsWith('https://github.com/Firextream/Divit/issues/new?')).toBe(true); expect(decodeURIComponent(url.href)).not.toContain('private sentence') }
+  for (const url of urls) { expect(url.href.startsWith('https://github.com/illfollowthesun/Divit/issues/new?')).toBe(true); expect(decodeURIComponent(url.href)).not.toContain('private sentence') }
 })

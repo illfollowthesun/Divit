@@ -6,11 +6,11 @@ A quiet Windows app for writing blog posts, stories and books. Your writing stay
 
 ![Divit in Write mode: only the text on warm paper](docs/screenshots/divit-write.png)
 
-> **Beta.** This is 0.1.0-beta.1. Keep a backup of anything important and [tell us what breaks](https://github.com/Firextream/Divit/issues/new/choose).
+> **Beta.** This is 0.1.0-beta.1. Keep a backup of anything important and [tell us what breaks](https://github.com/illfollowthesun/Divit/issues/new/choose).
 
 ## Download
 
-Get the installer from the [latest release](https://github.com/Firextream/Divit/releases/latest):
+Get the installer from the [latest release](https://github.com/illfollowthesun/Divit/releases/latest):
 
 - **Divit_0.1.0-beta.1_x64-setup.exe** is the usual choice. It installs for your Windows user only and needs no administrator rights.
 - **Divit_0.1.0-beta.1_x64_en-US.msi** is for managed or company PCs.

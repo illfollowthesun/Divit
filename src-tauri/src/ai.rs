@@ -11,7 +11,7 @@ pub const ANTHROPIC_VERSION: &str = "2026-10-21";
 const ANTHROPIC_URL: &str = "https://api.anthropic.com/v1";
 pub const GEMINI_URL: &str = "https://generativelanguage.googleapis.com/v1beta";
 const OPENAI_URL: &str = "https://api.openai.com/v1";
-const KEYRING_SERVICE: &str = "com.firextream.divit";
+const KEYRING_SERVICE: &str = "com.illfollowthesun.divit";
 // Keys stored before the app was renamed from Yazı to Divit; read once and copied to the new name.
 const LEGACY_KEYRING_SERVICE: &str = "com.firextream.yazi";
 
@@ -400,7 +400,7 @@ mod tests {
     #[test]
     #[ignore]
     fn windows_credential_manager_round_trip() {
-        let entry = keyring::Entry::new("com.firextream.divit.test", "round-trip").unwrap();
+        let entry = keyring::Entry::new("com.illfollowthesun.divit.test", "round-trip").unwrap();
         entry.set_password("sk-test-not-a-real-key").unwrap();
         assert_eq!(entry.get_password().unwrap(), "sk-test-not-a-real-key");
         entry.delete_credential().unwrap();
