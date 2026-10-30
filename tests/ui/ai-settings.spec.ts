@@ -1,16 +1,21 @@
 import { test, expect } from '@playwright/test'
 import { desktopBridge, nativeCalls } from './desktop-bridge'
+import { settingsTab } from './shell-helpers'
 
-test('Gemini model labels follow the published January price change', async ({ page }) => {
+test('model names stay short and Details follows the published January price change', async ({ page }) => {
   await page.clock.setFixedTime(new Date('2027-01-15T12:00:00Z'))
   await desktopBridge(page, { config: { enabled: true } })
-  await page.goto('/'); await page.getByRole('button', { name: 'Open settings' }).click()
+  await page.goto('/'); await page.getByRole('button', { name: 'Open settings' }).click(); await settingsTab(page, 'AI')
   const model = page.getByRole('dialog').getByLabel('Model', { exact: true })
-  await expect(model.locator('option').first()).toHaveText('Gemini 3.8 Flash · $1.5 / $7.5 per million tokens in / out on paid keys')
+  await expect(model.locator('option').first()).toHaveText('Gemini 3.8 Flash')
+  const details = page.getByRole('dialog').locator('.ai-details')
+  await expect(details.locator('ul')).toBeHidden()
+  await details.getByText('Details', { exact: true }).click()
+  await expect(details).toContainText('Gemini 3.8 Flash · $1.5 / $7.5 per million tokens in / out on paid keys')
 })
 
 test('in the browser preview, AI settings only explain that AI runs from the desktop app', async ({ page }) => {
-  await page.goto('/'); await page.getByRole('button', { name: 'Open settings' }).click()
+  await page.goto('/'); await page.getByRole('button', { name: 'Open settings' }).click(); await settingsTab(page, 'AI')
   const section = page.getByRole('dialog').locator('.ai-settings')
   const apiKey = section.locator('.ai-key').getByLabel('API key', { exact: true })
   await expect(section).toContainText('AI features run from the desktop app')
@@ -20,11 +25,12 @@ test('in the browser preview, AI settings only explain that AI runs from the des
 test('Gemini comes first, then local models; keys go only to Credential Manager; Claude fallbacks are an opt-in', async ({ page }) => {
   const month = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 7)
   await desktopBridge(page, { config: { usage: { month, calls: 3, inputTokens: 12000, outputTokens: 800, webSearches: 2, costUsd: 0.064, unpricedCalls: 0 } }, testMessage: 'Connected. Gemini 3.8 Flash is available.' })
-  await page.goto('/'); await page.getByRole('button', { name: 'Open settings' }).click()
+  await page.goto('/'); await page.getByRole('button', { name: 'Open settings' }).click(); await settingsTab(page, 'AI')
   const section = page.getByRole('dialog').locator('.ai-settings')
   const apiKey = section.locator('.ai-key').getByLabel('API key', { exact: true })
   await expect(section.getByLabel('Use AI in Divit')).not.toBeChecked()
   await expect(apiKey).toHaveCount(0) // hidden while AI is off
+  await section.getByText('Details', { exact: true }).click()
   await expect(section).toContainText('subscriptions cannot be used here')
   await section.getByLabel('Use AI in Divit').check()
 
@@ -50,7 +56,8 @@ test('Gemini comes first, then local models; keys go only to Credential Manager;
 
   await provider.selectOption('anthropic')
   await expect(model).toHaveValue('claude-sonnet-5-5')
-  await expect(model.locator('option')).toHaveText(['Claude Sonnet 5.5 · $2 / $10 per million tokens in / out', 'Claude Haiku 5.5 (lowest cost) · $0.1 / $0.5 per million tokens in / out', 'Claude Opus 5.5 · $4 / $20 per million tokens in / out'])
+  await expect(model.locator('option')).toHaveText(['Claude Sonnet 5.5', 'Claude Haiku 5.5 (lowest cost)', 'Claude Opus 5.5'])
+  await expect(section.locator('.ai-details')).toContainText('Claude Sonnet 5.5 · $2 / $10 per million tokens in / out')
   const fallbacks = section.getByLabel(/retry it on Anthropic’s recommended fallback model/)
   await expect(fallbacks).not.toBeChecked(); await expect(fallbacks).toBeEnabled()
   await fallbacks.check(); await model.selectOption('claude-haiku-5-5')

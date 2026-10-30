@@ -1,7 +1,8 @@
 import { test, expect } from '@playwright/test'
+import { startMenu } from './shell-helpers'
 test('project chrome is quiet, hides in focus and reveals at the top or with keyboard focus', async ({ page }) => {
   await page.goto('/'); await page.evaluate(() => localStorage.clear()); await page.reload()
-  await page.getByRole('button', { name: /New story or book/ }).click(); await page.getByLabel('Project title').fill('Chrome test')
+  await startMenu(page, 'New story or book'); await page.getByLabel('Project title').fill('Chrome test')
   await page.getByRole('button', { name: 'Create project', exact: true }).click()
   await expect(page.locator('.document-toolbar .accent-button')).toHaveCount(0)
   await page.keyboard.press('Control+.'); await page.mouse.move(600, 500)

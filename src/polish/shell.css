@@ -1,0 +1,67 @@
+/* Shell and layout for the 0.1.0-beta.2 tidy-up (docs/UI_TIDY.md, part A). */
+
+/* Button menus: the toolbar's More and the New writing split button. */
+.menu{position:relative;display:inline-flex}
+.menu-list{position:absolute;top:calc(100% + 4px);right:0;z-index:90;min-width:220px;padding:5px;background:var(--paper);border:1px solid var(--line);border-radius:6px;box-shadow:var(--shadow);display:flex;flex-direction:column}
+.menu-list button{display:flex;align-items:center;gap:8px;min-height:32px;padding:6px 10px;text-align:left;font-size:13px;color:var(--text);white-space:nowrap}
+.menu-list button:hover,.menu-list button:focus-visible{background:var(--hover);outline:none}
+.menu-list .menu-check{width:12px;color:var(--accent)}
+.menu-list .menu-label{flex:1}
+.menu-list kbd{font-size:10px;color:var(--muted)}
+.menu-start .menu-list{left:0;right:auto}
+
+/* Toolbar and top bar share one button size, spacing and active state. */
+.document-toolbar>div:last-child,.top-actions{gap:6px;align-items:center}
+.document-toolbar>div:last-child>button,.document-toolbar .menu>button,.top-actions button{min-height:32px;padding:6px 11px;font-size:12px;border-radius:4px}
+.document-toolbar>div:last-child>select{min-height:32px}
+.document-toolbar button[aria-expanded=true],.document-toolbar button[aria-pressed=true],.top-actions button[aria-pressed=true]{background:var(--hover);color:var(--accent)}
+.document-toolbar{flex-wrap:nowrap}
+.document-toolbar>div:first-child{min-width:0;overflow:hidden;text-overflow:ellipsis}
+
+/* Research: on wide windows the drawer is a column that pushes the text (which re-wraps) and takes the
+   companion's place; below 1100 px it stays an overlay with its close button. */
+@media(min-width:1101px){
+  .research-drawer{position:static;flex:0 0 min(440px,34vw);height:auto;box-shadow:none;border-left:1px solid var(--line);z-index:auto;width:auto}
+  .research-open .side-panel{display:none}
+}
+.research-close{min-width:32px;min-height:32px;font-size:20px}
+
+/* Library: New writing with a small menu for stories, books and imports; search right below it. */
+.new-split{display:flex;align-items:stretch;margin-bottom:10px}
+.new-split .new-button{margin-bottom:0;border-top-right-radius:0;border-bottom-right-radius:0;flex:1;min-width:0}
+.new-split .new-more>button{height:100%;min-width:32px;border:1px solid var(--line);border-left:0;border-radius:0 4px 4px 0;background:var(--paper);color:var(--muted)}
+.new-split .new-more>button[aria-expanded=true]{color:var(--accent)}
+.new-split .menu-list{left:auto;right:0}
+.library>.search-label{display:block;margin:0 0 16px}
+.library>.search-label input{width:100%;background:var(--paper);border:1px solid var(--line);min-height:32px}
+
+.settings-about p{font-size:13px;line-height:1.6;margin:8px 0}
+
+/* The metadata line under the title: one quiet button that opens the fields. */
+.metadata-summary{display:block;min-height:32px;margin:-14px 0 8px -8px;padding:6px 8px;font-size:13px;color:var(--muted);text-align:left;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.metadata-summary[aria-expanded=true]{color:var(--text)}
+.metadata-summary+.metadata{margin-bottom:6px}
+
+/* Top bar: the centre tabs keep their underline; the right-hand buttons match the toolbar (size above). */
+.topbar nav button{min-height:32px}
+.topbar nav button.active{color:var(--accent)}
+.editor-footer{justify-content:flex-start;gap:18px}
+.editor-footer [role=status]{margin-left:auto}
+
+/* Small shell labels: at least 12 px, in the theme's muted or text colour (AA in every theme, see
+   tests/themes.test.mjs). Mono caps keep a lighter letter-spacing at this size. */
+.section-label,.eyebrow,.panel-content>.section-label,.room-number,.column-heading small,.idea-card>small,.document-toolbar>div:first-child{font-size:12px;letter-spacing:.06em}
+.section-label span{opacity:1}
+.nav-count,.preview-notice,.preview-notice span,.new-button kbd,.library-filters button,.library-filters span,.library-bottom button,.library-bottom span,.document small,.new-project-link,
+.document-toolbar,.document-toolbar button,.editor-footer,.editor-footer button,.editor-footer kbd,.editor-footer .today-count,.metadata label,.metadata input,
+.panel-tabs button,.tag-filters button,.tag-filter-input input,.column-heading>span:last-child,.idea-tags span,.idea-card select,.idea-tag-edit,.idea-tag-edit input,.card-actions button,
+.capture button,.image-tile>span,.image-actions button,.outline-node,.outline-node small,.outline-tools button,.outline-trash,.outline-trash button,.outline-add button,.outline-word-count{font-size:12px}
+.document small,.metadata label,.column-heading small,.idea-card>small{color:var(--muted)}
+.library-filters span,.library-bottom span{font-family:'IBM Plex Mono',monospace}
+.new-split .new-button{white-space:nowrap;gap:8px}
+@media(max-width:1150px){.new-split .new-button kbd{display:none}}
+
+/* Companion tabs: five labels fit with room to spare on both sides, in English and Turkish. */
+@media(min-width:1300px){.side-panel{width:340px}}
+.panel-tabs{gap:8px;padding:0 16px;justify-content:space-between}
+.panel-tabs button{padding:0 2px;white-space:nowrap}

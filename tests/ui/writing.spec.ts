@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test'
+import { more, settingsTab } from './shell-helpers'
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/')
@@ -29,7 +30,7 @@ test('idea becomes a linked draft, and archived writing can be restored', async 
   await page.getByRole('button', { name: /Catch idea/ }).click()
   await page.getByRole('button', { name: /Start writing/ }).click()
   await expect(page.getByRole('textbox', { name: 'Title', exact: true })).toHaveValue('Vapurda bir sabah')
-  await page.getByRole('button', { name: 'Archive', exact: true }).click()
+  await more(page, 'Archive')
   await page.getByRole('button', { name: /Trash/ }).click()
   await expect(page.locator('.trash-list')).toContainText('Vapurda bir sabah')
   await page.getByRole('button', { name: 'Restore', exact: true }).click()
@@ -44,9 +45,11 @@ test('focus shortcut and dark theme persist', async ({ page }) => {
   await expect(page.getByRole('complementary', { name: 'Writing library' })).toBeHidden()
   await page.keyboard.press('Escape')
   await expect(page.getByRole('complementary', { name: 'Writing library' })).toBeVisible()
-  await page.getByRole('button', { name: 'Open settings' }).click()
-  await page.getByLabel('Appearance').selectOption('dark')
-  await page.getByRole('button', { name: 'Save settings' }).click()
+  await page.getByRole('button', { name: 'Open settings' }).click(); await settingsTab(page, 'Appearance')
+  await page.getByRole('combobox', { name: /^Appearance/ }).selectOption('dark')
+  // A theme is saved as soon as it is chosen, so Save stays off and Cancel just closes.
+  await expect(page.getByRole('button', { name: 'Save settings' })).toBeDisabled()
+  await page.getByRole('dialog').getByRole('button', { name: 'Cancel' }).click()
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
   await page.reload()
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')

@@ -1,7 +1,8 @@
 import { test, expect } from '@playwright/test'
+import { startMenu } from './shell-helpers'
 test('outline has readable targets, live chapter counts and persistent scene status',async({page})=>{
   await page.goto('/');await page.evaluate(()=>localStorage.clear());await page.reload()
-  await page.getByRole('button',{name:/New story or book/}).click();await page.getByLabel('Project type').selectOption('book')
+  await startMenu(page, 'New story or book');await page.getByLabel('Project type').selectOption('book')
   await page.getByRole('button',{name:'Create project',exact:true}).click();await page.getByRole('button',{name:'+ Chapter',exact:true}).click()
   await page.getByRole('textbox',{name:'Markdown text'}).fill('One two');await page.getByRole('button',{name:'+ Scene',exact:true}).click()
   await page.getByRole('textbox',{name:'Markdown text'}).fill('Three four five')

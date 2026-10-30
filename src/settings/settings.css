@@ -1,0 +1,21 @@
+/* Settings-only typography and containment; no shell layout rules. */
+dialog:has(.settings-form){overflow:hidden;max-width:780px;max-height:calc(100dvh - 32px)}
+.settings-form{display:flex;flex-direction:column;min-height:0}
+.settings-body{display:flex;min-height:0;height:min(540px,calc(100dvh - 220px))}
+.settings-tabs{display:flex;flex-direction:column;gap:4px;flex:0 0 140px;border-right:1px solid var(--line);padding-right:12px;overflow:auto}
+.settings-tabs button{text-align:left;min-height:44px;padding:8px 12px;font-size:13px;color:var(--text);border-radius:4px}
+.settings-tabs [aria-selected=true]{background:var(--chrome);font-weight:500;box-shadow:inset 3px 0 var(--accent)}
+.settings-sections{flex:1;min-width:0;overflow:auto;padding:0 20px}
+.settings-sections [hidden]{display:none}
+.settings-footer{flex-shrink:0;display:flex;justify-content:flex-end;gap:12px;padding-top:16px;margin-top:12px;border-top:1px solid var(--line);background:var(--paper)}
+.settings-footer button{min-height:44px}
+.settings-form :is(.field,.field small,.acknowledge,.quiet,.section-label,.settings-info small,.settings-info p,.backup-status),
+.ai-settings.ai-settings :is(.field,.field small,.quiet,.acknowledge,.section-label,.ai-usage,.ai-billing,legend){font-size:12px;color:var(--text);opacity:1}
+.settings-form button,.ai-settings button{min-height:32px;font-size:12px}
+.ai-details{font-size:12px;line-height:1.6;margin-top:16px;overflow-wrap:anywhere;color:var(--text)}
+.ai-details summary{cursor:pointer;min-height:32px;padding:6px 0}
+.ai-details p,.ai-details .ai-billing{font-size:12px;color:var(--text)}
+.ai-details ul{padding-left:20px}
+.backup-settings.backup-settings :is(.section-label,.quiet,.field,.field small),.settings-info.settings-info :is(.section-label,small,p),.settings-updates.settings-updates small{font-size:12px;color:var(--text)}
+.backup-settings button,.settings-info button{min-height:32px;font-size:12px}
+@media(max-width:600px){.settings-tabs{flex-basis:110px;padding-right:6px}.settings-tabs button{padding:8px}.settings-sections{padding:0 12px}}

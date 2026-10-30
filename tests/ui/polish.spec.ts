@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test'
+import { more } from './shell-helpers'
 
 test('first launch shows a short welcome that explains projects, modes and privacy, once', async ({ page }) => {
   await page.goto('/'); await page.evaluate(() => localStorage.clear()); await page.reload()
@@ -26,7 +27,7 @@ test('turning underlines on does not move the text, and Write mode shows only th
   const editor = page.getByRole('textbox', { name: 'Markdown text' })
   await editor.fill('The gulls arived before the ligth, and the peir was empty.')
   const line = page.locator('.cm-line').first(), before = await line.boundingBox()
-  await page.getByRole('button', { name: 'Underlines' }).click()
+  await more(page, 'Underlines')
   await expect(page.locator('.cm-misspelled').first()).toBeVisible()
   expect(await line.boundingBox()).toEqual(before)
   await page.keyboard.press('Control+1')

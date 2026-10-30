@@ -1,7 +1,8 @@
 import { test, expect } from '@playwright/test'
+import { startMenu } from './shell-helpers'
 test('clicking Derya, Çağla and İlker opens compact cards without editing text', async ({ page }) => {
   await page.goto('/'); await page.evaluate(() => localStorage.clear()); await page.reload()
-  await page.getByRole('button', { name: /New story or book/ }).click(); await page.getByLabel('Project title').fill('Names')
+  await startMenu(page, 'New story or book'); await page.getByLabel('Project title').fill('Names')
   await page.getByRole('button', { name: 'Create project', exact: true }).click()
   const text = 'Derya, Çağla ve İlker vapuru bekliyordu.'
   await page.getByRole('textbox', { name: 'Markdown text' }).fill(text)

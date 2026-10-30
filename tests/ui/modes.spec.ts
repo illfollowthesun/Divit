@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test'
+import { details, more, startMenu } from './shell-helpers'
 
 test('modes preserve editor, selection and history; Write hides chrome and escapes to Normal', async ({ page }) => {
   await page.goto('/'); await page.evaluate(() => localStorage.clear()); await page.reload()
@@ -30,11 +31,11 @@ test('Normal underlines are an explicit persisted choice', async ({ page }) => {
   await page.goto('/'); await page.evaluate(() => localStorage.clear()); await page.reload()
   await page.getByRole('button', { name: /New writing/ }).click()
   await page.getByRole('textbox', { name: 'Markdown text' }).fill('misspelld')
-  const toggle = page.getByRole('button', { name: 'Underlines', exact: true })
-  await expect(toggle).toHaveAttribute('aria-pressed', 'false')
+  const menu = page.getByRole('button', { name: 'More actions' }), toggle = page.getByRole('menuitemcheckbox', { name: 'Underlines' })
+  await menu.click(); await expect(toggle).toHaveAttribute('aria-checked', 'false')
   await toggle.click(); await expect(page.locator('.cm-misspelled')).toBeVisible()
   await page.keyboard.press('Control+s'); await expect(page.locator('.editor-footer [role=status]')).toHaveText('All changes saved')
-  await page.reload(); await expect(toggle).toHaveAttribute('aria-pressed', 'true')
+  await page.reload(); await menu.click(); await expect(toggle).toHaveAttribute('aria-checked', 'true')
 })
 
 test('Review checks mixed language paragraphs and offscreen text locally, with exact replacement and Undo', async ({ page }) => {
@@ -44,7 +45,7 @@ test('Review checks mixed language paragraphs and offscreen text locally, with e
   const text = 'The ticekts were folded.\n\nTürkçe bir cümle yazıyorr.\n\n' + 'The page is here.\n\n'.repeat(100) + 'A misspelld word.'
   await editor.fill(text)
   const external: string[] = []
-  page.on('request', request => { if (!request.url().startsWith('http://127.0.0.1:1420') && !request.url().startsWith('data:')) external.push(request.url()) })
+  page.on('request', request => { if (!request.url().startsWith(`http://127.0.0.1:${process.env.YAZI_UI_PORT ?? 1420}`) && !request.url().startsWith('data:')) external.push(request.url()) })
   await page.keyboard.press('Control+2')
   const panel = page.getByRole('complementary', { name: 'Review issues' })
   await expect(panel.getByRole('button', { name: 'misspelld', exact: true })).toBeVisible({ timeout: 15000 })
@@ -79,9 +80,9 @@ test('ignore once follows one occurrence; persistent ignores and dictionaries re
   await page.keyboard.press('Control+s')
   await expect(page.locator('.editor-footer [role=status]')).toHaveText('All changes saved')
   await page.reload(); await expect(panel.locator('li')).toHaveCount(0)
-  await page.getByRole('combobox', { name: 'LANGUAGE', exact: true }).selectOption('tr')
+  await details(page); await page.getByRole('combobox', { name: 'LANGUAGE', exact: true }).selectOption('tr')
   await expect(zorpex).toHaveCount(2, { timeout: 15000 })
-  await page.getByRole('combobox', { name: 'LANGUAGE', exact: true }).selectOption('en')
+  await details(page); await page.getByRole('combobox', { name: 'LANGUAGE', exact: true }).selectOption('en')
   await expect(zorpex).toHaveCount(0)
   await page.keyboard.press('Control+n'); await editor.fill('Zorpex misspelld')
   await expect(zorpex).toHaveCount(1)
@@ -114,7 +115,7 @@ test('companion shortcuts leave Review so compact drawers remain usable', async 
   await page.setViewportSize({ width: 800, height: 950 })
   await page.goto('/'); await page.evaluate(() => localStorage.clear()); await page.reload()
   await page.getByRole('button', { name: 'Toggle library' }).click()
-  await page.getByRole('button', { name: /New story or book/ }).click()
+  await startMenu(page, 'New story or book')
   await page.getByRole('button', { name: 'Create project', exact: true }).click()
   await page.keyboard.press('Control+2'); await page.keyboard.press('Control+Alt+k')
   await expect(page.locator('.app')).toHaveClass(/mode-normal/)

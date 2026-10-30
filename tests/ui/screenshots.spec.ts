@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test'
+import { more, startMenu } from './shell-helpers'
 import { mkdir } from 'node:fs/promises'
 
 test('capture the Phase 2 browser preview and verify the compact writing desk', async ({ page }) => {
@@ -8,7 +9,7 @@ test('capture the Phase 2 browser preview and verify the compact writing desk', 
   const errors: string[] = []; page.on('pageerror', error => errors.push(error.message))
   await mkdir(`${root}/screenshots`, { recursive: true }); await mkdir(`${root}/examples`, { recursive: true })
   await page.goto('/'); await page.evaluate(() => localStorage.clear()); await page.reload()
-  await page.getByRole('button', { name: /New story or book/ }).click()
+  await startMenu(page, 'New story or book')
   await page.getByLabel('Project type').selectOption('book'); await page.getByLabel('Project title').fill('The Last Ferry')
   await page.getByRole('button', { name: 'Create project', exact: true }).click()
   await page.getByRole('button', { name: '+ Chapter', exact: true }).click()
@@ -31,9 +32,9 @@ test('capture the Phase 2 browser preview and verify the compact writing desk', 
   await page.screenshot({ path: `${root}/screenshots/${prefix}-1440.png` })
 
   await page.locator('.outline-node').filter({ hasText: 'The city before dawn' }).click()
-  await page.getByRole('button', { name: 'Start a rewrite', exact: true }).click()
+  await more(page, 'Start a rewrite')
   await page.getByRole('textbox', { name: 'Markdown text' }).fill('At six in the morning, the city belonged to the people who had somewhere else to be.\n\nDerya belonged to neither shore. She carried her small collection of tickets like proof that a person could leave and return without becoming quite the same.\n\nThe letter was waiting on her usual seat. It had no stamp, no address, only her name in a hand she recognised before she remembered why.')
-  await page.getByRole('button', { name: 'Snapshots', exact: true }).click()
+  await more(page, 'Snapshots')
   await expect(page.locator('.snapshot-comparison section').first()).toContainText('Every morning')
   await expect(page.locator('.snapshot-comparison section').last()).toContainText('At six in the morning')
   await page.screenshot({ path: `${root}/screenshots/${prefix}-snapshots.png` })

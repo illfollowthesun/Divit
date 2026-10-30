@@ -1,5 +1,13 @@
 // Turkish interface text, keyed by the English source string. Keep {placeholders} unchanged.
 export const tr: Record<string, string> = {
+  'General': 'Genel', 'Writing': 'Yazma', 'Your files': 'Dosyalarınız', 'AI': 'Yapay zekâ', 'About': 'Hakkında',
+  'Settings sections': 'Ayar bölümleri', 'AI summary': 'Yapay zekâ özeti',
+  'AI runs only when you ask and never changes your writing.': 'Yapay zekâ yalnızca istediğinizde çalışır ve yazınızı değiştirmez.',
+  'Choose an API provider or a model on this computer.': 'Bir API sağlayıcısı veya bu bilgisayardaki bir modeli seçin.',
+  'Find pages for your AI model to read.': 'Yapay zekâ modelinizin okuyacağı sayfaları bulun.',
+  'The key stays in Windows Credential Manager.': 'Anahtar Windows Kimlik Bilgisi Yöneticisi’nde kalır.',
+  'Reflection': 'Düşünme', 'Notebook': 'Defter',
+
   // Shared words, data values and statuses
   'Preview': 'Önizleme', 'Cards': 'Kartlar', 'Notes': 'Notlar', 'Check': 'Kontrol', 'Images': 'Görseller', 'Sources': 'Kaynaklar', 'Highlights': 'Vurgular',
   'Write': 'Yaz', 'Review': 'İncele', 'Normal': 'Normal',
@@ -29,7 +37,7 @@ export const tr: Record<string, string> = {
   'Writing library': 'Yazı kitaplığı', 'Close library': 'Kitaplığı kapat', 'YOUR DESK': 'MASANIZ', '＋ New writing': '＋ Yeni yazı', 'New story or book': 'Yeni öykü ya da kitap',
   'Bring in writing…': 'Yazı içe aktar…', 'All writing': 'Tüm yazılar', 'Drafts': 'Taslaklar', 'Search writing': 'Yazılarda ara', 'Find a piece…': 'Bir yazı bul…',
   'No matching writing.': 'Eşleşen yazı yok.', 'A blank page is a good place to start.': 'Boş bir sayfa başlamak için iyi bir yer.',
-  'Trash': 'Kenara konanlar', 'Keyboard shortcuts': 'Klavye kısayolları', 'LOCAL FILES. YOUR WORDS.': 'YEREL DOSYALAR. SİZİN KELİMELERİNİZ.',
+  'Trash': 'Kenara konanlar', 'Keyboard shortcuts': 'Klavye kısayolları',
 
   // Writing area
   'BLOG POST': 'BLOG YAZISI', 'Project actions': 'Proje işlemleri', 'Writing mode': 'Yazma modu', 'Underlines': 'Alt çizgiler',
@@ -38,7 +46,7 @@ export const tr: Record<string, string> = {
   'Publish to my site': 'Siteme yayımla', 'On my site': 'Sitemde', 'ON MY SITE': 'SİTEMDE', 'Publish to my site (when set up)': 'Siteme yayımla (ayarlandıysa)',
   'Publish to my site (advanced)': 'Siteme yayımla (ileri düzey)', 'Site repository folder': 'Site deposu klasörü', 'Leave empty if you do not have one': 'Yoksa boş bırakın',
   'For a blog kept in a local Git repository that has a check:content script. Divit writes the post and its images on a new branch and makes a local commit; you push it yourself. Needs Node.js 22. Leave empty to hide Publish to my site.': 'check:content betiği olan yerel bir Git deposunda tutulan bir blog için. Divit, yazıyı ve görsellerini yeni bir dala yazar ve yerel bir commit yapar; push işlemini siz yaparsınız. Node.js 22 gerekir. Siteme yayımla seçeneğini gizlemek için boş bırakın.',
-  'MAKE A LITTLE SPACE. WRITE.': 'BİRAZ YER AÇ. YAZ.', 'Title': 'Başlık', 'PLACE': 'YER', 'Somewhere': 'Bir yerde', 'DATE': 'TARİH', 'TAGS': 'ETİKETLER',
+   'Title': 'Başlık', 'PLACE': 'YER', 'Somewhere': 'Bir yerde', 'DATE': 'TARİH', 'TAGS': 'ETİKETLER',
   'Add tags, separated by commas': 'Virgülle ayırarak etiket ekleyin', 'LANGUAGE': 'DİL', 'Detect per paragraph': 'Paragraf paragraf algıla',
   'SINGLE TEXT': 'TEK METİN', 'OPENING': 'AÇILIŞ', 'Single text': 'Tek metin', 'Opening': 'Açılış', 'the text': 'metin', 'Section title': 'Bölüm başlığı',
   'Words written today': 'Bugün yazılan kelimeler', 'Daily writing goal': 'Günlük yazma hedefi',
@@ -56,7 +64,7 @@ export const tr: Record<string, string> = {
   '＋ Add images': '＋ Görsel ekle', 'A SECOND PAIR OF EYES': 'İKİNCİ BİR GÖZ', 'Your voice stays yours.': 'Sesiniz sizin kalır.',
   'For now, a small pause:': 'Şimdilik küçük bir mola:', 'Is the opening yours?': 'Açılış sizin mi?', 'Is there a detail only you noticed?': 'Yalnızca sizin fark ettiğiniz bir ayrıntı var mı?', 'Does the ending need to explain?': 'Sonun açıklama yapması gerekiyor mu?',
   'Review mode (Ctrl 2) underlines spelling, checked on this computer. Sources and AI search live in Research (Ctrl Alt R). Nothing here changes your text.': 'İncele modu (Ctrl 2) yazım hatalarının altını çizer; denetim bu bilgisayarda yapılır. Kaynaklar ve yapay zekâ araması Araştırma’dadır (Ctrl Alt R). Burada hiçbir şey metninizi değiştirmez.',
-  'No AI request is made.': 'Hiçbir yapay zekâ isteği yapılmaz.', 'Take your time. It’s your page.': 'Acele etmeyin. Bu sizin sayfanız.',
+  'No AI request is made.': 'Hiçbir yapay zekâ isteği yapılmaz.',
   'Loading image…': 'Görsel yükleniyor…', 'Insert in text': 'Metne ekle', 'Move to trash': 'Kenara koy', 'Move {name} to trash': '{name} görselini kenara koy',
 
   // Idea box, images, trash
@@ -83,11 +91,15 @@ export const tr: Record<string, string> = {
   'Keyboard help': 'Klavye yardımı', 'Leave focus / close dialog': 'Odaktan çık / pencereyi kapat', 'Undo / redo': 'Geri al / yinele',
 
   // Settings
-  'Make yourself at home': 'Kendinizi evinizde hissedin', 'Interface language': 'Arayüz dili', 'Same as Windows': 'Windows ile aynı', 'Menus and messages only. The language you write in is set per project.': 'Yalnızca menüler ve iletiler. Yazdığınız dil her projede ayrı seçilir.',
+  'Interface language': 'Arayüz dili', 'Same as Windows': 'Windows ile aynı', 'Menus and messages only. The language you write in is set per project.': 'Yalnızca menüler ve iletiler. Yazdığınız dil her projede ayrı seçilir.',
   'Bring in writing': 'Yazı içe aktar', 'Help and shortcuts': 'Yardım ve kısayollar', 'WELCOME': 'HOŞ GELDİNİZ', 'A quiet place to write': 'Yazmak için sessiz bir yer', 'Projects': 'Projeler', 'Three modes': 'Üç mod', 'Private by default': 'Varsayılan olarak gizli', 'Got it': 'Anladım',
   'A blog post, a story or a book. Each one is a folder of plain files in Documents\\Divit that you can open without this app.': 'Bir blog yazısı, bir öykü ya da bir kitap. Her biri Belgeler\\Divit içinde, bu uygulama olmadan da açabileceğiniz düz dosyalardan oluşan bir klasördür.',
   'Write shows only your text. Review underlines spelling, checked on this computer. Normal brings back the panels. Switch with Ctrl 1, 2 and 3.': 'Yaz yalnızca metninizi gösterir. İncele, bu bilgisayarda denetlenen yazım hatalarının altını çizer. Normal panelleri geri getirir. Ctrl 1, 2 ve 3 ile geçiş yapın.',
   'Your writing stays on this computer. Nothing is sent anywhere unless you turn on AI or save a web page as a source. Divit only asks GitHub whether a new version exists, and you can turn that off in Settings.': 'Yazınız bu bilgisayarda kalır. Yapay zekâyı açmadıkça ya da bir web sayfasını kaynak olarak kaydetmedikçe hiçbir şey hiçbir yere gönderilmez. Divit yalnızca GitHub’a yeni sürüm olup olmadığını sorar; bunu Ayarlar’dan kapatabilirsiniz.',
+  'Place, date, tags and language': 'Yer, tarih, etiketler ve dil', 'No date': 'Tarih yok', 'Language: auto': 'Dil: otomatik', '+ tags': '+ etiket',
+  'Version {version}': 'Sürüm {version}',
+  'More ways to start': 'Başlamanın başka yolları',
+  'More actions': 'Diğer işlemler', 'Export (Ctrl+Shift+E)': 'Dışa aktar (Ctrl+Shift+E)',
   'Appearance': 'Görünüm', 'Theme': 'Tema', 'Match Windows': 'Windows ile aynı', 'Sage paper': 'Adaçayı kâğıdı', 'Dusty blue ink': 'Soluk mavi mürekkep', 'Terracotta evening': 'Kiremit akşamı', 'Plum night': 'Mürdüm gecesi',
   'Applies at once. Match Windows follows the light or dark setting of Windows.': 'Hemen uygulanır. “Windows ile aynı”, Windows’un açık ya da koyu ayarını izler.', 'Warm paper': 'Sıcak kâğıt', 'After hours': 'Mesai sonrası',
   'Check for a new version when Divit starts': 'Divit açılırken yeni sürüm var mı bak', 'Asks GitHub for the latest release; nothing about you or your writing is sent. Divit always asks before installing.': 'GitHub’a en son sürümü sorar; sizinle ya da yazınızla ilgili hiçbir şey gönderilmez. Divit kurmadan önce her zaman sorar.',
@@ -108,7 +120,7 @@ export const tr: Record<string, string> = {
   'The browser preview does not back up your Documents files.': 'Tarayıcı önizlemesi Belgeler’deki dosyalarınızı yedeklemez.', 'Choose a backup folder outside Divit': 'Divit klasörünün dışında bir yedek klasörü seçin',
 
   // AI settings
-  'AI (OPTIONAL)': 'YAPAY ZEKÂ (İSTEĞE BAĞLI)', 'AI features run from the desktop app, which keeps the API key in Windows Credential Manager.': 'Yapay zekâ özellikleri, API anahtarını Windows Kimlik Bilgileri Yöneticisi’nde saklayan masaüstü uygulamasında çalışır.',
+  'AI features run from the desktop app, which keeps the API key in Windows Credential Manager.': 'Yapay zekâ özellikleri, API anahtarını Windows Kimlik Bilgileri Yöneticisi’nde saklayan masaüstü uygulamasında çalışır.',
   'Loading AI settings…': 'Yapay zekâ ayarları yükleniyor…', 'Use AI in Divit': 'Divit’te yapay zekâ kullan', 'AI runs from the desktop app.': 'Yapay zekâ masaüstü uygulamasında çalışır.',
   'Nothing runs in the background. AI helps only when you click, its answers are labelled “AI”, and it never writes into your text. Claude, ChatGPT or Gemini subscriptions cannot be used here: AI needs an API key, or a model on this computer.': 'Arka planda hiçbir şey çalışmaz. Yapay zekâ yalnızca siz tıkladığınızda yardım eder, yanıtları “AI” diye etiketlenir ve metninize asla yazmaz. Claude, ChatGPT ya da Gemini abonelikleri burada kullanılamaz: bir API anahtarı ya da bu bilgisayarda bir model gerekir.',
   'Provider': 'Sağlayıcı', 'Model': 'Model', 'Service address': 'Servis adresi', 'Presets: {list}.': 'Hazır adresler: {list}.',

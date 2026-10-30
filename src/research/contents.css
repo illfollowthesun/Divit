@@ -1,0 +1,8 @@
+/* Content typography only; drawer sizing and positioning belong to the shell. */
+.research-drawer :is(.section-label,.type-chip,.ai-label,.source-meta,.source-url,.source-row small,.source-used,.highlight-meta,.ai-spend,.request-prompt,.request-ai-note,.field,.field small,label,.research-new,.source-kind,.research-tabs button span,.insert-as,.research-note small,.notebook-moved,.request-path),
+.side-panel :is(.section-label,.field,.field small,.project-card>small,.project-note small,.notebook-tabs button,.panel-tabs button){font-size:12px;color:var(--text);opacity:1}
+.research-drawer :is(button,summary){min-height:32px}
+.research-drawer .ai-label{color:var(--paper);background:var(--muted)}
+.research-drawer .ai-candidate.kept{opacity:1}
+.source-ai-details{font-size:12px;line-height:1.6;color:var(--text);margin:12px 0}
+.source-ai-details summary{cursor:pointer;padding:6px 0}

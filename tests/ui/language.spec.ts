@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test'
+import { details } from './shell-helpers'
 
 test.describe('on a Turkish Windows', () => {
   test.use({ locale: 'tr-TR' })
@@ -7,7 +8,7 @@ test.describe('on a Turkish Windows', () => {
     await expect(page.getByRole('button', { name: 'Ayarları aç' })).toBeVisible()
     await page.getByRole('button', { name: /Yeni yazı/ }).click()
     await expect(page.getByRole('combobox', { name: 'Yazma modu' })).toBeVisible()
-    await expect(page.locator('.metadata select')).toHaveValue('auto')
+    await details(page); await expect(page.locator('.metadata select')).toHaveValue('auto')
     await expect(page.locator('html')).toHaveAttribute('lang', 'tr')
   })
 })

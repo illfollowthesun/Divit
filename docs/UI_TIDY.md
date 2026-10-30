@@ -34,3 +34,16 @@ When both parts are done, Claude Code merges `ui/panels` into `ui/shell`, resolv
 
 ## Requests
 (add cross-part requests here)
+
+- B1 / App.tsx: the settings form is inline in this Part A file. Import `SettingsForm` from `./settings/SettingsForm` and replace the inline form with it inside the existing Modal. Pass `panels` with General = interface language + update controls, Writing = daily goal + advanced publishing, Appearance = theme picker, Your files = BackupSettings + LibraryLocation, AI = AiSettings, About = existing version/privacy text. Pass `dirty={JSON.stringify(settings) !== JSON.stringify(lib.settings)}`, `busy`, the existing save handler as `save`, and `cancel={() => setDialog(null)}`. Keep AI's existing independent save/key controls. The component keeps drafts mounted, supports arrow/Home/End tab navigation and contains scrolling above a persistent Save / Cancel footer. Its CSS scopes modal containment to `dialog:has(.settings-form)`.
+- B4 / App.tsx: retain tab state keys and shortcuts, but display `t('Reflection')` for Check and `t('Notebook')` for Notes. Check contains reflection prompts, not spelling controls; Notebook contains project notes and the writing log, while source-linked notes remain in Research. Both EN and TR labels are supplied. Update the existing companion-tab text assertions when wiring these labels. No feature is removed or merged.
+- B5 / shell CSS: this branch raises labels in panel and settings contents only. Please raise remaining shell labels to 12 px and retain theme text tokens; shell layout CSS is outside this branch's scope. There are six explicit palettes plus Match Windows (the seventh choice resolves to light/dark).
+
+## Merge status (Claude Code, ui/shell)
+- `ui/panels` (5404fc5, c476f2a) merged into `ui/shell` without conflicts.
+- Requests done: B1 `SettingsForm` wired into the Settings modal (General, Writing, Appearance, Your files, AI, About; Save/Cancel always visible, Save on when something changed; themes still apply and save at once). B4 companion tabs read Reflection and Notebook (keys and shortcuts unchanged). B5 remaining shell labels at 12 px with theme colour tokens.
+- After screenshots: `tidy-after-shell-*` (desk, desk-tr, research, settings, review at 1440 and 960) and refreshed `tidy-after-panels-*` from the merged app. README screenshots refreshed (no dot after Divit).
+
+### Left over
+- Labels under 12 px still exist in places neither part owned: character cards (`.project-card>small` 8 px), the snapshot comparison headers (8 px), notebook tab buttons and export result lines (10 px), the Publish to my site checklist (11 px).
+- Only the browser preview was checked; the desktop build was not rebuilt or run for this branch.

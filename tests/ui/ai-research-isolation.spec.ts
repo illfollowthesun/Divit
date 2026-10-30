@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test'
+import { settingsTab } from './shell-helpers'
 import { randomUUID } from 'node:crypto'
 import { desktopBridge, nativeCalls } from './desktop-bridge'
 import { newProject } from '../../src/shared/types'
@@ -33,7 +34,7 @@ test('reopening the search form uses AI settings saved while the research drawer
   await drawer.getByRole('button', { name: 'Search about this topic' }).click()
   await expect(drawer.getByRole('button', { name: 'Search with AI', exact: true })).toHaveCount(0)
   await drawer.getByRole('button', { name: 'Cancel', exact: true }).click()
-  await page.getByRole('button', { name: 'Open settings' }).click()
+  await page.getByRole('button', { name: 'Open settings' }).click(); await settingsTab(page, 'AI')
   const settings = page.getByRole('dialog').locator('.ai-settings')
   await settings.getByLabel('Use AI in Divit').check()
   await settings.getByRole('button', { name: 'Save AI settings', exact: true }).click()
@@ -51,7 +52,7 @@ test('turning AI off while a search form is open prevents the pending search', a
   const drawer = page.getByRole('complementary', { name: 'Research' })
   await drawer.getByRole('button', { name: 'Search about this topic' }).click()
   await expect(drawer.getByRole('button', { name: 'Search with AI', exact: true })).toBeVisible()
-  await page.getByRole('button', { name: 'Open settings' }).click()
+  await page.getByRole('button', { name: 'Open settings' }).click(); await settingsTab(page, 'AI')
   const settings = page.getByRole('dialog').locator('.ai-settings')
   await settings.getByLabel('Use AI in Divit').uncheck()
   await settings.getByRole('button', { name: 'Save AI settings', exact: true }).click()
