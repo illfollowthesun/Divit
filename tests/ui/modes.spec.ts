@@ -44,7 +44,7 @@ test('Review checks mixed language paragraphs and offscreen text locally, with e
   const text = 'The ticekts were folded.\n\nTürkçe bir cümle yazıyorr.\n\n' + 'The page is here.\n\n'.repeat(100) + 'A misspelld word.'
   await editor.fill(text)
   const external: string[] = []
-  page.on('request', request => { if (!request.url().startsWith('http://127.0.0.1:1420') && !request.url().startsWith('data:')) external.push(request.url()) })
+  page.on('request', request => { if (!request.url().startsWith(`http://127.0.0.1:${process.env.YAZI_UI_PORT ?? 1420}`) && !request.url().startsWith('data:')) external.push(request.url()) })
   await page.keyboard.press('Control+2')
   const panel = page.getByRole('complementary', { name: 'Review issues' })
   await expect(panel.getByRole('button', { name: 'misspelld', exact: true })).toBeVisible({ timeout: 15000 })

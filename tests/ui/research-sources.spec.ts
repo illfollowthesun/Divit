@@ -19,7 +19,7 @@ test('Add URL keeps a readable offline copy; the list filters, dedupes and shows
   }).listen(0, '127.0.0.1')
   await new Promise(resolve => server.once('listening', resolve))
   const base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`
-  const requests: string[] = []; page.on('request', request => { if (!request.url().startsWith('http://127.0.0.1:1420')) requests.push(request.url()) })
+  const requests: string[] = []; page.on('request', request => { if (!request.url().startsWith(`http://127.0.0.1:${process.env.YAZI_UI_PORT ?? 1420}`)) requests.push(request.url()) })
 
   await page.goto('/'); await page.evaluate(() => localStorage.clear()); await page.reload()
   await page.getByRole('button', { name: /New writing/ }).click()

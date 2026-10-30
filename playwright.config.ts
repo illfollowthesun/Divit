@@ -1,6 +1,8 @@
 import { defineConfig } from '@playwright/test'
 import { existsSync } from 'node:fs'
 import { randomUUID } from 'node:crypto'
+// YAZI_UI_PORT lets two working trees (for example two agents on separate branches) test side by side.
+const port = Number(process.env.YAZI_UI_PORT ?? 1420), origin = `http://127.0.0.1:${port}`
 const chrome = 'C:/Program Files/Google/Chrome/Application/chrome.exe'
 export default defineConfig({
   testDir: './tests/ui',
@@ -8,6 +10,6 @@ export default defineConfig({
   workers: process.env.YAZI_UI_WORKERS ? Number(process.env.YAZI_UI_WORKERS) : 4,
   // Playwright clears outputDir at startup. Separate runs must never clear each other's artifacts.
   outputDir: `./test-results/run-${process.pid}-${randomUUID()}`,
-  use: { baseURL: 'http://127.0.0.1:1420', viewport: { width: 1440, height: 950 }, trace: 'retain-on-failure', launchOptions: { executablePath: process.env.YAZI_BROWSER_PATH || (existsSync(chrome) ? chrome : undefined) } },
-  webServer: { command: 'npm.cmd run dev', url: 'http://127.0.0.1:1420', reuseExistingServer: true },
+  use: { baseURL: origin, viewport: { width: 1440, height: 950 }, trace: 'retain-on-failure', launchOptions: { executablePath: process.env.YAZI_BROWSER_PATH || (existsSync(chrome) ? chrome : undefined) } },
+  webServer: { command: port === 1420 ? 'npm.cmd run dev' : `npm.cmd run dev -- --port ${port}`, url: origin, reuseExistingServer: true },
 })
