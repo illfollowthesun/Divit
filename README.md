@@ -4,7 +4,7 @@
 
 A quiet Windows app for writing blog posts, stories and books. Your writing stays on your computer as plain Markdown files. Research and AI are there when you ask for them and silent when you don't. The interface is in English or Turkish, and you can write in any language.
 
-![Divit in Write mode: only the text on warm paper](docs/screenshots/divit-write.png)
+![Divit: your writing library, the text and a reading preview side by side](docs/screenshots/divit-desk.png)
 
 > **Beta.** This is 0.1.0-beta.2. Keep a backup of anything important and [tell us what breaks](https://github.com/illfollowthesun/Divit/issues/new/choose).
 
@@ -34,7 +34,7 @@ Divit runs on Windows 10 and 11 and uses Microsoft Edge WebView2, which Windows 
 | **Review** | Ctrl 2 | Spelling underlines (English UK and Turkish), checked on your computer, with suggestions you accept one by one. |
 | **Normal** | Ctrl 3 | Your library, outline, cards, notes, preview and research, all around the page. |
 
-![Review mode with two spelling suggestions](docs/screenshots/divit-review.png)
+![Review mode with a spelling suggestion](docs/screenshots/divit-review.png)
 
 Stories can be one text or scenes. Books have chapters with scenes. Drag to reorder, keep snapshots before a rewrite, and compare versions side by side. You can set an optional daily word goal in Settings; Divit then shows today's words and how many days in a row you have written. It is off by default and never appears in Write mode.
 
