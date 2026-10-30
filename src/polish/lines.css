@@ -1,7 +1,7 @@
 /* Fewer lines: spacing and soft tints separate areas. Lines remain only where they carry meaning
    (active tab and nav underlines, the selected item marker, form fields, list rows in dialogs). */
 .topbar,.preview-notice,.document-toolbar,.panel-tabs{border-bottom:0}
-.editor-footer,.panel-footnote,.library-bottom{border-top:0}
+.editor-footer,.library-bottom{border-top:0}
 .library{border-right:0}
 .side-panel{border-left:0}
 .paper-rule{height:0;background:none;margin:12px 0 22px}

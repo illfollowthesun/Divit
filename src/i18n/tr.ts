@@ -29,7 +29,7 @@ export const tr: Record<string, string> = {
   'Writing library': 'Yazı kitaplığı', 'Close library': 'Kitaplığı kapat', 'YOUR DESK': 'MASANIZ', '＋ New writing': '＋ Yeni yazı', 'New story or book': 'Yeni öykü ya da kitap',
   'Bring in writing…': 'Yazı içe aktar…', 'All writing': 'Tüm yazılar', 'Drafts': 'Taslaklar', 'Search writing': 'Yazılarda ara', 'Find a piece…': 'Bir yazı bul…',
   'No matching writing.': 'Eşleşen yazı yok.', 'A blank page is a good place to start.': 'Boş bir sayfa başlamak için iyi bir yer.',
-  'Trash': 'Kenara konanlar', 'Keyboard shortcuts': 'Klavye kısayolları', 'LOCAL FILES. YOUR WORDS.': 'YEREL DOSYALAR. SİZİN KELİMELERİNİZ.',
+  'Trash': 'Kenara konanlar', 'Keyboard shortcuts': 'Klavye kısayolları',
 
   // Writing area
   'BLOG POST': 'BLOG YAZISI', 'Project actions': 'Proje işlemleri', 'Writing mode': 'Yazma modu', 'Underlines': 'Alt çizgiler',
@@ -38,7 +38,7 @@ export const tr: Record<string, string> = {
   'Publish to my site': 'Siteme yayımla', 'On my site': 'Sitemde', 'ON MY SITE': 'SİTEMDE', 'Publish to my site (when set up)': 'Siteme yayımla (ayarlandıysa)',
   'Publish to my site (advanced)': 'Siteme yayımla (ileri düzey)', 'Site repository folder': 'Site deposu klasörü', 'Leave empty if you do not have one': 'Yoksa boş bırakın',
   'For a blog kept in a local Git repository that has a check:content script. Divit writes the post and its images on a new branch and makes a local commit; you push it yourself. Needs Node.js 22. Leave empty to hide Publish to my site.': 'check:content betiği olan yerel bir Git deposunda tutulan bir blog için. Divit, yazıyı ve görsellerini yeni bir dala yazar ve yerel bir commit yapar; push işlemini siz yaparsınız. Node.js 22 gerekir. Siteme yayımla seçeneğini gizlemek için boş bırakın.',
-  'MAKE A LITTLE SPACE. WRITE.': 'BİRAZ YER AÇ. YAZ.', 'Title': 'Başlık', 'PLACE': 'YER', 'Somewhere': 'Bir yerde', 'DATE': 'TARİH', 'TAGS': 'ETİKETLER',
+   'Title': 'Başlık', 'PLACE': 'YER', 'Somewhere': 'Bir yerde', 'DATE': 'TARİH', 'TAGS': 'ETİKETLER',
   'Add tags, separated by commas': 'Virgülle ayırarak etiket ekleyin', 'LANGUAGE': 'DİL', 'Detect per paragraph': 'Paragraf paragraf algıla',
   'SINGLE TEXT': 'TEK METİN', 'OPENING': 'AÇILIŞ', 'Single text': 'Tek metin', 'Opening': 'Açılış', 'the text': 'metin', 'Section title': 'Bölüm başlığı',
   'Words written today': 'Bugün yazılan kelimeler', 'Daily writing goal': 'Günlük yazma hedefi',
@@ -56,7 +56,7 @@ export const tr: Record<string, string> = {
   '＋ Add images': '＋ Görsel ekle', 'A SECOND PAIR OF EYES': 'İKİNCİ BİR GÖZ', 'Your voice stays yours.': 'Sesiniz sizin kalır.',
   'For now, a small pause:': 'Şimdilik küçük bir mola:', 'Is the opening yours?': 'Açılış sizin mi?', 'Is there a detail only you noticed?': 'Yalnızca sizin fark ettiğiniz bir ayrıntı var mı?', 'Does the ending need to explain?': 'Sonun açıklama yapması gerekiyor mu?',
   'Review mode (Ctrl 2) underlines spelling, checked on this computer. Sources and AI search live in Research (Ctrl Alt R). Nothing here changes your text.': 'İncele modu (Ctrl 2) yazım hatalarının altını çizer; denetim bu bilgisayarda yapılır. Kaynaklar ve yapay zekâ araması Araştırma’dadır (Ctrl Alt R). Burada hiçbir şey metninizi değiştirmez.',
-  'No AI request is made.': 'Hiçbir yapay zekâ isteği yapılmaz.', 'Take your time. It’s your page.': 'Acele etmeyin. Bu sizin sayfanız.',
+  'No AI request is made.': 'Hiçbir yapay zekâ isteği yapılmaz.',
   'Loading image…': 'Görsel yükleniyor…', 'Insert in text': 'Metne ekle', 'Move to trash': 'Kenara koy', 'Move {name} to trash': '{name} görselini kenara koy',
 
   // Idea box, images, trash
