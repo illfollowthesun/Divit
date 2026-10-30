@@ -17,3 +17,11 @@
 .document-toolbar button[aria-expanded=true],.document-toolbar button[aria-pressed=true],.top-actions button[aria-pressed=true]{background:var(--hover);color:var(--accent)}
 .document-toolbar{flex-wrap:nowrap}
 .document-toolbar>div:first-child{min-width:0;overflow:hidden;text-overflow:ellipsis}
+
+/* Research: on wide windows the drawer is a column that pushes the text (which re-wraps) and takes the
+   companion's place; below 1100 px it stays an overlay with its close button. */
+@media(min-width:1101px){
+  .research-drawer{position:static;flex:0 0 min(440px,34vw);height:auto;box-shadow:none;border-left:1px solid var(--line);z-index:auto;width:auto}
+  .research-open .side-panel{display:none}
+}
+.research-close{min-width:32px;min-height:32px;font-size:20px}
