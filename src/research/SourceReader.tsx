@@ -5,6 +5,7 @@ import type { Annotations } from './useResearch'
 import { textBlocks } from './blocks'
 import { anchor, overlaps, segments } from './anchor'
 import { t, tn } from '../i18n'
+import './contents.css'
 
 const message = (e: unknown) => e instanceof Error ? e.message : String(e)
 export const highlightColors = [{ id: 1, name: 'Sand' }, { id: 2, name: 'Sage' }, { id: 3, name: 'Sky' }, { id: 4, name: 'Rose' }] as const
@@ -85,8 +86,7 @@ export function SourceReader({ aiNotes, projectId, source, back, reload, highlig
     <h3 ref={heading} tabIndex={-1}>{source.title}</h3>
     <p className="source-meta">{[source.site, source.author, source.published ?? (source.saved && t('saved {date}', { date: source.saved }))].filter(Boolean).join(' · ')}</p>
     {source.url && <p className="source-url" title={t('Original address')}>{source.url}</p>}
-    {source.summary && <p className="source-summary">{source.summary}</p>}
-    {aiNotes.filter(n => n.kind === 'summary').map(n => <p key={n.id} className="ai-summary" title={`${n.provider} · ${n.model}`}><span className="ai-label">AI</span> {n.body}</p>)}
+    {(source.summary || aiNotes.some(n => n.kind === 'summary')) && <details className="source-ai-details"><summary>{t('Details')}</summary>{source.summary && <p>{source.summary}</p>}{aiNotes.filter(n => n.kind === 'summary').map(n => <p key={n.id} className="ai-summary" title={`${n.provider} · ${n.model}`}><span className="ai-label">AI</span> {n.body}</p>)}</details>}
     {places.length > 0 && <p className="source-used">{t('Quoted in {places}', { places: places.join(', ') })}</p>}
     {problem && <p className="research-problem" role="alert">{problem}</p>}
     {lost.length > 0 && <p className="quiet highlight-lost">{tn(lost.length, 'One highlight no longer matches the saved text. It is kept in Highlights.', '{n} highlights no longer match the saved text. They are kept in Highlights.')}</p>}
