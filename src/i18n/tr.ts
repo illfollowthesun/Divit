@@ -89,6 +89,7 @@ export const tr: Record<string, string> = {
   'Write shows only your text. Review underlines spelling, checked on this computer. Normal brings back the panels. Switch with Ctrl 1, 2 and 3.': 'Yaz yalnızca metninizi gösterir. İncele, bu bilgisayarda denetlenen yazım hatalarının altını çizer. Normal panelleri geri getirir. Ctrl 1, 2 ve 3 ile geçiş yapın.',
   'Your writing stays on this computer. Nothing is sent anywhere unless you turn on AI or save a web page as a source. Divit only asks GitHub whether a new version exists, and you can turn that off in Settings.': 'Yazınız bu bilgisayarda kalır. Yapay zekâyı açmadıkça ya da bir web sayfasını kaynak olarak kaydetmedikçe hiçbir şey hiçbir yere gönderilmez. Divit yalnızca GitHub’a yeni sürüm olup olmadığını sorar; bunu Ayarlar’dan kapatabilirsiniz.',
   'Place, date, tags and language': 'Yer, tarih, etiketler ve dil', 'No date': 'Tarih yok', 'Language: auto': 'Dil: otomatik', '+ tags': '+ etiket',
+  'More ways to start': 'Başlamanın başka yolları',
   'More actions': 'Diğer işlemler', 'Export (Ctrl+Shift+E)': 'Dışa aktar (Ctrl+Shift+E)',
   'Appearance': 'Görünüm', 'Theme': 'Tema', 'Match Windows': 'Windows ile aynı', 'Sage paper': 'Adaçayı kâğıdı', 'Dusty blue ink': 'Soluk mavi mürekkep', 'Terracotta evening': 'Kiremit akşamı', 'Plum night': 'Mürdüm gecesi',
   'Applies at once. Match Windows follows the light or dark setting of Windows.': 'Hemen uygulanır. “Windows ile aynı”, Windows’un açık ya da koyu ayarını izler.', 'Warm paper': 'Sıcak kâğıt', 'After hours': 'Mesai sonrası',

@@ -1,10 +1,11 @@
 import { test, expect } from '@playwright/test'
+import { startMenu } from './shell-helpers'
 import { readFile } from 'node:fs/promises'
 import { select, projectId, dropSource } from './research-helpers'
 
 test('Export can end with a Sources list built from the sources actually quoted', async ({ page }) => {
   await page.goto('/'); await page.evaluate(() => localStorage.clear()); await page.reload()
-  await page.getByRole('button', { name: /New story or book/ }).click(); await page.getByLabel('Project title').fill('Son Vapur')
+  await startMenu(page, 'New story or book'); await page.getByLabel('Project title').fill('Son Vapur')
   await page.getByRole('button', { name: 'Create project', exact: true }).click()
   await page.getByRole('textbox', { name: 'Markdown text' }).fill('İlk vapur kalktı.')
   const id = await projectId(page)

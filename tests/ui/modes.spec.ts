@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { details, more } from './shell-helpers'
+import { details, more, startMenu } from './shell-helpers'
 
 test('modes preserve editor, selection and history; Write hides chrome and escapes to Normal', async ({ page }) => {
   await page.goto('/'); await page.evaluate(() => localStorage.clear()); await page.reload()
@@ -115,7 +115,7 @@ test('companion shortcuts leave Review so compact drawers remain usable', async 
   await page.setViewportSize({ width: 800, height: 950 })
   await page.goto('/'); await page.evaluate(() => localStorage.clear()); await page.reload()
   await page.getByRole('button', { name: 'Toggle library' }).click()
-  await page.getByRole('button', { name: /New story or book/ }).click()
+  await startMenu(page, 'New story or book')
   await page.getByRole('button', { name: 'Create project', exact: true }).click()
   await page.keyboard.press('Control+2'); await page.keyboard.press('Control+Alt+k')
   await expect(page.locator('.app')).toHaveClass(/mode-normal/)

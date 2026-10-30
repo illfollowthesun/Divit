@@ -1,7 +1,7 @@
 import{test,expect}from'@playwright/test'
-import { more } from './shell-helpers'
+import { more, startMenu } from './shell-helpers'
 test('snapshots render headings, highlight word changes and filter unchanged blocks safely',async({page})=>{
-  await page.goto('/');await page.evaluate(()=>localStorage.clear());await page.reload();await page.getByRole('button',{name:/New story or book/}).click()
+  await page.goto('/');await page.evaluate(()=>localStorage.clear());await page.reload();await startMenu(page, 'New story or book')
   await page.getByRole('button',{name:'Create project',exact:true}).click()
   const editor=page.getByRole('textbox',{name:'Markdown text'})
   await editor.fill('## Karaköy\n\nÇağla eski defteri açtı.\n\nA quiet unchanged paragraph.')

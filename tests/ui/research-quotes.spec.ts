@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test'
+import { startMenu } from './shell-helpers'
 import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { select, projectId, researchFolder, dropSource } from './research-helpers'
@@ -9,7 +10,7 @@ const stored = (page: import('@playwright/test').Page) => page.evaluate(() => JS
 
 test('old Notebook research notes are copied once into Research notes; the originals stay in the project', async ({ page }) => {
   await page.goto('/'); await page.evaluate(() => localStorage.clear()); await page.reload()
-  await page.getByRole('button', { name: /New story or book/ }).click(); await page.getByRole('button', { name: 'Create project', exact: true }).click()
+  await startMenu(page, 'New story or book'); await page.getByRole('button', { name: 'Create project', exact: true }).click()
   await page.keyboard.press('Control+s'); await expect(page.getByRole('status').first()).toHaveText('All changes saved')
   await page.evaluate(() => {
     const lib = JSON.parse(localStorage.getItem('yazi-browser-preview-v1')!)

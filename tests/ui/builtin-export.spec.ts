@@ -1,11 +1,12 @@
 import { test, expect } from '@playwright/test'
+import { startMenu } from './shell-helpers'
 import { readFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
 const JSZip = createRequire(import.meta.url)('jszip')
 
 test('Word and PDF exports work with no extra tools and say which path made them', async ({ page }) => {
   await page.goto('/'); await page.evaluate(() => localStorage.clear()); await page.reload()
-  await page.getByRole('button', { name: /New story or book/ }).click()
+  await startMenu(page, 'New story or book')
   await page.getByLabel('Project type').selectOption('book'); await page.getByLabel('Project title').fill('İstanbul at dawn')
   await page.getByRole('button', { name: 'Create project', exact: true }).click()
   await page.getByRole('button', { name: '+ Chapter', exact: true }).click(); await page.getByLabel('Section title').fill('Şafak')

@@ -10,3 +10,8 @@ export async function details(page: Page) {
   const summary = page.locator('.metadata-summary')
   if (await summary.getAttribute('aria-expanded') !== 'true') await summary.click()
 }
+// "New story or book" and "Bring in writing…" live in the small menu beside New writing.
+export async function startMenu(page: Page, name: 'New story or book' | 'Bring in writing…') {
+  await page.getByRole('button', { name: 'More ways to start' }).click()
+  await page.getByRole('menu', { name: 'More ways to start' }).getByText(name, { exact: true }).click()
+}

@@ -1,9 +1,10 @@
 import { test, expect } from '@playwright/test'
+import { startMenu } from './shell-helpers'
 import type { Page } from '@playwright/test'
 
 async function book(page: Page) {
   await page.goto('/'); await page.evaluate(() => localStorage.clear()); await page.reload()
-  await page.getByRole('button', { name: /New story or book/ }).click()
+  await startMenu(page, 'New story or book')
   await page.getByLabel('Project type').selectOption('book'); await page.getByLabel('Project title').fill('The morning crossing')
   await page.getByRole('button', { name: 'Create project', exact: true }).click()
 }
@@ -62,4 +63,27 @@ test('place, date, tags and language fold into one line under the title and open
   await page.getByLabel('TAGS', { exact: true }).fill('ferry, winter'); await page.getByRole('combobox', { name: 'LANGUAGE', exact: true }).selectOption('en')
   await expect(summary).toHaveText('Karaköy · 30 Oct 2026 · English · #ferry #winter')
   await summary.click(); await expect(page.locator('#metadata-fields')).toHaveCount(0)
+})
+
+test('the sidebar starts with New writing and search; stories, books and imports are one click away', async ({ page }) => {
+  await page.goto('/'); await page.evaluate(() => localStorage.clear()); await page.reload()
+  const library = page.locator('#writing-library')
+  const order = await library.evaluate(el => [...el.querySelectorAll('.new-button, .search-label input, .library-filters')].map(e => e.className || (e as HTMLInputElement).placeholder))
+  expect(order).toEqual(['new-button', 'Find a piece…', 'library-filters'])
+  await expect(library.getByRole('button', { name: /All writing/ })).toContainText('0')
+  await library.getByRole('button', { name: 'More ways to start' }).click()
+  const menu = page.getByRole('menu', { name: 'More ways to start' })
+  await expect(menu.locator('[role=menuitem]')).toHaveText([/New story or book.*Ctrl Shift N/, /Bring in writing….*Ctrl O/])
+  await menu.getByRole('menuitem', { name: /Bring in writing/ }).click()
+  await expect(page.getByRole('dialog', { name: 'Bring in your writing' })).toBeVisible()
+})
+
+test('the status bar shows words, reading time and save state, without the Focus hint; Focus shows its state', async ({ page }) => {
+  await book(page)
+  const footer = page.locator('.editor-footer')
+  await expect(footer).toContainText('0 words'); await expect(footer).toContainText('1 min read'); await expect(footer.getByRole('status')).toBeVisible()
+  await expect(footer.getByRole('button')).toHaveCount(0)
+  const focus = page.locator('.top-actions').getByRole('button', { name: 'Focus', exact: true })
+  await expect(focus).toHaveAttribute('aria-pressed', 'false'); await focus.click()
+  await expect(page.locator('.top-actions').getByRole('button', { name: 'Leave focus' })).toHaveAttribute('aria-pressed', 'true')
 })

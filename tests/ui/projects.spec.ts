@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { more } from './shell-helpers'
+import { more, startMenu } from './shell-helpers'
 import { readFile } from 'node:fs/promises'
 
 test.beforeEach(async ({ page }) => {
@@ -9,7 +9,7 @@ test.beforeEach(async ({ page }) => {
 
 test('story and book projects keep their type across restart', async ({ page }) => {
   for (const type of ['story', 'book']) {
-    await page.getByRole('button', { name: /New story or book/ }).click()
+    await startMenu(page, 'New story or book')
     await page.getByLabel('Project type').selectOption(type)
     await page.getByLabel('Project title').fill(type === 'story' ? 'The Last Ferry' : 'Rooms of the City')
     await page.getByRole('button', { name: 'Create project', exact: true }).click()
@@ -23,7 +23,7 @@ test('story and book projects keep their type across restart', async ({ page }) 
 })
 
 test('chapters and scenes keep independent text and can be set aside and restored', async ({ page }) => {
-  await page.getByRole('button', { name: /New story or book/ }).click()
+  await startMenu(page, 'New story or book')
   await page.getByLabel('Project type').selectOption('book'); await page.getByLabel('Project title').fill('The Last Ferry')
   await page.getByRole('button', { name: 'Create project', exact: true }).click()
   await page.getByRole('button', { name: '+ Chapter', exact: true }).click()
@@ -46,7 +46,7 @@ test('chapters and scenes keep independent text and can be set aside and restore
 })
 
 test('character and place cards retain details through editing, set-aside and restart', async ({ page }) => {
-  await page.getByRole('button', { name: /New story or book/ }).click()
+  await startMenu(page, 'New story or book')
   await page.getByLabel('Project title').fill('The Last Ferry')
   await page.getByRole('button', { name: 'Create project', exact: true }).click()
   await page.getByRole('tab', { name: 'Cards', exact: true }).click()
@@ -90,7 +90,7 @@ test('typewriter mode centers the current line without changing the text', async
 })
 
 test('snapshots compare side by side and restoring keeps the rewrite too', async ({ page }) => {
-  await page.getByRole('button', { name: /New story or book/ }).click()
+  await startMenu(page, 'New story or book')
   await page.getByLabel('Project title').fill('The Last Ferry')
   await page.getByRole('button', { name: 'Create project', exact: true }).click()
   await page.getByRole('button', { name: '+ Scene', exact: true }).click()
@@ -110,7 +110,7 @@ test('snapshots compare side by side and restoring keeps the rewrite too', async
 })
 
 test('browser preview exports a real Markdown download with the built-in exporter', async ({ page }) => {
-  await page.getByRole('button', { name: /New story or book/ }).click()
+  await startMenu(page, 'New story or book')
   await page.getByLabel('Project title').fill('İstanbul at dawn')
   await page.getByRole('button', { name: 'Create project', exact: true }).click()
   await page.getByRole('button', { name: '+ Scene', exact: true }).click()
@@ -127,7 +127,7 @@ test('browser preview exports a real Markdown download with the built-in exporte
 })
 
 test('timeline and daily writing goals persist without counting metadata as writing', async ({ page }) => {
-  await page.getByRole('button', { name: /New story or book/ }).click()
+  await startMenu(page, 'New story or book')
   await page.getByLabel('Project title').fill('The Last Ferry'); await page.getByRole('button', { name: 'Create project', exact: true }).click()
   await page.getByRole('textbox', { name: 'Markdown text' }).fill('One quiet morning.')
   await page.getByRole('tab', { name: 'Notes', exact: true }).click(); await page.getByRole('button', { name: 'Writing log', exact: true }).click()

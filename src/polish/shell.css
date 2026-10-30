@@ -26,7 +26,22 @@
 }
 .research-close{min-width:32px;min-height:32px;font-size:20px}
 
+/* Library: New writing with a small menu for stories, books and imports; search right below it. */
+.new-split{display:flex;align-items:stretch;margin-bottom:10px}
+.new-split .new-button{margin-bottom:0;border-top-right-radius:0;border-bottom-right-radius:0;flex:1;min-width:0}
+.new-split .new-more>button{height:100%;min-width:32px;border:1px solid var(--line);border-left:0;border-radius:0 4px 4px 0;background:var(--paper);color:var(--muted)}
+.new-split .new-more>button[aria-expanded=true]{color:var(--accent)}
+.new-split .menu-list{left:auto;right:0}
+.library>.search-label{display:block;margin:0 0 16px}
+.library>.search-label input{width:100%;background:var(--paper);border:1px solid var(--line);min-height:32px}
+
 /* The metadata line under the title: one quiet button that opens the fields. */
 .metadata-summary{display:block;min-height:32px;margin:-14px 0 8px -8px;padding:6px 8px;font-size:13px;color:var(--muted);text-align:left;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .metadata-summary[aria-expanded=true]{color:var(--text)}
 .metadata-summary+.metadata{margin-bottom:6px}
+
+/* Top bar: the centre tabs keep their underline; the right-hand buttons match the toolbar (size above). */
+.topbar nav button{min-height:32px}
+.topbar nav button.active{color:var(--accent)}
+.editor-footer{justify-content:flex-start;gap:18px}
+.editor-footer [role=status]{margin-left:auto}

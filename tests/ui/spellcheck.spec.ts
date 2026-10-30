@@ -1,5 +1,5 @@
 import {test,expect} from '@playwright/test'
-import { details, more } from './shell-helpers'
+import { details, more, startMenu } from './shell-helpers'
 const stored=(page:import('@playwright/test').Page)=>page.evaluate(()=>JSON.parse(localStorage.getItem('yazi-browser-preview-v1')!))
 test('EN/TR project language persists and switches the spelling language without correcting text',async({page})=>{
   await page.goto('/');await page.evaluate(()=>localStorage.clear());await page.reload();await page.getByRole('button',{name:/New writing/}).click()
@@ -66,7 +66,7 @@ test('right-click offers suggestions, a per-language dictionary, a per-project i
 })
 test('card names are never flagged in Turkish projects',async({page})=>{
   await page.goto('/');await page.evaluate(()=>localStorage.clear());await page.reload()
-  await page.getByRole('button',{name:/New story or book/}).click();await page.getByRole('button',{name:'Create project',exact:true}).click()
+  await startMenu(page, 'New story or book');await page.getByRole('button',{name:'Create project',exact:true}).click()
   await details(page); await page.getByRole('combobox',{name:'LANGUAGE',exact:true}).selectOption('tr')
   await more(page, 'Underlines');await page.getByRole('textbox',{name:'Markdown text'}).fill('Vexora kitaplarımızdan birini yazıyorr.')
   await expect(page.locator('.cm-misspelled',{hasText:'Vexora'})).toBeVisible({timeout:15000})

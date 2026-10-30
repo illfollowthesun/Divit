@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { more } from './shell-helpers'
+import { more, startMenu } from './shell-helpers'
 import { mkdir } from 'node:fs/promises'
 
 test('capture the Phase 2 browser preview and verify the compact writing desk', async ({ page }) => {
@@ -9,7 +9,7 @@ test('capture the Phase 2 browser preview and verify the compact writing desk', 
   const errors: string[] = []; page.on('pageerror', error => errors.push(error.message))
   await mkdir(`${root}/screenshots`, { recursive: true }); await mkdir(`${root}/examples`, { recursive: true })
   await page.goto('/'); await page.evaluate(() => localStorage.clear()); await page.reload()
-  await page.getByRole('button', { name: /New story or book/ }).click()
+  await startMenu(page, 'New story or book')
   await page.getByLabel('Project type').selectOption('book'); await page.getByLabel('Project title').fill('The Last Ferry')
   await page.getByRole('button', { name: 'Create project', exact: true }).click()
   await page.getByRole('button', { name: '+ Chapter', exact: true }).click()
