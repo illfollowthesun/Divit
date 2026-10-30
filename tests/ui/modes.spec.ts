@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test'
+import { more } from './shell-helpers'
 
 test('modes preserve editor, selection and history; Write hides chrome and escapes to Normal', async ({ page }) => {
   await page.goto('/'); await page.evaluate(() => localStorage.clear()); await page.reload()
@@ -30,11 +31,11 @@ test('Normal underlines are an explicit persisted choice', async ({ page }) => {
   await page.goto('/'); await page.evaluate(() => localStorage.clear()); await page.reload()
   await page.getByRole('button', { name: /New writing/ }).click()
   await page.getByRole('textbox', { name: 'Markdown text' }).fill('misspelld')
-  const toggle = page.getByRole('button', { name: 'Underlines', exact: true })
-  await expect(toggle).toHaveAttribute('aria-pressed', 'false')
+  const menu = page.getByRole('button', { name: 'More actions' }), toggle = page.getByRole('menuitemcheckbox', { name: 'Underlines' })
+  await menu.click(); await expect(toggle).toHaveAttribute('aria-checked', 'false')
   await toggle.click(); await expect(page.locator('.cm-misspelled')).toBeVisible()
   await page.keyboard.press('Control+s'); await expect(page.locator('.editor-footer [role=status]')).toHaveText('All changes saved')
-  await page.reload(); await expect(toggle).toHaveAttribute('aria-pressed', 'true')
+  await page.reload(); await menu.click(); await expect(toggle).toHaveAttribute('aria-checked', 'true')
 })
 
 test('Review checks mixed language paragraphs and offscreen text locally, with exact replacement and Undo', async ({ page }) => {

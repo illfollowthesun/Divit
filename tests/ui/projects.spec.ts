@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test'
+import { more } from './shell-helpers'
 import { readFile } from 'node:fs/promises'
 
 test.beforeEach(async ({ page }) => {
@@ -95,15 +96,15 @@ test('snapshots compare side by side and restoring keeps the rewrite too', async
   await page.getByRole('button', { name: '+ Scene', exact: true }).click()
   await page.getByLabel('Section title').fill('The crossing')
   const editor = page.getByRole('textbox', { name: 'Markdown text' })
-  await editor.fill('The sea was quiet.'); await page.getByRole('button', { name: 'Start a rewrite', exact: true }).click()
+  await editor.fill('The sea was quiet.'); await more(page, 'Start a rewrite')
   await expect(page.getByRole('status')).toContainText('Snapshot kept')
   await editor.fill('The sea remembered every departure.')
-  await page.getByRole('button', { name: 'Snapshots', exact: true }).click()
+  await more(page, 'Snapshots')
   await expect(page.locator('.snapshot-comparison section').nth(0)).toContainText('The sea was quiet.')
   await expect(page.locator('.snapshot-comparison section').nth(1)).toContainText('The sea remembered every departure.')
   await page.getByRole('button', { name: 'Restore this version', exact: true }).click()
   await expect(editor).toContainText('The sea was quiet.')
-  await page.getByRole('button', { name: 'Snapshots', exact: true }).click()
+  await more(page, 'Snapshots')
   await expect(page.getByLabel('Snapshot to compare').locator('option')).toHaveCount(2)
   await expect(page.locator('.snapshot-comparison section').nth(0)).toContainText('The sea remembered every departure.')
 })

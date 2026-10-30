@@ -29,3 +29,5 @@ import './polish/spelling.css'
 import './polish/lines.css'
 
 import './polish/research.css'
+
+import './polish/shell.css'

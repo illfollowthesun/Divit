@@ -1,0 +1,19 @@
+/* Shell and layout for the 0.1.0-beta.2 tidy-up (docs/UI_TIDY.md, part A). */
+
+/* Button menus: the toolbar's More and the New writing split button. */
+.menu{position:relative;display:inline-flex}
+.menu-list{position:absolute;top:calc(100% + 4px);right:0;z-index:90;min-width:220px;padding:5px;background:var(--paper);border:1px solid var(--line);border-radius:6px;box-shadow:var(--shadow);display:flex;flex-direction:column}
+.menu-list button{display:flex;align-items:center;gap:8px;min-height:32px;padding:6px 10px;text-align:left;font-size:13px;color:var(--text);white-space:nowrap}
+.menu-list button:hover,.menu-list button:focus-visible{background:var(--hover);outline:none}
+.menu-list .menu-check{width:12px;color:var(--accent)}
+.menu-list .menu-label{flex:1}
+.menu-list kbd{font-size:10px;color:var(--muted)}
+.menu-start .menu-list{left:0;right:auto}
+
+/* Toolbar and top bar share one button size, spacing and active state. */
+.document-toolbar>div:last-child,.top-actions{gap:6px;align-items:center}
+.document-toolbar>div:last-child>button,.document-toolbar .menu>button,.top-actions button{min-height:32px;padding:6px 11px;font-size:12px;border-radius:4px}
+.document-toolbar>div:last-child>select{min-height:32px}
+.document-toolbar button[aria-expanded=true],.document-toolbar button[aria-pressed=true],.top-actions button[aria-pressed=true]{background:var(--hover);color:var(--accent)}
+.document-toolbar{flex-wrap:nowrap}
+.document-toolbar>div:first-child{min-width:0;overflow:hidden;text-overflow:ellipsis}

@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test'
+import { more } from './shell-helpers'
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/')
@@ -29,7 +30,7 @@ test('idea becomes a linked draft, and archived writing can be restored', async 
   await page.getByRole('button', { name: /Catch idea/ }).click()
   await page.getByRole('button', { name: /Start writing/ }).click()
   await expect(page.getByRole('textbox', { name: 'Title', exact: true })).toHaveValue('Vapurda bir sabah')
-  await page.getByRole('button', { name: 'Archive', exact: true }).click()
+  await more(page, 'Archive')
   await page.getByRole('button', { name: /Trash/ }).click()
   await expect(page.locator('.trash-list')).toContainText('Vapurda bir sabah')
   await page.getByRole('button', { name: 'Restore', exact: true }).click()
