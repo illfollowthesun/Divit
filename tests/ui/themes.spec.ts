@@ -1,12 +1,13 @@
 import { test, expect } from '@playwright/test'
+import { settingsTab } from './shell-helpers'
 
 const paper = (page: import('@playwright/test').Page) => page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--paper').trim())
 
 test('themes apply at once from Settings and the shortcut sheet, and are remembered', async ({ page }) => {
   await page.goto('/'); await page.evaluate(() => localStorage.clear()); await page.reload()
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light')
-  await page.getByRole('button', { name: 'Open settings' }).click()
-  const appearance = page.getByRole('dialog').getByLabel(/^Appearance/)
+  await page.getByRole('button', { name: 'Open settings' }).click(); await settingsTab(page, 'Appearance')
+  const appearance = page.getByRole('dialog').getByRole('combobox', { name: /^Appearance/ })
   await expect(appearance.locator('option')).toHaveText(['Match Windows', 'Warm paper', 'Sage paper', 'Dusty blue ink', 'After hours', 'Terracotta evening', 'Plum night'])
   await appearance.selectOption('plum')
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'plum'); await expect(page.locator('html')).toHaveAttribute('data-tone', 'dark')
@@ -23,8 +24,8 @@ test('themes apply at once from Settings and the shortcut sheet, and are remembe
 test('Match Windows follows the system light or dark setting while the app is open', async ({ page }) => {
   await page.emulateMedia({ colorScheme: 'light' })
   await page.goto('/'); await page.evaluate(() => localStorage.clear()); await page.reload()
-  await page.getByRole('button', { name: 'Open settings' }).click()
-  await page.getByRole('dialog').getByLabel(/^Appearance/).selectOption('system')
+  await page.getByRole('button', { name: 'Open settings' }).click(); await settingsTab(page, 'Appearance')
+  await page.getByRole('dialog').getByRole('combobox', { name: /^Appearance/ }).selectOption('system')
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light')
   await page.emulateMedia({ colorScheme: 'dark' })
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')

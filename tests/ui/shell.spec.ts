@@ -87,3 +87,24 @@ test('the status bar shows words, reading time and save state, without the Focus
   await expect(focus).toHaveAttribute('aria-pressed', 'false'); await focus.click()
   await expect(page.locator('.top-actions').getByRole('button', { name: 'Leave focus' })).toHaveAttribute('aria-pressed', 'true')
 })
+
+test('Settings opens on side tabs with Save and Cancel always in view; Save turns on with a change', async ({ page }) => {
+  await page.setViewportSize({ width: 960, height: 700 })
+  await page.goto('/'); await page.evaluate(() => localStorage.clear()); await page.reload()
+  await page.getByRole('button', { name: 'Open settings' }).click()
+  const dialog = page.getByRole('dialog')
+  await expect(dialog.getByRole('tab')).toHaveText(['General', 'Writing', 'Appearance', 'Your files', 'AI', 'About'])
+  const save = dialog.getByRole('button', { name: 'Save settings' })
+  await expect(save).toBeInViewport(); await expect(save).toBeDisabled(); await expect(dialog.getByRole('button', { name: 'Cancel' })).toBeInViewport()
+  await dialog.getByRole('tab', { name: 'Writing' }).click(); await dialog.getByLabel('Daily writing goal').fill('300')
+  await expect(save).toBeEnabled(); await expect(save).toBeInViewport()
+  await dialog.getByRole('tab', { name: 'About' }).click(); await expect(dialog.getByRole('tabpanel', { name: 'About' })).toContainText('Version')
+  await save.click(); await expect(dialog).toHaveCount(0)
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('yazi-browser-preview-v1')!).settings.writingGoal)).toBe(300)
+})
+
+test('companion tabs say Reflection and Notebook, so they do not echo Review and research notes', async ({ page }) => {
+  await book(page)
+  await expect(page.locator('#writing-companion [role=tab]')).toHaveText(['Preview', 'Cards', 'Notebook', 'Reflection', 'Images'])
+  await page.keyboard.press('Control+Alt+n'); await expect(page.getByRole('tab', { name: 'Notebook', exact: true })).toHaveAttribute('aria-selected', 'true')
+})

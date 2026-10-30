@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test'
+import { settingsTab } from './shell-helpers'
 import { desktopBridge, nativeCalls } from './desktop-bridge'
 
 test('moving the library warns about two computers, copies only after confirming and keeps the old folder', async ({ page }) => {
@@ -7,7 +8,7 @@ test('moving the library warns about two computers, copies only after confirming
     library_location: { root: 'D:\OneDrive\Divit', existing: false, projects: 0, changedAt: null },
     library_move: { dataRoot: 'D:\OneDrive\Divit', previous: 'C:\Users\writer\Documents\Divit', copied: 12 },
   } })
-  await page.goto('/'); await page.getByRole('button', { name: 'Open settings' }).click()
+  await page.goto('/'); await page.getByRole('button', { name: 'Open settings' }).click(); await settingsTab(page, 'Your files')
   const dialog = page.getByRole('dialog')
   await expect(dialog).toContainText('C:/Users/writer/Documents/Divit')
   await dialog.getByRole('button', { name: 'Move library…' }).click()
@@ -22,7 +23,7 @@ test('moving the library warns about two computers, copies only after confirming
 
 test('a folder that already holds a library is offered for use, not overwritten', async ({ page }) => {
   await desktopBridge(page, { config: {}, extra: { 'plugin:dialog|open': 'D:\Dropbox', library_location: { root: 'D:\Dropbox\Divit', existing: true, projects: 4, changedAt: Date.UTC(2026, 9, 29, 9, 30) } } })
-  await page.goto('/'); await page.getByRole('button', { name: 'Open settings' }).click()
+  await page.goto('/'); await page.getByRole('button', { name: 'Open settings' }).click(); await settingsTab(page, 'Your files')
   const dialog = page.getByRole('dialog')
   await dialog.getByRole('button', { name: 'Move library…' }).click()
   const plan = dialog.getByRole('group', { name: 'Move library' })

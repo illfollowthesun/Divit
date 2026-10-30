@@ -35,7 +35,7 @@ test('Research with a saved source', async ({ page }) => {
   const server = createServer((_, res) => { res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' }); res.end(article) }).listen(0, '127.0.0.1')
   await new Promise(resolve => server.once('listening', resolve))
   await open(page)
-  await page.getByRole('button', { name: /^Research/ }).click()
+  await page.getByRole('button', { name: 'Research', exact: true }).click()
   const drawer = page.getByRole('complementary', { name: 'Research' })
   await drawer.getByLabel(/Web address to save/).fill(`http://127.0.0.1:${(server.address() as AddressInfo).port}/crossing`)
   await drawer.getByRole('button', { name: 'Add', exact: true }).click()
@@ -49,7 +49,6 @@ test('Research with a saved source', async ({ page }) => {
 test('Settings, AI', async ({ page }) => {
   await open(page)
   await page.getByRole('button', { name: 'Open settings' }).click()
-  const section = page.getByRole('dialog').locator('.ai-settings')
-  await section.scrollIntoViewIfNeeded(); await page.waitForTimeout(300)
+  await page.getByRole('dialog').getByRole('tab', { name: 'AI', exact: true }).click(); await page.waitForTimeout(300)
   await page.screenshot({ path: 'docs/screenshots/divit-settings-ai.png' })
 })

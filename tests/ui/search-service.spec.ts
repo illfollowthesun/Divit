@@ -3,6 +3,7 @@ import type { Page } from '@playwright/test'
 import { randomUUID } from 'node:crypto'
 import { newProject } from '../../src/shared/types'
 import { desktopBridge, nativeCalls } from './desktop-bridge'
+import { settingsTab } from './shell-helpers'
 
 const usage = { inputTokens: 900, outputTokens: 120, webSearches: 0, costUsd: null, monthCostUsd: 0, overLimit: false, model: 'llama3.2' }
 const candidate = { title: 'Winter timetable', url: 'https://example.com/tarife', site: 'example.com', published: '2026-10-20', type: 'news', summary: 'The first ferry leaves at 06:10.', excerpt: '' }
@@ -19,7 +20,7 @@ async function search(page: Page) {
 
 test('Settings stores a search service key only in Credential Manager and saves the choice', async ({ page }) => {
   await desktopBridge(page, { config: local })
-  await page.goto('/'); await page.getByRole('button', { name: 'Open settings' }).click()
+  await page.goto('/'); await page.getByRole('button', { name: 'Open settings' }).click(); await settingsTab(page, 'AI')
   const section = page.getByRole('dialog').locator('.ai-settings')
   const service = section.getByLabel('Search service', { exact: true })
   await expect(service.locator('option')).toHaveText(['None', 'Tavily (free monthly allowance)', 'Brave Search', 'SearXNG (your own server)'])

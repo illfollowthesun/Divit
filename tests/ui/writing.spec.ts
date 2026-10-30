@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { more } from './shell-helpers'
+import { more, settingsTab } from './shell-helpers'
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/')
@@ -45,9 +45,11 @@ test('focus shortcut and dark theme persist', async ({ page }) => {
   await expect(page.getByRole('complementary', { name: 'Writing library' })).toBeHidden()
   await page.keyboard.press('Escape')
   await expect(page.getByRole('complementary', { name: 'Writing library' })).toBeVisible()
-  await page.getByRole('button', { name: 'Open settings' }).click()
-  await page.getByLabel('Appearance').selectOption('dark')
-  await page.getByRole('button', { name: 'Save settings' }).click()
+  await page.getByRole('button', { name: 'Open settings' }).click(); await settingsTab(page, 'Appearance')
+  await page.getByRole('combobox', { name: /^Appearance/ }).selectOption('dark')
+  // A theme is saved as soon as it is chosen, so Save stays off and Cancel just closes.
+  await expect(page.getByRole('button', { name: 'Save settings' })).toBeDisabled()
+  await page.getByRole('dialog').getByRole('button', { name: 'Cancel' }).click()
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
   await page.reload()
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')

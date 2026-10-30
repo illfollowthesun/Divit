@@ -1,11 +1,12 @@
 import { test, expect } from '@playwright/test'
+import { settingsTab } from './shell-helpers'
 
 test('Publish to my site stays hidden until a site repository is set; blog posts can always be exported', async ({ page }) => {
   await page.goto('/'); await page.evaluate(() => localStorage.clear()); await page.reload()
   await page.getByRole('button', { name: /New writing/ }).click()
   await expect(page.getByRole('button', { name: /Publish to my site/ })).toHaveCount(0)
   await expect(page.getByRole('button', { name: 'Export', exact: true })).toBeVisible()
-  await page.getByRole('button', { name: 'Open settings' }).click()
+  await page.getByRole('button', { name: 'Open settings' }).click(); await settingsTab(page, 'Writing')
   const dialog = page.getByRole('dialog')
   const advanced = dialog.locator('details.settings-advanced')
   await expect(advanced).not.toHaveAttribute('open', '')

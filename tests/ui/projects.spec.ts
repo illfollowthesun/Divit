@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { more, startMenu } from './shell-helpers'
+import { more, settingsTab, startMenu } from './shell-helpers'
 import { readFile } from 'node:fs/promises'
 
 test.beforeEach(async ({ page }) => {
@@ -130,19 +130,19 @@ test('timeline and daily writing goals persist without counting metadata as writ
   await startMenu(page, 'New story or book')
   await page.getByLabel('Project title').fill('The Last Ferry'); await page.getByRole('button', { name: 'Create project', exact: true }).click()
   await page.getByRole('textbox', { name: 'Markdown text' }).fill('One quiet morning.')
-  await page.getByRole('tab', { name: 'Notes', exact: true }).click(); await page.getByRole('button', { name: 'Writing log', exact: true }).click()
+  await page.getByRole('tab', { name: 'Notebook', exact: true }).click(); await page.getByRole('button', { name: 'Writing log', exact: true }).click()
   await expect(page.locator('.daily-progress')).toContainText('3 words today in this project')
   await expect(page.locator('.daily-goal-line')).toHaveCount(0) // the goal is off until the writer sets one
   await page.getByRole('button', { name: 'Timeline', exact: true }).click(); await page.getByRole('button', { name: '+ Event', exact: true }).click()
   await page.getByLabel('Note title').fill('Departure'); await page.getByLabel('When', { exact: true }).fill('Day 1, 06:10')
   await page.getByLabel('Note text').fill('Derya takes the first ferry.'); await page.getByRole('button', { name: 'Save note', exact: true }).click()
   await page.keyboard.press('Control+s')
-  await page.getByRole('button', { name: 'Open settings' }).click(); await page.getByRole('dialog').getByLabel('Daily writing goal').fill('10'); await page.getByRole('button', { name: 'Save settings' }).click()
+  await page.getByRole('button', { name: 'Open settings' }).click(); await settingsTab(page, 'Writing'); await page.getByRole('dialog').getByLabel('Daily writing goal').fill('10'); await page.getByRole('button', { name: 'Save settings' }).click()
   await expect(page.locator('.daily-goal-line')).toHaveAttribute('value', '3'); await expect(page.locator('.daily-goal-line')).toHaveAttribute('max', '10')
   await expect(page.locator('.goal-status')).toHaveText('3 / 10 today')
   await page.getByRole('combobox', { name: 'Writing mode' }).selectOption('write'); await expect(page.locator('.goal-status')).toBeHidden()
   await page.keyboard.press('Escape')
-  await page.reload(); await page.getByRole('tab', { name: 'Notes', exact: true }).click()
+  await page.reload(); await page.getByRole('tab', { name: 'Notebook', exact: true }).click()
   await page.getByRole('button', { name: 'Timeline', exact: true }).click(); await expect(page.locator('.project-notes')).toContainText('Day 1, 06:10')
 })
 
@@ -153,7 +153,7 @@ test('fiction shortcuts create projects, chapters and scenes and open companion 
   await page.keyboard.press('Control+Alt+1'); await expect(page.getByLabel('Section title')).toHaveValue('Chapter 1')
   await page.keyboard.press('Control+Alt+2'); await expect(page.getByLabel('Section title')).toHaveValue('Scene 1')
   await page.keyboard.press('Control+Alt+k'); await expect(page.getByRole('tab', { name: 'Cards', exact: true })).toHaveAttribute('aria-selected', 'true')
-  await page.keyboard.press('Control+Alt+n'); await expect(page.getByRole('tab', { name: 'Notes', exact: true })).toHaveAttribute('aria-selected', 'true')
+  await page.keyboard.press('Control+Alt+n'); await expect(page.getByRole('tab', { name: 'Notebook', exact: true })).toHaveAttribute('aria-selected', 'true')
   await page.keyboard.press('Control+Alt+v'); await expect(page.getByRole('dialog')).toContainText('Keep a version before rewriting')
   await page.keyboard.press('Escape'); await page.keyboard.press('Control+Shift+e')
   await expect(page.getByRole('dialog')).toContainText('A finished copy')

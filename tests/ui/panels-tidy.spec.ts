@@ -49,7 +49,7 @@ for (const viewport of [{ width: 1440, height: 900 }, { width: 960, height: 700 
     await expect(drawer.locator('mark')).toBeVisible()
     await page.screenshot({ path: `docs/screenshots/tidy-after-panels-research-${viewport.width}x${viewport.height}.png` })
     await page.keyboard.press('Escape'); await page.getByRole('button', { name: 'Open settings' }).click()
-    await page.locator('.ai-settings').scrollIntoViewIfNeeded()
+    await page.getByRole('dialog').getByRole('tab', { name: 'AI', exact: true }).click() // Settings is tabbed since the merge
     await page.screenshot({ path: `docs/screenshots/tidy-after-panels-ai-${viewport.width}x${viewport.height}.png` })
   })
 }

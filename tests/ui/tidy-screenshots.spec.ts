@@ -35,6 +35,11 @@ for (const size of [{ name: '1440', width: 1440, height: 900 }, { name: '960', w
     await expect(drawer.getByRole('button', { name: /The morning crossing/ })).toBeVisible({ timeout: 15000 })
     await page.waitForTimeout(300); await shot(page, 'research'); server.close()
   })
+  test(`settings ${size.name}`, async ({ page }) => {
+    await open(page); await page.getByRole('button', { name: 'Open settings' }).click()
+    if (stage !== 'before') await page.getByRole('dialog').getByRole('tab', { name: 'AI', exact: true }).click()
+    await page.waitForTimeout(300); await shot(page, 'settings')
+  })
   test(`review ${size.name}`, async ({ page }) => {
     await open(page); await page.keyboard.press('Control+2'); await expect(page.locator('.cm-misspelled').first()).toBeVisible({ timeout: 10000 }); await page.waitForTimeout(400)
     await shot(page, 'review')

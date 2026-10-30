@@ -35,6 +35,8 @@
 .library>.search-label{display:block;margin:0 0 16px}
 .library>.search-label input{width:100%;background:var(--paper);border:1px solid var(--line);min-height:32px}
 
+.settings-about p{font-size:13px;line-height:1.6;margin:8px 0}
+
 /* The metadata line under the title: one quiet button that opens the fields. */
 .metadata-summary{display:block;min-height:32px;margin:-14px 0 8px -8px;padding:6px 8px;font-size:13px;color:var(--muted);text-align:left;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .metadata-summary[aria-expanded=true]{color:var(--text)}
@@ -45,3 +47,16 @@
 .topbar nav button.active{color:var(--accent)}
 .editor-footer{justify-content:flex-start;gap:18px}
 .editor-footer [role=status]{margin-left:auto}
+
+/* Small shell labels: at least 12 px, in the theme's muted or text colour (AA in every theme, see
+   tests/themes.test.mjs). Mono caps keep a lighter letter-spacing at this size. */
+.section-label,.eyebrow,.panel-content>.section-label,.room-number,.column-heading small,.idea-card>small,.document-toolbar>div:first-child{font-size:12px;letter-spacing:.06em}
+.section-label span{opacity:1}
+.nav-count,.preview-notice,.preview-notice span,.new-button kbd,.library-filters button,.library-filters span,.library-bottom button,.library-bottom span,.document small,.new-project-link,
+.document-toolbar,.document-toolbar button,.editor-footer,.editor-footer button,.editor-footer kbd,.editor-footer .today-count,.metadata label,.metadata input,
+.panel-tabs button,.tag-filters button,.tag-filter-input input,.column-heading>span:last-child,.idea-tags span,.idea-card select,.idea-tag-edit,.idea-tag-edit input,.card-actions button,
+.capture button,.image-tile>span,.image-actions button,.outline-node,.outline-node small,.outline-tools button,.outline-trash,.outline-trash button,.outline-add button,.outline-word-count{font-size:12px}
+.document small,.metadata label,.column-heading small,.idea-card>small{color:var(--muted)}
+.library-filters span,.library-bottom span{font-family:'IBM Plex Mono',monospace}
+.new-split .new-button{white-space:nowrap;gap:8px}
+@media(max-width:1150px){.new-split .new-button kbd{display:none}}

@@ -15,3 +15,7 @@ export async function startMenu(page: Page, name: 'New story or book' | 'Bring i
   await page.getByRole('button', { name: 'More ways to start' }).click()
   await page.getByRole('menu', { name: 'More ways to start' }).getByText(name, { exact: true }).click()
 }
+// Settings is split into side tabs; fields outside the open tab are hidden.
+export async function settingsTab(page: Page, name: 'General' | 'Writing' | 'Appearance' | 'Your files' | 'AI' | 'About') {
+  await page.getByRole('dialog').getByRole('tab', { name, exact: true }).click()
+}

@@ -1,10 +1,11 @@
 import { test, expect } from '@playwright/test'
 import { desktopBridge, nativeCalls } from './desktop-bridge'
+import { settingsTab } from './shell-helpers'
 
 test('model names stay short and Details follows the published January price change', async ({ page }) => {
   await page.clock.setFixedTime(new Date('2027-01-15T12:00:00Z'))
   await desktopBridge(page, { config: { enabled: true } })
-  await page.goto('/'); await page.getByRole('button', { name: 'Open settings' }).click()
+  await page.goto('/'); await page.getByRole('button', { name: 'Open settings' }).click(); await settingsTab(page, 'AI')
   const model = page.getByRole('dialog').getByLabel('Model', { exact: true })
   await expect(model.locator('option').first()).toHaveText('Gemini 3.8 Flash')
   const details = page.getByRole('dialog').locator('.ai-details')
@@ -14,7 +15,7 @@ test('model names stay short and Details follows the published January price cha
 })
 
 test('in the browser preview, AI settings only explain that AI runs from the desktop app', async ({ page }) => {
-  await page.goto('/'); await page.getByRole('button', { name: 'Open settings' }).click()
+  await page.goto('/'); await page.getByRole('button', { name: 'Open settings' }).click(); await settingsTab(page, 'AI')
   const section = page.getByRole('dialog').locator('.ai-settings')
   const apiKey = section.locator('.ai-key').getByLabel('API key', { exact: true })
   await expect(section).toContainText('AI features run from the desktop app')
@@ -24,7 +25,7 @@ test('in the browser preview, AI settings only explain that AI runs from the des
 test('Gemini comes first, then local models; keys go only to Credential Manager; Claude fallbacks are an opt-in', async ({ page }) => {
   const month = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 7)
   await desktopBridge(page, { config: { usage: { month, calls: 3, inputTokens: 12000, outputTokens: 800, webSearches: 2, costUsd: 0.064, unpricedCalls: 0 } }, testMessage: 'Connected. Gemini 3.8 Flash is available.' })
-  await page.goto('/'); await page.getByRole('button', { name: 'Open settings' }).click()
+  await page.goto('/'); await page.getByRole('button', { name: 'Open settings' }).click(); await settingsTab(page, 'AI')
   const section = page.getByRole('dialog').locator('.ai-settings')
   const apiKey = section.locator('.ai-key').getByLabel('API key', { exact: true })
   await expect(section.getByLabel('Use AI in Divit')).not.toBeChecked()

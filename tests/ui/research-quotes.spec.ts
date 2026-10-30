@@ -18,7 +18,7 @@ test('old Notebook research notes are copied once into Research notes; the origi
     localStorage.setItem('yazi-browser-preview-v1', JSON.stringify(lib))
   })
   await page.reload()
-  await page.getByRole('tab', { name: 'Notes', exact: true }).click()
+  await page.getByRole('tab', { name: 'Notebook', exact: true }).click()
   await expect(page.locator('.notebook-tabs').getByRole('button')).toHaveText(['Timeline', 'Writing log'])
   await expect(page.locator('.project-notes')).toContainText('Departure')
   await page.getByRole('button', { name: /^Research/ }).click()
