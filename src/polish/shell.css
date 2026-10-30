@@ -25,3 +25,8 @@
   .research-open .side-panel{display:none}
 }
 .research-close{min-width:32px;min-height:32px;font-size:20px}
+
+/* The metadata line under the title: one quiet button that opens the fields. */
+.metadata-summary{display:block;min-height:32px;margin:-14px 0 8px -8px;padding:6px 8px;font-size:13px;color:var(--muted);text-align:left;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.metadata-summary[aria-expanded=true]{color:var(--text)}
+.metadata-summary+.metadata{margin-bottom:6px}

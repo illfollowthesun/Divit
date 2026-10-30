@@ -51,3 +51,15 @@ test('on wide windows Research pushes the text instead of covering it; below 110
   await expect(close).toBeVisible(); expect((await close.boundingBox())!.height).toBeGreaterThanOrEqual(32)
   await close.click(); await expect(drawer).toHaveCount(0)
 })
+
+test('place, date, tags and language fold into one line under the title and open on click', async ({ page }) => {
+  await book(page)
+  const summary = page.locator('.metadata-summary')
+  await expect(page.locator('#metadata-fields')).toHaveCount(0)
+  await expect(summary).toHaveText(/^Somewhere · \d{1,2} \w{3} \d{4} · Language: auto · \+ tags$/)
+  await summary.click(); await expect(summary).toHaveAttribute('aria-expanded', 'true')
+  await page.getByLabel('PLACE', { exact: true }).fill('Karaköy'); await page.getByLabel('DATE', { exact: true }).fill('2026-10-30')
+  await page.getByLabel('TAGS', { exact: true }).fill('ferry, winter'); await page.getByRole('combobox', { name: 'LANGUAGE', exact: true }).selectOption('en')
+  await expect(summary).toHaveText('Karaköy · 30 Oct 2026 · English · #ferry #winter')
+  await summary.click(); await expect(page.locator('#metadata-fields')).toHaveCount(0)
+})

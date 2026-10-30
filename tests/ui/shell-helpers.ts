@@ -5,3 +5,8 @@ export async function more(page: Page, name: string) {
   await page.getByRole('button', { name: 'More actions' }).click()
   await page.getByRole('menu', { name: 'More actions' }).getByText(name, { exact: true }).click()
 }
+// Opens the place / date / tags / language fields under the title (a quiet summary line until opened).
+export async function details(page: Page) {
+  const summary = page.locator('.metadata-summary')
+  if (await summary.getAttribute('aria-expanded') !== 'true') await summary.click()
+}

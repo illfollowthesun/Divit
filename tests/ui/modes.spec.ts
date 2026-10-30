@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { more } from './shell-helpers'
+import { details, more } from './shell-helpers'
 
 test('modes preserve editor, selection and history; Write hides chrome and escapes to Normal', async ({ page }) => {
   await page.goto('/'); await page.evaluate(() => localStorage.clear()); await page.reload()
@@ -80,9 +80,9 @@ test('ignore once follows one occurrence; persistent ignores and dictionaries re
   await page.keyboard.press('Control+s')
   await expect(page.locator('.editor-footer [role=status]')).toHaveText('All changes saved')
   await page.reload(); await expect(panel.locator('li')).toHaveCount(0)
-  await page.getByRole('combobox', { name: 'LANGUAGE', exact: true }).selectOption('tr')
+  await details(page); await page.getByRole('combobox', { name: 'LANGUAGE', exact: true }).selectOption('tr')
   await expect(zorpex).toHaveCount(2, { timeout: 15000 })
-  await page.getByRole('combobox', { name: 'LANGUAGE', exact: true }).selectOption('en')
+  await details(page); await page.getByRole('combobox', { name: 'LANGUAGE', exact: true }).selectOption('en')
   await expect(zorpex).toHaveCount(0)
   await page.keyboard.press('Control+n'); await editor.fill('Zorpex misspelld')
   await expect(zorpex).toHaveCount(1)
