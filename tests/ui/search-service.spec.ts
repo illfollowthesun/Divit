@@ -24,7 +24,9 @@ test('Settings stores a search service key only in Credential Manager and saves 
   const service = section.getByLabel('Search service', { exact: true })
   await expect(service.locator('option')).toHaveText(['None', 'Tavily (free monthly allowance)', 'Brave Search', 'SearXNG (your own server)'])
   await service.selectOption('tavily')
-  await expect(section).toContainText('your AI model ranks and summarises them')
+  await expect(section).toContainText('Find pages for your AI model to read.')
+  await section.getByText('Details', { exact: true }).click()
+  await expect(section.locator('.ai-details')).toContainText('Get a key at tavily.com.')
   const secret = 'tvly-test-0123456789'
   await section.getByLabel('Search service key').fill(secret)
   await section.getByRole('button', { name: 'Store search key' }).click()

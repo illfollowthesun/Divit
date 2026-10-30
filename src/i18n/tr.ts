@@ -1,5 +1,13 @@
 // Turkish interface text, keyed by the English source string. Keep {placeholders} unchanged.
 export const tr: Record<string, string> = {
+  'General': 'Genel', 'Writing': 'Yazma', 'Your files': 'Dosyalarınız', 'AI': 'Yapay zekâ', 'About': 'Hakkında',
+  'Settings sections': 'Ayar bölümleri', 'AI summary': 'Yapay zekâ özeti',
+  'AI runs only when you ask and never changes your writing.': 'Yapay zekâ yalnızca istediğinizde çalışır ve yazınızı değiştirmez.',
+  'Choose an API provider or a model on this computer.': 'Bir API sağlayıcısı veya bu bilgisayardaki bir modeli seçin.',
+  'Find pages for your AI model to read.': 'Yapay zekâ modelinizin okuyacağı sayfaları bulun.',
+  'The key stays in Windows Credential Manager.': 'Anahtar Windows Kimlik Bilgisi Yöneticisi’nde kalır.',
+  'Reflection': 'Düşünme', 'Notebook': 'Defter',
+
   // Shared words, data values and statuses
   'Preview': 'Önizleme', 'Cards': 'Kartlar', 'Notes': 'Notlar', 'Check': 'Kontrol', 'Images': 'Görseller', 'Sources': 'Kaynaklar', 'Highlights': 'Vurgular',
   'Write': 'Yaz', 'Review': 'İncele', 'Normal': 'Normal',
