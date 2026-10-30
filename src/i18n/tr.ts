@@ -91,7 +91,7 @@ export const tr: Record<string, string> = {
   'Keyboard help': 'Klavye yardımı', 'Leave focus / close dialog': 'Odaktan çık / pencereyi kapat', 'Undo / redo': 'Geri al / yinele',
 
   // Settings
-  'Make yourself at home': 'Kendinizi evinizde hissedin', 'Interface language': 'Arayüz dili', 'Same as Windows': 'Windows ile aynı', 'Menus and messages only. The language you write in is set per project.': 'Yalnızca menüler ve iletiler. Yazdığınız dil her projede ayrı seçilir.',
+  'Interface language': 'Arayüz dili', 'Same as Windows': 'Windows ile aynı', 'Menus and messages only. The language you write in is set per project.': 'Yalnızca menüler ve iletiler. Yazdığınız dil her projede ayrı seçilir.',
   'Bring in writing': 'Yazı içe aktar', 'Help and shortcuts': 'Yardım ve kısayollar', 'WELCOME': 'HOŞ GELDİNİZ', 'A quiet place to write': 'Yazmak için sessiz bir yer', 'Projects': 'Projeler', 'Three modes': 'Üç mod', 'Private by default': 'Varsayılan olarak gizli', 'Got it': 'Anladım',
   'A blog post, a story or a book. Each one is a folder of plain files in Documents\\Divit that you can open without this app.': 'Bir blog yazısı, bir öykü ya da bir kitap. Her biri Belgeler\\Divit içinde, bu uygulama olmadan da açabileceğiniz düz dosyalardan oluşan bir klasördür.',
   'Write shows only your text. Review underlines spelling, checked on this computer. Normal brings back the panels. Switch with Ctrl 1, 2 and 3.': 'Yaz yalnızca metninizi gösterir. İncele, bu bilgisayarda denetlenen yazım hatalarının altını çizer. Normal panelleri geri getirir. Ctrl 1, 2 ve 3 ile geçiş yapın.',
@@ -120,7 +120,7 @@ export const tr: Record<string, string> = {
   'The browser preview does not back up your Documents files.': 'Tarayıcı önizlemesi Belgeler’deki dosyalarınızı yedeklemez.', 'Choose a backup folder outside Divit': 'Divit klasörünün dışında bir yedek klasörü seçin',
 
   // AI settings
-  'AI (OPTIONAL)': 'YAPAY ZEKÂ (İSTEĞE BAĞLI)', 'AI features run from the desktop app, which keeps the API key in Windows Credential Manager.': 'Yapay zekâ özellikleri, API anahtarını Windows Kimlik Bilgileri Yöneticisi’nde saklayan masaüstü uygulamasında çalışır.',
+  'AI features run from the desktop app, which keeps the API key in Windows Credential Manager.': 'Yapay zekâ özellikleri, API anahtarını Windows Kimlik Bilgileri Yöneticisi’nde saklayan masaüstü uygulamasında çalışır.',
   'Loading AI settings…': 'Yapay zekâ ayarları yükleniyor…', 'Use AI in Divit': 'Divit’te yapay zekâ kullan', 'AI runs from the desktop app.': 'Yapay zekâ masaüstü uygulamasında çalışır.',
   'Nothing runs in the background. AI helps only when you click, its answers are labelled “AI”, and it never writes into your text. Claude, ChatGPT or Gemini subscriptions cannot be used here: AI needs an API key, or a model on this computer.': 'Arka planda hiçbir şey çalışmaz. Yapay zekâ yalnızca siz tıkladığınızda yardım eder, yanıtları “AI” diye etiketlenir ve metninize asla yazmaz. Claude, ChatGPT ya da Gemini abonelikleri burada kullanılamaz: bir API anahtarı ya da bu bilgisayarda bir model gerekir.',
   'Provider': 'Sağlayıcı', 'Model': 'Model', 'Service address': 'Servis adresi', 'Presets: {list}.': 'Hazır adresler: {list}.',

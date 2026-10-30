@@ -108,3 +108,15 @@ test('companion tabs say Reflection and Notebook, so they do not echo Review and
   await expect(page.locator('#writing-companion [role=tab]')).toHaveText(['Preview', 'Cards', 'Notebook', 'Reflection', 'Images'])
   await page.keyboard.press('Control+Alt+n'); await expect(page.getByRole('tab', { name: 'Notebook', exact: true })).toHaveAttribute('aria-selected', 'true')
 })
+
+for (const locale of ['en-GB', 'tr-TR']) test(`companion tabs keep clear of the edges at 1440 px (${locale})`, async ({ browser }) => {
+  const page = await browser.newPage({ locale, viewport: { width: 1440, height: 900 } })
+  await page.goto('/'); await page.evaluate(() => localStorage.clear()); await page.reload()
+  await page.locator('.new-split .new-button').click(); await page.locator('.title-input').waitFor()
+  const room = await page.locator('#writing-companion .panel-tabs').evaluate(bar => {
+    const box = bar.getBoundingClientRect(), tabs = [...bar.querySelectorAll('[role=tab]')].map(t => t.getBoundingClientRect())
+    return { overflow: bar.scrollWidth - bar.clientWidth, left: tabs[0].left - box.left, right: box.right - tabs[tabs.length - 1].right }
+  })
+  expect(room.overflow).toBeLessThanOrEqual(0); expect(room.left).toBeGreaterThanOrEqual(12); expect(room.right).toBeGreaterThanOrEqual(12)
+  await page.close()
+})

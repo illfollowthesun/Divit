@@ -46,5 +46,4 @@ When both parts are done, Claude Code merges `ui/panels` into `ui/shell`, resolv
 
 ### Left over
 - Labels under 12 px still exist in places neither part owned: character cards (`.project-card>small` 8 px), the snapshot comparison headers (8 px), notebook tab buttons and export result lines (10 px), the Publish to my site checklist (11 px).
-- The Settings title ("Make yourself at home", 32 px) takes room at 960×700; a shorter heading would give the tabs more height.
 - Only the browser preview was checked; the desktop build was not rebuilt or run for this branch.

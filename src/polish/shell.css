@@ -60,3 +60,8 @@
 .library-filters span,.library-bottom span{font-family:'IBM Plex Mono',monospace}
 .new-split .new-button{white-space:nowrap;gap:8px}
 @media(max-width:1150px){.new-split .new-button kbd{display:none}}
+
+/* Companion tabs: five labels fit with room to spare on both sides, in English and Turkish. */
+@media(min-width:1300px){.side-panel{width:340px}}
+.panel-tabs{gap:8px;padding:0 16px;justify-content:space-between}
+.panel-tabs button{padding:0 2px;white-space:nowrap}

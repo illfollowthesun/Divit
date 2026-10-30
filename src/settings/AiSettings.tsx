@@ -21,8 +21,8 @@ export function AiSettings() {
     setWorking(true); setProblem(''); setNote('')
     try { const result = await action(); if (result) setNote(result) } catch (error) { setProblem(message(error)) } finally { setWorking(false) }
   }
-  if (!desktop) return <section className="ai-settings"><div className="section-label">{t('AI (OPTIONAL)')}</div><p className="quiet">{t('AI features run from the desktop app, which keeps the API key in Windows Credential Manager.')}</p></section>
-  if (!status || !form) return <section className="ai-settings"><div className="section-label">{t('AI (OPTIONAL)')}</div>{problem ? <p className="research-problem" role="alert">{problem}</p> : <p className="quiet">{t('Loading AI settings…')}</p>}</section>
+  if (!desktop) return <section className="ai-settings" aria-label={t('AI')}><p className="quiet">{t('AI features run from the desktop app, which keeps the API key in Windows Credential Manager.')}</p></section>
+  if (!status || !form) return <section className="ai-settings" aria-label={t('AI')}>{problem ? <p className="research-problem" role="alert">{problem}</p> : <p className="quiet">{t('Loading AI settings…')}</p>}</section>
   const month = localDay().slice(0, 7), hasKey = status.hasKey[form.provider], keyOptional = form.provider === 'local'
   const models = form.provider === 'gemini' ? status.models.gemini : form.provider === 'anthropic' ? status.models.anthropic : null
   const model = models?.find(m => m.id === form.model), provider = providers.find(p => p.id === form.provider)!
@@ -38,8 +38,7 @@ export function AiSettings() {
     setKey('')
   }
   const save = () => run(async () => { const next = await ai.save(form); setStatus(next); setForm(next.config); return t('AI settings saved.') })
-  return <section className="ai-settings" aria-labelledby="ai-settings-title">
-    <div className="section-label" id="ai-settings-title">{t('AI (OPTIONAL)')}</div>
+  return <section className="ai-settings" aria-label={t('AI')}>
     <label className="acknowledge"><input type="checkbox" checked={form.enabled} onChange={event => setForm({ ...form, enabled: event.target.checked })}/> {t('Use AI in Divit')}</label>
     <p className="quiet">{t('AI runs only when you ask and never changes your writing.')}</p>
     {form.enabled && <>

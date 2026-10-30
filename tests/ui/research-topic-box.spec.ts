@@ -37,5 +37,5 @@ test('with AI off the Sources box points to Settings and still prefills a reques
   await expect(form.getByRole('button', { name: 'Save request' })).toBeVisible()
   await box.fill('kış vapuru')
   await drawer.getByRole('button', { name: 'Turn on AI in Settings to search' }).click()
-  await expect(page.getByRole('dialog', { name: 'Make yourself at home' })).toBeVisible()
+  await expect(page.getByRole('dialog', { name: 'Settings' })).toBeVisible()
 })
