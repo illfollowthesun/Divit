@@ -59,7 +59,8 @@ export function Editor({ id, body, onChange, onReady, typewriter = false, checki
       checkConfig.current.of(checking ? spellCheck({ language: () => spelling.current.language, accepted: lang => spelling.current.accepted(lang), issues: (issues, checking) => spelling.current.issues?.(issues, checking), rules: () => spelling.current.rules, add: (word, lang) => spelling.current.add?.(word, lang), ignore: word => spelling.current.ignore?.(word), error: message => spelling.current.error?.(message) }) : []),
       EditorView.updateListener.of((update: ViewUpdate) => {
         if (update.docChanged) changed.current(update.state.doc.toString())
-        if (typewriterRef.current && (update.docChanged || update.selectionSet || update.focusChanged)) centerCaret(update.view)
+        // Typing and the arrow keys keep the line in place; a click or a drag must not pull the page from under the mouse.
+        if (typewriterRef.current && (update.docChanged || update.selectionSet && !update.transactions.some(tr => tr.isUserEvent('select.pointer')))) centerCaret(update.view)
       }),
     ] }) }); editor.current = view; ready.current(view)
     if (typewriterRef.current) centerCaret(view)

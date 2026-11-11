@@ -87,7 +87,7 @@ export const tr: Record<string, string> = {
   'TELL US': 'BİZE YAZIN', 'Opens a GitHub issue in your browser with the app version and Windows version filled in. Your writing is never included.': 'Tarayıcınızda, uygulama ve Windows sürümü doldurulmuş bir GitHub kaydı açar. Yazınız asla eklenmez.',
   'Send feedback ↗': 'Geri bildirim gönder ↗', 'Report a bug ↗': 'Hata bildir ↗',
   'Write / Review / Normal': 'Yaz / İncele / Normal', 'Leave Write mode': 'Yaz modundan çık', 'New writing': 'Yeni yazı', 'Add chapter / scene': 'Bölüm / sahne ekle', 'Character/place cards': 'Karakter/yer kartları',
-  'Project notebook': 'Proje defteri', 'Export story or book': 'Öyküyü ya da kitabı dışa aktar', 'Save now': 'Şimdi kaydet', 'Catch an idea': 'Fikir yakala', 'Typewriter mode': 'Daktilo modu',
+  'Project notebook': 'Proje defteri', 'Export story or book': 'Öyküyü ya da kitabı dışa aktar', 'Save now': 'Şimdi kaydet', 'Catch an idea': 'Fikir yakala', 'Typewriter mode': 'Daktilo modu', 'Companion (Ctrl+Alt+P)': 'Yardımcı (Ctrl+Alt+P)', 'Show or hide the companion': 'Yardımcıyı göster / gizle',
   'Keyboard help': 'Klavye yardımı', 'Leave focus / close dialog': 'Odaktan çık / pencereyi kapat', 'Undo / redo': 'Geri al / yinele',
 
   // Settings

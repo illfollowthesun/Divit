@@ -102,6 +102,7 @@ Settings → Your files can move the library to another folder, for example insi
 | Catch an idea | Ctrl Shift I |
 | Typewriter mode | Ctrl Alt T |
 | Focus mode | Ctrl . |
+| Show or hide the companion | Ctrl Alt P |
 | Settings | Ctrl , |
 | Help, shortcuts and theme | F1 |
 
