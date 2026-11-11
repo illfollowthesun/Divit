@@ -115,3 +115,4 @@
 .unsourced-text{font-size:13px;line-height:1.55;white-space:pre-wrap}
 .ai-summary .ai-label{margin-right:4px}
 .ai-excerpt{margin:6px 0;padding-left:10px;border-left:2px solid var(--muted);font:italic 13px/1.5 Newsreader,Georgia,serif;color:var(--muted)}
+.notebook-moved{display:flex;align-items:center;justify-content:space-between;gap:10px}.notebook-moved button{flex-shrink:0;font-size:11px;padding:4px 8px}

@@ -65,3 +65,12 @@
 @media(min-width:1300px){.side-panel{width:340px}}
 .panel-tabs{gap:8px;padding:0 16px;justify-content:space-between}
 .panel-tabs button{padding:0 2px;white-space:nowrap}
+.mode-picker{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:12px}
+.document-toolbar>div:last-child>.mode-picker select{min-height:32px;border-color:transparent;background:transparent;font-size:12px;color:var(--text);padding:6px 8px}
+.document-toolbar>div:last-child>.mode-picker select:hover{border-color:var(--line)}
+.menu-list .menu-desc{display:block;font-size:11px;color:var(--muted);margin-top:1px}
+.menu-list button:has(.menu-desc){min-height:44px}
+.menu-list:has(.menu-desc){width:300px}
+.menu-list .menu-desc{white-space:normal;line-height:1.35}
+.menu-list button:has(.menu-desc){padding-top:7px;padding-bottom:7px}
+.shortcut-group{margin:18px 0 0}.shortcut-group .shortcut-list{margin:6px 0 0}.shortcut-group .shortcut-list>div{padding:8px 0}.shortcut-group .section-label{margin:0}

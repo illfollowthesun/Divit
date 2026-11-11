@@ -30,7 +30,7 @@ test('idea becomes a linked draft, and archived writing can be restored', async 
   await page.getByRole('button', { name: /Catch idea/ }).click()
   await page.getByRole('button', { name: /Start writing/ }).click()
   await expect(page.getByRole('textbox', { name: 'Title', exact: true })).toHaveValue('Vapurda bir sabah')
-  await more(page, 'Archive')
+  await more(page, 'Move to trash')
   await page.getByRole('button', { name: /Trash/ }).click()
   await expect(page.locator('.trash-list')).toContainText('Vapurda bir sabah')
   await page.getByRole('button', { name: 'Restore', exact: true }).click()

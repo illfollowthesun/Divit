@@ -3,7 +3,7 @@ import type { ReactNode } from 'react'
 
 // A small button menu (the toolbar's More, the New writing split button). Opens on click or Enter,
 // moves with the arrow keys, closes on Esc, Tab, a choice or a click elsewhere. No hover-only parts.
-export type MenuItem = { label: string; onSelect: () => void; disabled?: boolean; checked?: boolean; hint?: string }
+export type MenuItem = { label: string; onSelect: () => void; disabled?: boolean; checked?: boolean; hint?: string; description?: string }
 export function Menu({ label, items, children, className = '', title }: { label: string; items: MenuItem[]; children: ReactNode; className?: string; title?: string }) {
   const [open, setOpen] = useState(false)
   const root = useRef<HTMLDivElement>(null), button = useRef<HTMLButtonElement>(null)
@@ -26,6 +26,6 @@ export function Menu({ label, items, children, className = '', title }: { label:
   return <div className={`menu ${className}`} ref={root} onKeyDown={keys}>
     <button ref={button} type="button" aria-haspopup="menu" aria-expanded={open} aria-label={label} title={title} onClick={() => setOpen(value => !value)}>{children}</button>
     {open && <div className="menu-list" role="menu" aria-label={label}>{items.map(item => <button key={item.label} type="button" role={item.checked === undefined ? 'menuitem' : 'menuitemcheckbox'} aria-checked={item.checked} disabled={item.disabled} onClick={() => { setOpen(false); item.onSelect() }}>
-      <span className="menu-check" aria-hidden="true">{item.checked ? '✓' : ''}</span><span className="menu-label">{item.label}</span>{item.hint && <kbd>{item.hint}</kbd>}</button>)}</div>}
+      <span className="menu-check" aria-hidden="true">{item.checked ? '✓' : ''}</span><span className="menu-label"><span>{item.label}</span>{item.description && <small className="menu-desc">{item.description}</small>}</span>{item.hint && <kbd>{item.hint}</kbd>}</button>)}</div>}
   </div>
 }

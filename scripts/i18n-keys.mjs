@@ -6,12 +6,12 @@ import { pathToFileURL } from 'node:url'
 
 // Values shown through t(variable): tab names, stages, source types, statuses, kinds, providers and labels.
 export const DYNAMIC = [
-  'Preview', 'Cards', 'Notes', 'Check', 'Reflection', 'Notebook', 'Images', 'Sources', 'Highlights', 'Write', 'Review', 'Normal',
+  'Preview', 'Cards', 'Notes', 'Check', 'Reflection', 'Notebook', 'Images', 'Sources', 'Highlights', 'Write', 'Review', 'Normal', 'Only the text, Esc to leave', 'Spelling underlines and the issue list', 'Everything',
   'Idea', 'Research', 'Draft', 'Published', 'news', 'article', 'blog', 'paper', 'other', 'draft', 'to-fix', 'done',
   'projects', 'ideas', 'images', 'STORY', 'BOOK', 'CHAPTER', 'SCENE', 'Sand', 'Sage', 'Sky', 'Rose',
   'All changes saved', 'Saving…', 'Unsaved changes', 'Not saved — your text is still here',
   'Write / Review / Normal', 'Leave Write mode', 'New writing', 'New story or book', 'Add chapter / scene', 'Character/place cards', 'Project notebook', 'Snapshots',
-  'Export', 'Save now', 'Catch an idea', 'Publish to my site (when set up)', 'Typewriter mode', 'Focus mode', 'Show or hide the companion', 'Settings', 'Help and shortcuts', 'Bring in writing', 'Leave focus / close dialog', 'Undo / redo',
+  'Export', 'Save now', 'Catch an idea', 'Publish to my site (when set up)', 'Typewriter mode', 'Focus mode', 'Show or hide the side panel', 'Writing', 'Project', 'View', 'Settings', 'Help and shortcuts', 'Bring in writing', 'Leave focus / close dialog', 'Undo / redo',
   'Warm paper', 'Sage paper', 'Dusty blue ink', 'After hours', 'Terracotta evening', 'Plum night',
   'Gemini 3.8 Flash', 'Gemini 3.5 Flash-Lite (lowest cost)', 'Claude Sonnet 5.5', 'Claude Haiku 5.5 (lowest cost)', 'Claude Opus 5.5',
 ]

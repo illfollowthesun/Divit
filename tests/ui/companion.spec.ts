@@ -11,7 +11,7 @@ const paragraphs = Array.from({ length: 35 }, (_, i) => `Paragraph ${i + 1}. A l
 test('the companion can be put away at full width, keeps the text readable and is remembered', async ({ page }) => {
   await book(page)
   const companion = page.getByRole('complementary', { name: 'Writing companion' })
-  const toggle = page.locator('.top-actions').getByRole('button', { name: 'Companion', exact: true })
+  const toggle = page.locator('.top-actions').getByRole('button', { name: 'Side panel', exact: true })
   await expect(companion).toBeVisible(); await expect(toggle).toHaveAttribute('aria-pressed', 'true')
   await toggle.click()
   await expect(companion).toBeHidden(); await expect(toggle).toHaveAttribute('aria-pressed', 'false')

@@ -30,18 +30,18 @@ export const tr: Record<string, string> = {
   // Start, top bar and library
   'Opening your writing desk…': 'Yazı masanız açılıyor…', 'A little room for your words.': 'Kelimeleriniz için küçük bir oda.',
   'Divit writing desk': 'Divit yazı masası', 'Main navigation': 'Ana gezinme', 'Idea box': 'Fikir kutusu',
-  'Typewriter': 'Daktilo', 'Typewriter mode (Ctrl+Alt+T)': 'Daktilo modu (Ctrl+Alt+T)', 'Focus': 'Odak', 'Leave focus': 'Odaktan çık', 'Focus mode': 'Odak modu', 'Focus mode (Ctrl+.)': 'Odak modu (Ctrl+.)',
+  'Typewriter': 'Daktilo', 'Focus': 'Odak', 'Leave focus': 'Odaktan çık', 'Focus mode': 'Odak modu', 
   'Settings': 'Ayarlar', 'Settings (Ctrl+,)': 'Ayarlar (Ctrl+,)', 'Open settings': 'Ayarları aç',
   'Browser preview': 'Tarayıcı önizlemesi', 'Writing is saved in this browser. Open the desktop app for Documents files and site transfer.': 'Yazılar bu tarayıcıda saklanır. Belgeler klasörü ve siteye gönderme için masaüstü uygulamasını açın.',
-  'Dismiss error': 'Hatayı kapat', 'Toggle companion': 'Yardımcı paneli aç/kapat', 'Companion': 'Yardımcı', 'Toggle library': 'Kitaplığı aç/kapat', 'Library': 'Kitaplık',
+  'Dismiss error': 'Hatayı kapat', 'Toggle companion': 'Yardımcı paneli aç/kapat', 'Toggle library': 'Kitaplığı aç/kapat', 'Library': 'Kitaplık',
   'Writing library': 'Yazı kitaplığı', 'Close library': 'Kitaplığı kapat', 'YOUR DESK': 'MASANIZ', '＋ New writing': '＋ Yeni yazı', 'New story or book': 'Yeni öykü ya da kitap',
   'Bring in writing…': 'Yazı içe aktar…', 'All writing': 'Tüm yazılar', 'Drafts': 'Taslaklar', 'Search writing': 'Yazılarda ara', 'Find a piece…': 'Bir yazı bul…',
   'No matching writing.': 'Eşleşen yazı yok.', 'A blank page is a good place to start.': 'Boş bir sayfa başlamak için iyi bir yer.',
-  'Trash': 'Kenara konanlar', 'Keyboard shortcuts': 'Klavye kısayolları',
+  'Trash': 'Çöp kutusu', 'Keyboard shortcuts': 'Klavye kısayolları',
 
   // Writing area
   'BLOG POST': 'BLOG YAZISI', 'Project actions': 'Proje işlemleri', 'Writing mode': 'Yazma modu', 'Underlines': 'Alt çizgiler',
-  'Research (Ctrl+Alt+R)': 'Araştırma (Ctrl+Alt+R)', 'Move writing to trash': 'Yazıyı kenara koy', 'Archive': 'Arşivle', 'Export': 'Dışa aktar', 'Snapshots': 'Sürümler',
+  'Research (Ctrl+Alt+R)': 'Araştırma (Ctrl+Alt+R)', 'Move writing to trash': 'Yazıyı çöp kutusuna taşı', 'Export': 'Dışa aktar', 'Snapshots': 'Sürümler',
   'Start a rewrite': 'Yeniden yazmaya başla', 'Snapshot kept. Ready to rewrite.': 'Sürüm saklandı. Yeniden yazmaya hazır.', 'Before rewriting: {title}': 'Yeniden yazmadan önce: {title}',
   'Publish to my site': 'Siteme yayımla', 'On my site': 'Sitemde', 'ON MY SITE': 'SİTEMDE', 'Publish to my site (when set up)': 'Siteme yayımla (ayarlandıysa)',
   'Publish to my site (advanced)': 'Siteme yayımla (ileri düzey)', 'Site repository folder': 'Site deposu klasörü', 'Leave empty if you do not have one': 'Yoksa boş bırakın',
@@ -59,23 +59,23 @@ export const tr: Record<string, string> = {
   'Your current text has not been saved. Save or copy it before opening another draft.': 'Şu anki metniniz kaydedilmedi. Başka bir taslak açmadan önce kaydedin ya da kopyalayın.',
 
   // Companion panel
-  'Companion tabs': 'Yardımcı sekmeleri', 'Writing companion': 'Yazı yardımcısı', 'Close companion': 'Yardımcıyı kapat', 'THE READING VIEW': 'OKUMA GÖRÜNÜMÜ',
+  'Companion tabs': 'Yardımcı sekmeleri', 'Writing companion': 'Yazı yardımcısı', 'THE READING VIEW': 'OKUMA GÖRÜNÜMÜ',
   'A PLACE FOR IMAGES': 'GÖRSELLER İÇİN BİR YER', 'Keep the originals. Prepare a lighter, private copy when sending to your site.': 'Asılları saklayın. Sitenize gönderirken daha hafif ve gizli bir kopya hazırlanır.',
   '＋ Add images': '＋ Görsel ekle', 'A SECOND PAIR OF EYES': 'İKİNCİ BİR GÖZ', 'Your voice stays yours.': 'Sesiniz sizin kalır.',
   'For now, a small pause:': 'Şimdilik küçük bir mola:', 'Is the opening yours?': 'Açılış sizin mi?', 'Is there a detail only you noticed?': 'Yalnızca sizin fark ettiğiniz bir ayrıntı var mı?', 'Does the ending need to explain?': 'Sonun açıklama yapması gerekiyor mu?',
   'Review mode (Ctrl 2) underlines spelling, checked on this computer. Sources and AI search live in Research (Ctrl Alt R). Nothing here changes your text.': 'İncele modu (Ctrl 2) yazım hatalarının altını çizer; denetim bu bilgisayarda yapılır. Kaynaklar ve yapay zekâ araması Araştırma’dadır (Ctrl Alt R). Burada hiçbir şey metninizi değiştirmez.',
   'No AI request is made.': 'Hiçbir yapay zekâ isteği yapılmaz.',
-  'Loading image…': 'Görsel yükleniyor…', 'Insert in text': 'Metne ekle', 'Move to trash': 'Kenara koy', 'Move {name} to trash': '{name} görselini kenara koy',
+  'Loading image…': 'Görsel yükleniyor…', 'Insert in text': 'Metne ekle', 'Move to trash': 'Çöp kutusuna taşı', 'Move {name} to trash': '{name} görselini çöp kutusuna taşı',
 
   // Idea box, images, trash
   'BEFORE THE FIRST DRAFT': 'İLK TASLAKTAN ÖNCE', 'Somewhere to begin.': 'Başlamak için bir yer.', 'Catch a thought. Let it become something.': 'Bir düşünce yakalayın. Bir şeye dönüşsün.',
   '02 / IDEA BOX': '02 / FİKİR KUTUSU', 'New idea': 'Yeni fikir', 'A sentence, a question, a place…': 'Bir cümle, bir soru, bir yer…', 'Catch idea': 'Fikri yakala',
   'All ideas': 'Tüm fikirler', 'Filter or add a tag': 'Etiketle süz ya da etiket ekle', 'Filter / add tag': 'Süz / etiket ekle', 'Tags': 'Etiketler', 'Stage for {title}': '{title} için aşama',
-  'Open draft': 'Taslağı aç', 'Move idea {title} to trash': '{title} fikrini kenara koy',
+  'Open draft': 'Taslağı aç', 'Move idea {title} to trash': '{title} fikrini çöp kutusuna taşı',
   'Small thoughts welcome.': 'Küçük düşünceler de olur.', 'Follow your curiosity.': 'Merakınızın peşinden gidin.', 'Room for a first version.': 'İlk sürüm için yer.', 'Words out in the world.': 'Dünyaya çıkmış kelimeler.',
   'THE VISUAL NOTEBOOK': 'GÖRSEL DEFTER', 'A detail worth keeping.': 'Saklamaya değer bir ayrıntı.', 'Originals stay here. Site copies lose GPS and serial numbers.': 'Asıllar burada kalır. Site kopyalarından GPS ve seri numaraları silinir.',
-  'Bring a photograph. Give the words some company.': 'Bir fotoğraf getirin. Kelimelere eşlik etsin.', 'Images used in a draft stay in the library. Remove their references before moving them to trash.': 'Bir taslakta kullanılan görseller kitaplıkta kalır. Kenara koymadan önce metindeki bağlantılarını kaldırın.',
-  'NOTHING LOST': 'HİÇBİR ŞEY KAYBOLMAZ', 'Set aside, kept safe.': 'Kenarda, güvende.', 'Removed writing, ideas and images can always come back.': 'Kaldırılan yazılar, fikirler ve görseller her zaman geri gelebilir.', 'Nothing set aside yet.': 'Henüz kenara konan bir şey yok.',
+  'Bring a photograph. Give the words some company.': 'Bir fotoğraf getirin. Kelimelere eşlik etsin.', 'Images used in a draft stay in the library. Remove their references before moving them to trash.': 'Bir taslakta kullanılan görseller kitaplıkta kalır. Çöp kutusuna taşımadan önce metindeki bağlantılarını kaldırın.',
+  'NOTHING LOST': 'HİÇBİR ŞEY KAYBOLMAZ', 'Set aside, kept safe.': 'Çöp kutusunda, güvende.', 'Removed writing, ideas and images can always come back.': 'Kaldırılan yazılar, fikirler ve görseller her zaman geri gelebilir.', 'Nothing set aside yet.': 'Çöp kutusunda henüz bir şey yok.',
 
   // Dialogs
   'Close dialog': 'Pencereyi kapat', 'A new beginning': 'Yeni bir başlangıç', 'Give your writing room to grow.': 'Yazınıza büyüyecek yer açın.', 'Project type': 'Proje türü',
@@ -87,7 +87,7 @@ export const tr: Record<string, string> = {
   'TELL US': 'BİZE YAZIN', 'Opens a GitHub issue in your browser with the app version and Windows version filled in. Your writing is never included.': 'Tarayıcınızda, uygulama ve Windows sürümü doldurulmuş bir GitHub kaydı açar. Yazınız asla eklenmez.',
   'Send feedback ↗': 'Geri bildirim gönder ↗', 'Report a bug ↗': 'Hata bildir ↗',
   'Write / Review / Normal': 'Yaz / İncele / Normal', 'Leave Write mode': 'Yaz modundan çık', 'New writing': 'Yeni yazı', 'Add chapter / scene': 'Bölüm / sahne ekle', 'Character/place cards': 'Karakter/yer kartları',
-  'Project notebook': 'Proje defteri', 'Export story or book': 'Öyküyü ya da kitabı dışa aktar', 'Save now': 'Şimdi kaydet', 'Catch an idea': 'Fikir yakala', 'Typewriter mode': 'Daktilo modu', 'Companion (Ctrl+Alt+P)': 'Yardımcı (Ctrl+Alt+P)', 'Show or hide the companion': 'Yardımcıyı göster / gizle',
+  'Project notebook': 'Proje defteri', 'Export story or book': 'Öyküyü ya da kitabı dışa aktar', 'Save now': 'Şimdi kaydet', 'Catch an idea': 'Fikir yakala', 'Typewriter mode': 'Daktilo modu', 'Show or hide the companion': 'Yan paneli göster / gizle',
   'Keyboard help': 'Klavye yardımı', 'Leave focus / close dialog': 'Odaktan çık / pencereyi kapat', 'Undo / redo': 'Geri al / yinele',
 
   // Settings
@@ -208,7 +208,7 @@ export const tr: Record<string, string> = {
   'THE NOTEBOOK': 'DEFTER', 'Writing log': 'Yazma kaydı', 'Timeline': 'Zaman çizelgesi', 'Research notes now live in the Research panel': 'Araştırma notları artık Araştırma panelinde',
   'A little, often.': 'Az ama sık.', 'A local record of words added and removed. No AI, no streak to protect.': 'Eklenen ve silinen kelimelerin yerel kaydı. Yapay zekâ yok, korunacak bir seri yok.',
   'When': 'Ne zaman', 'Day 3, before the last ferry': '3. gün, son vapurdan önce', 'Note text': 'Not metni', 'Keep the order of events close, in your own words.': 'Olayların sırasını kendi kelimelerinizle yakında tutun.', '+ Event': '+ Olay', 'Edit note': 'Notu düzenle',
-  'Manuscript outline': 'Metin taslağı', 'MANUSCRIPT': 'METİN', '{n} chapters and scenes': '{n} bölüm ve sahne', 'Scene status for {title}: {status}': '{title} sahnesinin durumu: {status}', 'Cycle scene status: draft, to fix, done': 'Sahne durumunu değiştir: taslak, düzeltilecek, bitti',
+  'Manuscript outline': 'Metin taslağı', 'MANUSCRIPT': 'METİN', '{n} chapters and scenes': '{n} bölüm ve sahne', 'Scene status for {title}: {status}': '{title} sahnesinin durumu: {status}', 
   '+ Chapter': '+ Bölüm', '+ Scene': '+ Sahne', 'Move {title} up': '{title} yukarı taşı', 'Move {title} down': '{title} aşağı taşı', 'Set aside ({n})': 'Kenara konanlar ({n})',
   'Keep a version before rewriting. Restoring also keeps a snapshot of your current writing.': 'Yeniden yazmadan önce bir sürüm saklayın. Geri yüklemek de şu anki yazınızın bir sürümünü saklar.', 'Snapshot label': 'Sürüm etiketi', 'Before a rewrite, a different ending…': 'Yeniden yazmadan önce, farklı bir son…',
   'Keep snapshot': 'Sürümü sakla', 'Snapshot to compare': 'Karşılaştırılacak sürüm', 'Restore this version': 'Bu sürümü geri yükle', 'A version worth keeping starts here.': 'Saklamaya değer bir sürüm burada başlar.', 'Current writing': 'Şu anki yazı',
@@ -247,4 +247,17 @@ export const tr: Record<string, string> = {
   'Backups use the Documents folder in the desktop app.': 'Yedekler masaüstü uygulamasında Belgeler klasörünü kullanır.', 'Browser preview · saved in this browser only': 'Tarayıcı önizlemesi · yalnızca bu tarayıcıda saklanır',
   'This item changed in another tab. Copy your text before reloading.': 'Bu öğe başka bir sekmede değişti. Yeniden yüklemeden önce metninizi kopyalayın.', 'Item not found': 'Öğe bulunamadı', 'An item already uses this location.': 'Bu konumu zaten başka bir öğe kullanıyor.',
   'Use images under 3 MB in browser preview. Desktop supports 100 MB.': 'Tarayıcı önizlemesinde 3 MB’tan küçük görseller kullanın. Masaüstü 100 MB’a kadar destekler.',
+  // Explanations (items 4-12)
+  'Side panel': 'Yan panel', 'Side panel: preview, cards, notebook (Ctrl+Alt+P)': 'Yan panel: önizleme, kartlar, defter (Ctrl+Alt+P)', 'Close side panel': 'Yan paneli kapat',
+  'Keep the line you are writing at the same height (Ctrl+Alt+T)': 'Yazdığınız satırı hep aynı yükseklikte tutar (Ctrl+Alt+T)',
+  'Hide the library and the bars; move the mouse to the top to bring them back (Ctrl+.)': 'Kitaplığı ve çubukları gizler; geri getirmek için fareyi üste götürün (Ctrl+.)',
+  'Mode': 'Mod', 'Normal: everything. Write: only the text, Esc to leave. Review: spelling underlines and the issue list.': 'Normal: her şey. Yaz: yalnızca metin, çıkmak için Esc. İncele: yazım altçizgileri ve sorun listesi.',
+  'Only the text, Esc to leave': 'Yalnızca metin, çıkmak için Esc', 'Spelling underlines and the issue list': 'Yazım altçizgileri ve sorun listesi', 'Everything': 'Her şey',
+  '{n} words in this chapter': 'Bu bölümde {n} kelime', 'Status: {status} (click to change: draft, to fix, done)': 'Durum: {status} (değiştirmek için tıklayın: taslak, düzeltilecek, bitti)',
+  'Move up': 'Yukarı taşı', 'Move down': 'Aşağı taşı', 'Set aside: moves this to the trash, it can be restored': 'Kenara koy: bunu çöp kutusuna taşır, geri getirilebilir',
+  '+ place': '+ yer',
+  'Mark possible spelling mistakes while you write': 'Yazarken olası yazım hatalarını işaretler', 'Keeps a snapshot of this text first, so you can go back': 'Önce bu metnin bir sürümünü saklar, böylece geri dönebilirsiniz',
+  'Moves this whole piece to the trash; you can restore it there': 'Tüm yazıyı çöp kutusuna taşır; oradan geri getirebilirsiniz',
+  'Quiet tools': 'Sessiz araçlar', 'Focus (Ctrl .) hides the bars. Typewriter (Ctrl Alt T) keeps your line at one height. The side panel (Ctrl Alt P) holds the preview, cards and notebook. Research (Ctrl Alt R) keeps your sources.': 'Odak (Ctrl .) çubukları gizler. Daktilo (Ctrl Alt T) satırınızı aynı yükseklikte tutar. Yan panel (Ctrl Alt P) önizlemeyi, kartları ve defteri içerir. Araştırma (Ctrl Alt R) kaynaklarınızı saklar.',
+  'Project': 'Proje', 'View': 'Görünüm', 'Show or hide the side panel': 'Yan paneli göster / gizle',
 }

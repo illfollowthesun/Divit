@@ -2,6 +2,7 @@ import type { Project, Settings, WritingMode } from '../shared/types'
 
 export const modes: WritingMode[] = ['write', 'review', 'normal']
 export const modeNames: Record<WritingMode, string> = { write: 'Write', review: 'Review', normal: 'Normal' }
+export const modeHints: Record<WritingMode, string> = { write: 'Only the text, Esc to leave', review: 'Spelling underlines and the issue list', normal: 'Everything' }
 
 // A document opens in its own last mode; one never switched opens in the last mode used anywhere.
 export const startMode = (project: Pick<Project, 'mode'> | null, settings: Pick<Settings, 'lastMode'>): WritingMode =>

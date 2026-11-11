@@ -48,3 +48,38 @@ test('markdown headings are sized, not underlined, and their marks are muted', a
   const bodyColor = await lines.nth(6).evaluate(el => getComputedStyle(el).color)
   expect(marks.text).toContain('##'); expect(marks.color).not.toBe(bodyColor)
 })
+
+test('an empty place shows as a "+ place" prompt, a filled one shows its name', async ({ page }) => {
+  await page.goto('/'); await page.evaluate(() => localStorage.clear()); await page.reload()
+  await page.getByRole('button', { name: /New writing/ }).click()
+  const summary = page.locator('.metadata-summary')
+  await expect(summary).toHaveText(/^\+ place · /); await expect(summary).not.toContainText('Somewhere')
+  await summary.click(); await page.getByLabel('PLACE').fill('Kadıköy')
+  await expect(summary).toHaveText(/^Kadıköy · /)
+})
+
+test('the quiet-screen controls say what they do, and the More menu explains itself', async ({ page }) => {
+  await page.goto('/'); await page.evaluate(() => localStorage.clear()); await page.reload()
+  await page.getByRole('button', { name: /New writing/ }).click()
+  await expect(page.getByRole('button', { name: 'Focus', exact: true })).toHaveAttribute('title', /Hide the library and the bars.*\(Ctrl\+\.\)/)
+  await expect(page.getByRole('button', { name: 'Typewriter', exact: true })).toHaveAttribute('title', /same height \(Ctrl\+Alt\+T\)/)
+  await expect(page.getByRole('button', { name: 'Side panel', exact: true })).toHaveAttribute('title', /preview, cards, notebook \(Ctrl\+Alt\+P\)/)
+  await expect(page.locator('.mode-picker')).toContainText('Mode')
+  await page.getByRole('button', { name: 'More actions' }).click()
+  const menu = page.getByRole('menu', { name: 'More actions' })
+  await expect(menu.getByRole('menuitem', { name: /Move to trash/ })).toContainText('restore it there')
+  await expect(menu.getByText('Archive')).toHaveCount(0)
+})
+
+test('the shortcut sheet is grouped and the Notebook pointer can be dismissed for good', async ({ page }) => {
+  await book(page)
+  await page.keyboard.press('F1')
+  const dialog = page.getByRole('dialog')
+  await expect(dialog.locator('.shortcut-group h3')).toHaveText(['Writing', 'Project', 'View'])
+  await page.keyboard.press('Escape')
+  await page.keyboard.press('Control+Alt+n')
+  const note = page.locator('.notebook-moved')
+  await expect(note).toContainText('Research notes now live'); await note.getByRole('button', { name: 'Got it' }).click()
+  await expect(note).toHaveCount(0)
+  await page.reload(); await page.keyboard.press('Control+Alt+n'); await expect(page.locator('.notebook')).toBeVisible(); await expect(page.locator('.notebook-moved')).toHaveCount(0)
+})
