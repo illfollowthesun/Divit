@@ -13,7 +13,7 @@ import { spellCheck, refreshSpelling } from './spell-check'
 import { acceptedWords } from '../spell/words'
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands'
 import { markdown } from '@codemirror/lang-markdown'
-import { syntaxHighlighting, defaultHighlightStyle } from '@codemirror/language'
+import { markdownStyle } from './markdown-style'
 
 // Native squiggles cannot be read or offered as suggestions, so Divit checks spelling itself.
 const attributes = (language: string) => EditorView.contentAttributes.of({ 'aria-label': t('Markdown text'), spellcheck: 'false', lang: language === 'auto' ? '' : language, autocorrect: 'off', autocapitalize: 'off' })
@@ -52,7 +52,7 @@ export function Editor({ id, body, onChange, onReady, typewriter = false, checki
   useEffect(() => {
     if (!element.current) return
     const view = new EditorView({ parent: element.current, state: EditorState.create({ doc: initial.current, extensions: [
-      checkIssues, history(), keymap.of([...defaultKeymap, ...historyKeymap]), markdown(), syntaxHighlighting(defaultHighlightStyle),
+      checkIssues, history(), keymap.of([...defaultKeymap, ...historyKeymap]), markdown(), markdownStyle,
       EditorView.lineWrapping, placeholder(t('Begin anywhere. The first sentence can change.')),
       cardConfig.current.of(cardLinks(() => cardsRef.current ?? [], id => cardOpen.current?.(id))),
       languageConfig.current.of(attributes(language)),
