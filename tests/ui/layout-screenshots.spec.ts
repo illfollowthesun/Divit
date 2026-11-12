@@ -38,7 +38,7 @@ for (const size of [{ name: '1440', width: 1440, height: 900 }, { name: '1000', 
       await expect(drawer.getByRole('button', { name: /The morning crossing/ })).toBeVisible({ timeout: 15000 })
     } else {
       await page.keyboard.press('Control+Alt+r')
-      const panel = page.getByRole('region', { name: /^(Research|Araştırma)$/ })
+      const panel = page.locator('.research-tab')
       await panel.getByRole('textbox').first().fill(url); await panel.getByRole('button', { name: /^(Save|Kaydet)$/ }).click()
       await expect(panel.getByRole('button', { name: /The morning crossing/ })).toBeVisible({ timeout: 15000 })
     }
