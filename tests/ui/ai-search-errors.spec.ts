@@ -13,7 +13,7 @@ async function searchFails(page: import('@playwright/test').Page, searchError: s
   await page.getByRole('button', { name: /Ferry notes/ }).click()
   await openResearch(page)
   const drawer = page.locator('.research-tab')
-  await drawer.getByRole('button', { name: 'Search about this topic' }).click()
+  await drawer.getByRole('button', { name: /^Search about/ }).click()
   await drawer.getByLabel('Topic', { exact: true }).fill('Bosphorus ferries')
   await drawer.getByRole('button', { name: 'Search with AI' }).click()
   return drawer

@@ -29,13 +29,13 @@ test('Add URL keeps a readable offline copy; the list filters, dedupes and shows
   const drawer = page.locator('.research-tab')
   await expect(drawer.getByLabel('Web address to save')).toBeFocused()
   await drawer.getByLabel('Web address to save').fill(`${base}/go`)
-  await drawer.getByRole('button', { name: 'Add', exact: true }).click()
+  await drawer.getByRole('button', { name: 'Save', exact: true }).click()
   await expect(drawer.getByRole('status')).toHaveText('Saved a readable copy: Karaköy iskelesi', { timeout: 15000 })
   const row = drawer.getByRole('button', { name: /Karaköy iskelesi/ })
   await expect(row).toContainText('Şehir Hatları Günlüğü · 2026-10-20'); await expect(row).toContainText('article')
 
   await drawer.getByLabel('Web address to save').fill(`${base}/karakoy?utm_source=newsletter#top`)
-  await drawer.getByRole('button', { name: 'Add', exact: true }).click()
+  await drawer.getByRole('button', { name: 'Save', exact: true }).click()
   await expect(drawer.getByRole('status')).toHaveText('Already saved: Karaköy iskelesi')
   await expect(drawer.locator('.source-row')).toHaveCount(1)
 
@@ -62,13 +62,24 @@ test('Add URL keeps a readable offline copy; the list filters, dedupes and shows
   await writeFile(join(research, 'inbox', 'tarife.md'), '---\ntitle: Winter timetable\nurl: https://example.com/tarife\nsite: Example News\ntype: news\n---\nFirst ferry 06:10.')
   await expect(toggle.locator('.research-count')).toHaveText('1 new', { timeout: 10000 })
   await expect(toggle).toHaveText('Research1 new')
+  // Filters stay out of the way until there are more than five sources, then sit behind a Filter toggle.
+  await expect(drawer.getByRole('button', { name: 'Filter', exact: true })).toHaveCount(0); await expect(drawer.getByLabel('Source type')).toHaveCount(0)
+  for (const n of [1, 2, 3, 4]) await writeFile(join(research, 'inbox', `gull-${n}.md`), `---
+title: Gull notes ${n}
+url: https://example.com/gull-${n}
+site: Example Blog
+type: blog
+---
+Gulls, part ${n}.`)
+  await expect(drawer.locator('.source-row')).toHaveCount(6, { timeout: 10000 })
+  await drawer.getByRole('button', { name: 'Filter', exact: true }).click()
   await drawer.getByLabel('Source type').selectOption('news')
   await expect(drawer.locator('.source-row')).toHaveCount(1); await expect(drawer.locator('.source-row')).toContainText('Winter timetable')
   await drawer.getByLabel('Source type').selectOption('all'); await drawer.getByLabel('Find a source').fill('karaköy')
   await expect(drawer.locator('.source-row')).toHaveCount(1); await expect(drawer.locator('.source-row')).toContainText('Karaköy iskelesi')
   await drawer.getByLabel('Find a source').fill(''); await drawer.getByRole('button', { name: /Winter timetable/ }).click()
   await expect(drawer.getByRole('article')).toContainText('First ferry 06:10.')
-  await expect(toggle.locator('.research-count')).toHaveCount(0); await expect(toggle).toHaveText('Research')
+  await expect(toggle.locator('.research-count')).toHaveText('4 new') // the timetable is read; the four gull notes are not
 
   await page.keyboard.press('Escape'); await expect(drawer.getByRole('article')).toHaveCount(0) // Escape closes the reader first
   await page.keyboard.press('Control+Alt+r'); await expect(drawer).toHaveCount(0); await expect(page.getByRole('tab', { name: 'Preview' })).toHaveAttribute('aria-selected', 'true')

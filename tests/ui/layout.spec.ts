@@ -1,4 +1,6 @@
 import { test, expect, type Page } from '@playwright/test'
+import { createServer } from 'node:http'
+import type { AddressInfo } from 'node:net'
 
 async function start(page: Page) {
   await page.goto('/'); await page.evaluate(() => localStorage.clear()); await page.reload()
@@ -65,4 +67,27 @@ test('Research is a tab of the dock: Ctrl+Alt+R shows it, again returns to the p
   await page.getByLabel('Project type').selectOption('book'); await page.getByRole('button', { name: 'Create project', exact: true }).click()
   await expect(dock.getByRole('tab')).toHaveText(['Preview', 'Cards', 'Notebook', 'Research', 'Images'])
   await expect(tab('Preview')).toHaveAttribute('aria-selected', 'true')
+})
+
+test('the Research tab: one input row whose button follows the input, a Search about link, a segmented control and quiet status lines', async ({ page }) => {
+  const server = createServer((_, res) => { res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' }); res.end('<!doctype html><title>The crossing | Harbour Notes</title><article><h1>The crossing</h1><p>The first boat leaves at six.</p></article>') }).listen(0, '127.0.0.1')
+  await new Promise(resolve => server.once('listening', resolve))
+  await start(page); await page.getByLabel('Title').fill('Harbour')
+  await page.keyboard.press('Control+Alt+r')
+  const panel = page.locator('.research-tab'), input = page.getByLabel('Web address to save'), save = panel.getByRole('button', { name: 'Save', exact: true })
+  await expect(panel.locator('.segmented').getByRole('tab')).toHaveText(['Sources', 'Highlights', 'Notes'])
+  await expect(save).toBeDisabled(); await expect(panel.getByRole('button', { name: 'Search about: Harbour' })).toBeVisible()
+  await expect(panel.getByRole('button', { name: /^(Search about this topic|Search about)/ })).toHaveCount(1) // no second full-width button
+  await input.fill('ferry timetable'); await expect(panel.getByRole('button', { name: 'Search', exact: true })).toBeVisible(); await expect(panel.getByRole('button', { name: /^Search about/ })).toHaveCount(0)
+  await input.fill(`http://127.0.0.1:${(server.address() as AddressInfo).port}/crossing`); await expect(save).toBeEnabled()
+  const top = () => panel.locator('.source-list').evaluate(el => el.getBoundingClientRect().top)
+  await save.click()
+  const status = panel.getByRole('status')
+  await expect(status).toHaveText(/Saved a readable copy: The crossing/, { timeout: 15000 })
+  const shown = await top(); expect((await status.boundingBox())!.y).toBeGreaterThan(shown) // the message sits below the list
+  await expect(status).toHaveText('', { timeout: 10000 }) // fades by itself
+  expect(await top()).toBe(shown) // and nothing moved when it appeared or left
+  const row = panel.locator('.source-row')
+  await expect(row).toContainText('Harbour Notes'); await expect(row.locator('.type-chip')).toBeVisible(); await expect(row.locator('small .unread-dot')).toHaveCount(1) // the dot belongs to the meta line
+  server.close()
 })

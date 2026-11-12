@@ -15,7 +15,7 @@ const message = (e: unknown) => e instanceof Error ? e.message : String(e)
 
 // "Search about this topic": with AI connected, a web search the writer starts; without it, a request
 // file plus a ready-to-paste prompt, answered by whoever writes source files into the inbox.
-export function RequestPanel({ projectId, projectTitle, language, suggestTopic, research, reload, saveAnnotations, prefill, openSettings }: { prefill?: { topic: string; at: number } | null; openSettings: () => void; projectId: string; projectTitle: string; language: 'en' | 'tr'; suggestTopic: () => string; research: Research | null; reload: () => Promise<unknown>; saveAnnotations: (change: (current: Annotations) => Partial<Annotations>) => Promise<void> }) {
+export function RequestPanel({ projectId, projectTitle, language, suggestTopic, research, reload, saveAnnotations, prefill, openSettings, inputEmpty }: { inputEmpty: boolean; prefill?: { topic: string; at: number } | null; openSettings: () => void; projectId: string; projectTitle: string; language: 'en' | 'tr'; suggestTopic: () => string; research: Research | null; reload: () => Promise<unknown>; saveAnnotations: (change: (current: Annotations) => Partial<Annotations>) => Promise<void> }) {
   const [form, setForm] = useState<Form | null>(null)
   const [made, setMade] = useState<{ request: ResearchRequest; prompt: string; path: string } | null>(null)
   const [working, setWorking] = useState(false), [problem, setProblem] = useState(''), [problemCode, setProblemCode] = useState(''), [copied, setCopied] = useState<'yes' | 'failed' | ''>('')
@@ -24,7 +24,7 @@ export function RequestPanel({ projectId, projectTitle, language, suggestTopic, 
   const requests = (research as (Research & { requests?: ResearchRequest[] }) | null)?.requests ?? []
   const latest = made?.request ?? requests[requests.length - 1]
   const arrived = latest ? research?.sources.filter(s => s.origin === 'inbox' && s.addedAt >= latest.createdAt).length ?? 0 : 0
-  const month = localDay().slice(0, 7), config = aiStatus?.config
+  const month = localDay().slice(0, 7), config = aiStatus?.config, about = suggestTopic().trim()
   const aiOn = !!config?.enabled, route = searchRoute(aiStatus), canSearch = !!route
   // Text from the Sources box that is not an address arrives here as the topic.
   useEffect(() => { if (prefill) void openForm(prefill.topic) }, [prefill?.at])
@@ -85,7 +85,7 @@ export function RequestPanel({ projectId, projectTitle, language, suggestTopic, 
     try { await navigator.clipboard.writeText(made!.prompt); setCopied('yes') } catch { setCopied('failed') }
   }
   return <div className="request-panel">
-    {!form && !found && !unsourced && <button className="outline-button search-topic" disabled={working} onClick={() => void openForm()}>{t('Search about this topic')}</button>}
+    {!form && !found && !unsourced && inputEmpty && <button type="button" className="text-link search-topic" disabled={working} onClick={() => void openForm()}>{about ? t('Search about: {topic}', { topic: about }) : t('Search about this topic')}</button>}
     {form && <form className="request-form" onSubmit={event => void save(event)} aria-label={t('Search about this topic')}>
       <label className="field">{t('Topic')}<input autoFocus value={form.topic} onChange={event => setForm({ ...form, topic: event.target.value })}/></label>
       <label className="field">{t('Angle')}<input placeholder={t('Optional: what you want to know')} value={form.angle} onChange={event => setForm({ ...form, angle: event.target.value })}/></label>

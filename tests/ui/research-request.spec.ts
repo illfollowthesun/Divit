@@ -12,7 +12,7 @@ test('Search about this topic saves a request file, copies a ready prompt and wa
   await editor.fill('Kış vapur tarifesi değişti.'); await editor.press('Control+a')
   await openResearch(page)
   const drawer = page.locator('.research-tab')
-  await drawer.getByRole('button', { name: 'Search about this topic' }).click()
+  await drawer.getByRole('button', { name: /^Search about/ }).click()
   const form = drawer.getByRole('form', { name: 'Search about this topic' })
   await expect(form.getByLabel('Topic')).toHaveValue('Kış vapur tarifesi değişti.') // the selection wins over the title
   await form.getByLabel('Topic').fill('Kış vapur tarifesi'); await form.getByLabel('Angle').fill('Sabah ilk sefer')

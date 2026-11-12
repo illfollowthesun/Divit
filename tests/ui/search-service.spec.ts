@@ -14,7 +14,7 @@ async function search(page: Page) {
   await page.getByRole('button', { name: /Ferry notes/ }).click()
   await openResearch(page)
   const drawer = page.locator('.research-tab')
-  await drawer.getByRole('button', { name: 'Search about this topic' }).click()
+  await drawer.getByRole('button', { name: /^Search about/ }).click()
   await drawer.getByLabel('Topic', { exact: true }).fill('Winter ferries')
   return drawer
 }

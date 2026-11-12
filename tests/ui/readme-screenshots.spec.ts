@@ -38,7 +38,7 @@ test('Research with a saved source', async ({ page }) => {
   await openResearch(page)
   const drawer = page.locator('.research-tab')
   await drawer.getByLabel(/Web address to save/).fill(`http://127.0.0.1:${(server.address() as AddressInfo).port}/crossing`)
-  await drawer.getByRole('button', { name: 'Add', exact: true }).click()
+  await drawer.getByRole('button', { name: 'Save', exact: true }).click()
   await drawer.getByRole('button', { name: /The morning crossing/ }).click({ timeout: 15000 })
   await select(page, 'Regular passengers keep to the same seats')
   await page.getByRole('dialog', { name: 'Highlight selection' }).getByRole('button', { name: 'Highlight in Sage' }).click()

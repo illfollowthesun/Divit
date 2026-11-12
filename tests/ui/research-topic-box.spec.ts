@@ -12,13 +12,13 @@ async function openDrawer(page: import('@playwright/test').Page) {
   return page.locator('.research-tab')
 }
 
-test('a topic typed into the Sources box is never fetched; with AI on it offers Search this with AI', async ({ page }) => {
+test('a topic typed into the Sources box is never fetched; with AI on its button says Search', async ({ page }) => {
   await desktopBridge(page, { config: { enabled: true }, keys: { gemini: true }, projects: [project()] })
   const drawer = await openDrawer(page)
   const box = drawer.getByLabel('Web address to save, or a topic to search')
   await box.fill('winter ferry timetable')
   await expect(drawer.locator('.add-url-hint')).toHaveText('Not a web address, so it will be searched as a topic.')
-  await drawer.getByRole('button', { name: 'Search this with AI' }).click()
+  await drawer.getByRole('button', { name: 'Search', exact: true }).click()
   const form = drawer.getByRole('form', { name: 'Search about this topic' })
   await expect(form.getByLabel('Topic', { exact: true })).toHaveValue('winter ferry timetable')
   await expect(form.getByRole('button', { name: 'Search with AI' })).toBeVisible()

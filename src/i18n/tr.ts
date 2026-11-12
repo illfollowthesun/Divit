@@ -155,14 +155,14 @@ export const tr: Record<string, string> = {
 
   // Research drawer
   'Research tabs': 'Araştırma sekmeleri', 'Web address to save, or a topic to search': 'Kaydedilecek web adresi ya da aranacak konu',
-  'Paste a link, or type a topic': 'Bir bağlantı yapıştırın ya da bir konu yazın', 'Add': 'Ekle', 'Search': 'Ara', 'Search this with AI': 'Bunu yapay zekâyla ara',
+  'Paste a link, or type a topic': 'Bir bağlantı yapıştırın ya da bir konu yazın', 'Add': 'Ekle', 'Search': 'Ara', 
   'Not a web address, so it will be searched as a topic.': 'Bu bir web adresi değil; konu olarak aranacak.', 'Not a web address.': 'Bu bir web adresi değil.', 'Turn on AI in Settings to search': 'Aramak için Ayarlar’da yapay zekâyı açın', ', or press Search to save a request.': ' ya da istek kaydetmek için Ara’ya basın.',
   'Already saved: {title}': 'Zaten kayıtlı: {title}', 'Saved a readable copy: {title}': 'Okunabilir bir kopya kaydedildi: {title}',
   'This quote is {n} words. Quoting this much may need the author’s permission.': 'Bu alıntı {n} kelime. Bu kadar uzun bir alıntı yazarın iznini gerektirebilir.', 'Insert anyway': 'Yine de ekle',
   'Open the text you are writing, then insert.': 'Önce yazdığınız metni açın, sonra ekleyin.', 'Quote inserted with its source.': 'Alıntı kaynağıyla birlikte eklendi.', 'Quote inserted with its source as a footnote.': 'Alıntı kaynağıyla birlikte dipnot olarak eklendi.',
   'The quote is in your text, but marking the source as quoted failed: {reason}': 'Alıntı metninizde, ama kaynak alıntılandı olarak işaretlenemedi: {reason}',
   'Find a source': 'Kaynak bul', 'Find a source…': 'Bir kaynak bul…', 'Source type': 'Kaynak türü', 'All types': 'Tüm türler', 'Reading status': 'Okuma durumu', 'Any status': 'Her durum', 'Unread': 'Okunmadı', 'Read': 'Okundu', 'Quoted': 'Alıntılandı',
-  'Paste a link above, or drop source files into this project’s research/inbox folder. Nothing is searched unless you ask.': 'Yukarıya bir bağlantı yapıştırın ya da kaynak dosyalarını bu projenin research/inbox klasörüne bırakın. Siz istemedikçe hiçbir şey aranmaz.',
+  
   'No source matches.': 'Eşleşen kaynak yok.', 'Research is unavailable.': 'Araştırma kullanılamıyor.', 'Research needs the desktop app or the development preview.': 'Araştırma için masaüstü uygulaması ya da geliştirme önizlemesi gerekir.',
   'Choose a project first.': 'Önce bir proje seçin.', 'This research is still loading. Try again in a moment.': 'Araştırma hâlâ yükleniyor. Birazdan tekrar deneyin.',
   'No readable text was found on this page. Save the text into the inbox instead.': 'Bu sayfada okunabilir metin bulunamadı. Metni bunun yerine gelen kutusuna kaydedin.',
@@ -248,7 +248,7 @@ export const tr: Record<string, string> = {
   'This item changed in another tab. Copy your text before reloading.': 'Bu öğe başka bir sekmede değişti. Yeniden yüklemeden önce metninizi kopyalayın.', 'Item not found': 'Öğe bulunamadı', 'An item already uses this location.': 'Bu konumu zaten başka bir öğe kullanıyor.',
   'Use images under 3 MB in browser preview. Desktop supports 100 MB.': 'Tarayıcı önizlemesinde 3 MB’tan küçük görseller kullanın. Masaüstü 100 MB’a kadar destekler.',
   // Explanations (items 4-12)
-  'Side panel': 'Yan panel', 'Side panel: preview, cards, notebook, research (Ctrl+Alt+P)': 'Yan panel: önizleme, kartlar, defter, araştırma (Ctrl+Alt+P)', 'Saved': 'Kaydedildi', 'Library (Ctrl+Alt+L)': 'Kitaplık (Ctrl+Alt+L)', 'Close side panel': 'Yan paneli kapat',
+  'Side panel': 'Yan panel', 'Side panel: preview, cards, notebook, research (Ctrl+Alt+P)': 'Yan panel: önizleme, kartlar, defter, araştırma (Ctrl+Alt+P)', 'Saved': 'Kaydedildi', 'Save': 'Kaydet', 'Filter': 'Süz', 'Search about: {topic}': 'Şunu ara: {topic}', 'Paste a link or type a topic above. Nothing is searched until you ask.': 'Yukarıya bir bağlantı yapıştırın ya da bir konu yazın. Siz istemedikçe hiçbir şey aranmaz.', 'Library (Ctrl+Alt+L)': 'Kitaplık (Ctrl+Alt+L)', 'Close side panel': 'Yan paneli kapat',
   'Keep the line you are writing at the same height (Ctrl+Alt+T)': 'Yazdığınız satırı hep aynı yükseklikte tutar (Ctrl+Alt+T)',
   'Hide the library and the bars; move the mouse to the top to bring them back (Ctrl+.)': 'Kitaplığı ve çubukları gizler; geri getirmek için fareyi üste götürün (Ctrl+.)',
   'Mode': 'Mod', 'Normal: everything. Write: only the text, Esc to leave. Review: spelling underlines and the issue list.': 'Normal: her şey. Yaz: yalnızca metin, çıkmak için Esc. İncele: yazım altçizgileri ve sorun listesi.',
