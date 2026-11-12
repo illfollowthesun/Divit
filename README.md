@@ -36,6 +36,8 @@ Divit runs on Windows 10 and 11 and uses Microsoft Edge WebView2, which Windows 
 
 ![Review mode with a spelling suggestion](docs/screenshots/divit-review.png)
 
+Two small icons at the ends of the project row show or hide the **library** (Ctrl Alt L) and the **side panel** (Ctrl Alt P). The side panel is one dock with five tabs: Preview, Cards, Notebook, Research and Images. Typewriter and Focus sit in the same row, next to the Mode menu.
+
 Stories can be one text or scenes. Books have chapters with scenes. Drag to reorder, keep snapshots before a rewrite, and compare versions side by side. You can set an optional daily word goal in Settings; Divit then shows today's words and how many days in a row you have written. It is off by default and never appears in Write mode.
 
 ## Export
@@ -44,14 +46,14 @@ Stories can be one text or scenes. Books have chapters with scenes. Drag to reor
 
 ## Research
 
-Open **Research** with **Ctrl Alt R**.
+Research is a tab of the side panel. Open it with **Ctrl Alt R**; press the keys again to go back to the tab you were on.
 
 - **Save sources:** paste a link and Divit keeps a readable, offline copy of the page. You can also drop source files into the project's `research/inbox` folder.
 - **Highlight and note:** select words in a source to highlight them in four colours and add notes. Highlights stay with their quote, even if the file changes.
 - **Quote with citation:** insert a highlight as a quote block or a footnote. The source is marked as quoted, and Export can end with a *Sources* list.
 - **Search a topic:** type a topic instead of a link. With AI on, Divit searches the web and shows candidates. You keep the ones you want, and Divit saves the real page, never the AI's paraphrase. Without AI, it saves a request you can answer yourself.
 
-![Research drawer with a saved source and a highlight](docs/screenshots/divit-research.png)
+![Research tab with a saved source and a highlight](docs/screenshots/divit-research.png)
 
 ## AI (optional, off by default)
 
@@ -102,7 +104,8 @@ Settings → Your files can move the library to another folder, for example insi
 | Catch an idea | Ctrl Shift I |
 | Typewriter mode | Ctrl Alt T |
 | Focus mode | Ctrl . |
-| Show or hide the companion | Ctrl Alt P |
+| Show or hide the library | Ctrl Alt L |
+| Show or hide the side panel | Ctrl Alt P |
 | Settings | Ctrl , |
 | Help, shortcuts and theme | F1 |
 

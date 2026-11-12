@@ -31,7 +31,7 @@ test('the library keeps Trash and Keyboard shortcuts in view and scrolls the res
   for (let i = 0; i < 14; i++) await page.getByRole('button', { name: '+ Scene' }).click()
   const library = page.getByRole('complementary', { name: 'Writing library' })
   for (const name of [/^Trash/, /^Keyboard shortcuts/]) await expect(library.getByRole('button', { name })).toBeInViewport({ ratio: 1 })
-  expect(await page.locator('.outline').evaluate(el => el.scrollHeight > el.clientHeight)).toBe(true)
+  expect(await page.locator('.outline-scroll').evaluate(el => el.scrollHeight > el.clientHeight)).toBe(true)
   expect(await library.evaluate(el => el.scrollHeight <= el.clientHeight + 1)).toBe(true)
 })
 

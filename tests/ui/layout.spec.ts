@@ -115,3 +115,26 @@ test('the export dialog says what is exported, lists formats as radio rows and s
   await expect(dialog.locator('.export-result')).toContainText(/\.md/); await expect(dialog.locator('.export-result')).toContainText('Copy ready')
   await dialog.getByRole('radio', { name: 'PDF' }).check(); await expect(dialog.getByRole('button', { name: 'Export manuscript' })).toBeVisible()
 })
+
+test('the outline heading stays while the list scrolls, and the shortcut sheet scrolls cleanly with the library row', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 760 })
+  await page.goto('/'); await page.evaluate(() => localStorage.clear()); await page.reload()
+  await page.getByRole('button', { name: 'More ways to start' }).click()
+  await page.getByRole('menu', { name: 'More ways to start' }).getByText('New story or book', { exact: true }).click()
+  await page.getByLabel('Project type').selectOption('book'); await page.getByRole('button', { name: 'Create project', exact: true }).click()
+  await page.getByRole('button', { name: '+ Chapter' }).click()
+  for (let i = 0; i < 16; i++) await page.getByRole('button', { name: '+ Scene' }).click()
+  const scroll = page.locator('.outline-scroll'), heading = page.locator('.outline .section-label')
+  await scroll.evaluate(el => { el.scrollTop = el.scrollHeight })
+  expect(await scroll.evaluate(el => el.scrollTop)).toBeGreaterThan(0)
+  await expect(heading).toBeInViewport({ ratio: 1 }); await expect(heading).toHaveText(/MANUSCRIPT/)
+  expect((await heading.boundingBox())!.y).toBeLessThan((await scroll.boundingBox())!.y) // the heading sits above the scrolling part
+
+  await page.keyboard.press('F1')
+  const list = page.locator('.shortcut-scroll'), dialog = page.getByRole('dialog')
+  await expect(dialog.getByText('Show or hide the library')).toBeVisible()
+  await list.evaluate(el => { el.scrollTop = el.scrollHeight })
+  const last = dialog.locator('.shortcut-list > div').last(), box = (await list.boundingBox())!, lastBox = (await last.boundingBox())!
+  expect(lastBox.y + lastBox.height).toBeLessThanOrEqual(box.y + box.height - 8) // a little room under the last row
+  expect((await dialog.boundingBox())!.y + (await dialog.boundingBox())!.height).toBeLessThanOrEqual(760)
+})
