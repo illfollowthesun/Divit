@@ -138,3 +138,20 @@ test('the outline heading stays while the list scrolls, and the shortcut sheet s
   expect(lastBox.y + lastBox.height).toBeLessThanOrEqual(box.y + box.height - 8) // a little room under the last row
   expect((await dialog.boundingBox())!.y + (await dialog.boundingBox())!.height).toBeLessThanOrEqual(760)
 })
+
+test('Focus hides the app row, the project row and the bottom row; the top edge brings them back; Escape still steps out in order', async ({ page }) => {
+  await start(page)
+  const editor = page.getByRole('textbox', { name: 'Markdown text' }), app = page.locator('.app'), opacity = (locator: ReturnType<typeof page.locator>) => locator.evaluate(el => getComputedStyle(el).opacity)
+  await editor.fill('A line to write.')
+  await row(page).getByRole('button', { name: 'Focus', exact: true }).click(); await page.mouse.move(600, 500)
+  await expect(app).toHaveClass(/focus-mode/); await expect(page.getByRole('banner')).not.toBeInViewport()
+  expect(await opacity(row(page))).toBe('0'); expect(await opacity(page.locator('.editor-footer'))).toBe('0')
+  await page.mouse.move(300, 4)
+  await expect.poll(() => opacity(row(page))).toBe('1'); await expect.poll(() => opacity(page.locator('.editor-footer'))).toBe('1')
+  await expect(page.getByRole('banner')).toBeInViewport()
+  // Escape steps out in order: the side panel first, then Focus.
+  await page.mouse.move(600, 500); await editor.click()
+  await page.keyboard.press('Control+Alt+p'); await expect(page.getByRole('complementary', { name: 'Writing companion' })).toBeVisible()
+  await page.keyboard.press('Escape'); await expect(page.getByRole('complementary', { name: 'Writing companion' })).toBeHidden(); await expect(app).toHaveClass(/focus-mode/)
+  await page.keyboard.press('Escape'); await expect(app).not.toHaveClass(/focus-mode/); expect(await opacity(row(page))).toBe('1')
+})

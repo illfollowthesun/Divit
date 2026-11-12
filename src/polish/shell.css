@@ -108,3 +108,8 @@
 .outline{display:flex;flex-direction:column;overflow:hidden}
 .outline>.outline-scroll{overflow-y:auto;min-height:0;flex:1 1 auto}
 .shortcut-scroll{max-height:max(220px,calc(100dvh - 410px));overflow-y:auto;margin:0 -8px;padding:0 8px 16px}
+.focus-mode .top-actions{margin-left:auto}
+/* In Focus the bottom row hides with the bars and returns with them. */
+.app.distraction-mode .editor-footer{opacity:0;pointer-events:none;transition:opacity .16s ease}
+.app.distraction-mode.chrome-visible .editor-footer,.app.distraction-mode .editor-footer:has(:focus-visible){opacity:1;pointer-events:auto}
+@media(prefers-reduced-motion:reduce){.app.distraction-mode .editor-footer{transition:none}}
