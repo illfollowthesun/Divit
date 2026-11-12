@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test'
+import { openResearch } from './research-helpers'
 import { startMenu } from './shell-helpers'
 import type { Page } from '@playwright/test'
 
@@ -10,15 +11,16 @@ async function book(page: Page) {
 }
 const fits = (page: Page) => page.getByRole('toolbar', { name: 'Project actions' }).evaluate(bar => { const box = bar.getBoundingClientRect(); return bar.scrollWidth <= bar.clientWidth + 1 && [...bar.querySelectorAll('button, select')].every(e => e.getBoundingClientRect().right <= box.right + 1) })
 
-test('the toolbar keeps mode, Research, Export and More, and never overflows at 960 px', async ({ page }) => {
+test('the project row keeps mode, Typewriter, Focus, Export and More, and never overflows at 960 px', async ({ page }) => {
   await page.setViewportSize({ width: 960, height: 700 })
   await book(page)
   const bar = page.getByRole('toolbar', { name: 'Project actions' })
-  for (const name of ['Research', 'Export', 'More actions']) await expect(bar.getByRole('button', { name, exact: true })).toBeVisible()
+  for (const name of ['Typewriter', 'Focus', 'Export', 'More actions']) await expect(bar.getByRole('button', { name, exact: true })).toBeVisible()
+  await expect(bar.getByRole('button', { name: 'Research', exact: true })).toHaveCount(0)
   await expect(bar.getByRole('combobox', { name: 'Writing mode' })).toBeVisible()
   for (const name of ['Move to trash', 'Snapshots', 'Start a rewrite', 'Underlines']) await expect(bar.getByRole('button', { name, exact: true })).toHaveCount(0)
   expect(await fits(page)).toBe(true)
-  await page.getByRole('button', { name: 'Research', exact: true }).click()
+  await openResearch(page)
   expect(await fits(page)).toBe(true)
 })
 
@@ -35,22 +37,23 @@ test('the More menu works from the keyboard and lists every moved action', async
   await expect(page.getByRole('dialog', { name: 'A few versions of the same thought' })).toBeVisible()
 })
 
-test('on wide windows Research pushes the text instead of covering it; below 1100 px it overlays with a close button', async ({ page }) => {
+test('Research is a tab of the dock: it widens the dock on wide windows and overlays the text below 1240 px', async ({ page }) => {
   await book(page)
-  const paper = page.locator('.paper'), before = (await paper.boundingBox())!
-  await page.getByRole('button', { name: 'Research', exact: true }).click()
-  const drawer = page.getByRole('complementary', { name: 'Research' })
-  const [text, side] = [(await paper.boundingBox())!, (await drawer.boundingBox())!]
-  expect(text.x + text.width).toBeLessThanOrEqual(side.x + 1)
-  expect(Math.abs(text.width - before.width)).toBeLessThan(200) // the drawer takes the companion's place
-  await expect(page.locator('#writing-companion')).toBeHidden()
-  await page.getByRole('button', { name: 'Close research' }).click(); await expect(page.locator('#writing-companion')).toBeVisible()
+  const paper = page.locator('.paper'), dock = page.locator('#writing-companion'), tab = page.getByRole('tab', { name: /^Research/ })
+  expect((await dock.boundingBox())!.width).toBe(340)
+  await tab.click(); await expect(tab).toHaveAttribute('aria-selected', 'true'); await expect(page.locator('.research-tab')).toBeVisible()
+  await expect.poll(async () => (await dock.boundingBox())!.width).toBe(440)
+  const [text, side] = [(await paper.boundingBox())!, (await dock.boundingBox())!]
+  expect(text.x + text.width).toBeLessThanOrEqual(side.x + 1); expect(text.width).toBeGreaterThanOrEqual(560)
+  await page.keyboard.press('Control+Alt+r'); await expect(page.getByRole('tab', { name: 'Preview' })).toHaveAttribute('aria-selected', 'true')
+  await expect.poll(async () => (await dock.boundingBox())!.width).toBe(340)
 
-  await page.setViewportSize({ width: 960, height: 700 })
-  await page.getByRole('button', { name: 'Research', exact: true }).click()
-  const close = page.getByRole('button', { name: 'Close research' })
-  await expect(close).toBeVisible(); expect((await close.boundingBox())!.height).toBeGreaterThanOrEqual(32)
-  await close.click(); await expect(drawer).toHaveCount(0)
+  await page.setViewportSize({ width: 1180, height: 700 })
+  await page.keyboard.press('Control+Alt+r'); await expect(page.locator('.research-tab')).toBeVisible()
+  const overlay = (await dock.boundingBox())!
+  expect(overlay.width).toBe(440); expect(Math.abs(overlay.x + overlay.width - 1180)).toBeLessThan(2)
+  expect((await paper.boundingBox())!.width).toBeGreaterThanOrEqual(560) // the text column keeps its width; the dock lies over its edge
+  await page.keyboard.press('Escape'); await expect(page.locator('.research-tab')).toBeHidden()
 })
 
 test('place, date, tags and language fold into one line under the title and open on click', async ({ page }) => {
@@ -103,9 +106,9 @@ test('Settings opens on side tabs with Save and Cancel always in view; Save turn
   expect(await page.evaluate(() => JSON.parse(localStorage.getItem('yazi-browser-preview-v1')!).settings.writingGoal)).toBe(300)
 })
 
-test('companion tabs say Reflection and Notebook, so they do not echo Review and research notes', async ({ page }) => {
+test('the dock tabs are Preview, Cards, Notebook, Research and Images', async ({ page }) => {
   await book(page)
-  await expect(page.locator('#writing-companion [role=tab]')).toHaveText(['Preview', 'Cards', 'Notebook', 'Reflection', 'Images'])
+  await expect(page.locator('#writing-companion [role=tab]')).toHaveText(['Preview', 'Cards', 'Notebook', 'Research', 'Images'])
   await page.keyboard.press('Control+Alt+n'); await expect(page.getByRole('tab', { name: 'Notebook', exact: true })).toHaveAttribute('aria-selected', 'true')
 })
 

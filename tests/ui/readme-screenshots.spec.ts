@@ -5,7 +5,7 @@ import type { AddressInfo } from 'node:net'
 import { randomUUID } from 'node:crypto'
 import { newProject } from '../../src/shared/types'
 import { desktopBridge } from './desktop-bridge'
-import { select } from './research-helpers'
+import { select, openResearch } from './research-helpers'
 
 // README screenshots with invented sample text. Runs only when asked: YAZI_README_SHOTS=1 npx playwright test readme
 test.skip(!process.env.YAZI_README_SHOTS, 'Set YAZI_README_SHOTS=1 to refresh the README screenshots.')
@@ -35,8 +35,8 @@ test('Research with a saved source', async ({ page }) => {
   const server = createServer((_, res) => { res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' }); res.end(article) }).listen(0, '127.0.0.1')
   await new Promise(resolve => server.once('listening', resolve))
   await open(page)
-  await page.getByRole('button', { name: 'Research', exact: true }).click()
-  const drawer = page.getByRole('complementary', { name: 'Research' })
+  await openResearch(page)
+  const drawer = page.locator('.research-tab')
   await drawer.getByLabel(/Web address to save/).fill(`http://127.0.0.1:${(server.address() as AddressInfo).port}/crossing`)
   await drawer.getByRole('button', { name: 'Add', exact: true }).click()
   await drawer.getByRole('button', { name: /The morning crossing/ }).click({ timeout: 15000 })

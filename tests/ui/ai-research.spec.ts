@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test'
+import { openResearch } from './research-helpers'
 import type { Page } from '@playwright/test'
 import { createServer } from 'node:http'
 import type { AddressInfo } from 'node:net'
@@ -45,8 +46,8 @@ async function openSearch(page: Page, options: { search?: unknown; searchError?:
   await researchDesktop(page, { ...options, project })
   await page.goto('/')
   await page.getByRole('button', { name: /Ferry research/ }).click()
-  await page.getByRole('button', { name: /^Research/ }).click()
-  const drawer = page.getByRole('complementary', { name: 'Research' })
+  await openResearch(page)
+  const drawer = page.locator('.research-tab')
   await drawer.getByRole('button', { name: 'Search about this topic' }).click()
   const form = drawer.getByRole('form', { name: 'Search about this topic' })
   await form.getByLabel('Topic', { exact: true }).fill('Winter ferries')
@@ -108,7 +109,7 @@ test('AI suggestions fetch real pages only on Keep; summaries stay separate and 
     await new Promise<void>((resolve, reject) => server.close(error => error ? reject(error) : resolve()))
     await page.reload()
     await page.getByRole('button', { name: /Ferry research/ }).click()
-    await page.getByRole('button', { name: /^Research/ }).click()
+    await openResearch(page)
     await drawer.getByRole('button', { name: /Real ferry timetable/ }).click()
     await expect(drawer.locator('.source-text')).toContainText('Verified paragraph 7')
     await expect(drawer.locator('.ai-summary')).toHaveText(`AI ${summary}`)

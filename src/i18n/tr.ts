@@ -6,10 +6,10 @@ export const tr: Record<string, string> = {
   'Choose an API provider or a model on this computer.': 'Bir API sağlayıcısı veya bu bilgisayardaki bir modeli seçin.',
   'Find pages for your AI model to read.': 'Yapay zekâ modelinizin okuyacağı sayfaları bulun.',
   'The key stays in Windows Credential Manager.': 'Anahtar Windows Kimlik Bilgisi Yöneticisi’nde kalır.',
-  'Reflection': 'Düşünme', 'Notebook': 'Defter',
+  'Notebook': 'Defter',
 
   // Shared words, data values and statuses
-  'Preview': 'Önizleme', 'Cards': 'Kartlar', 'Notes': 'Notlar', 'Check': 'Kontrol', 'Images': 'Görseller', 'Sources': 'Kaynaklar', 'Highlights': 'Vurgular',
+  'Preview': 'Önizleme', 'Cards': 'Kartlar', 'Notes': 'Notlar', 'Images': 'Görseller', 'Sources': 'Kaynaklar', 'Highlights': 'Vurgular',
   'Write': 'Yaz', 'Review': 'İncele', 'Normal': 'Normal',
   'Idea': 'Fikir', 'Research': 'Araştırma', 'Draft': 'Taslak', 'Published': 'Yayımlandı',
   'news': 'haber', 'article': 'makale', 'blog': 'blog', 'paper': 'akademik', 'other': 'diğer',
@@ -61,10 +61,10 @@ export const tr: Record<string, string> = {
   // Companion panel
   'Companion tabs': 'Yardımcı sekmeleri', 'Writing companion': 'Yazı yardımcısı', 'THE READING VIEW': 'OKUMA GÖRÜNÜMÜ',
   'A PLACE FOR IMAGES': 'GÖRSELLER İÇİN BİR YER', 'Keep the originals. Prepare a lighter, private copy when sending to your site.': 'Asılları saklayın. Sitenize gönderirken daha hafif ve gizli bir kopya hazırlanır.',
-  '＋ Add images': '＋ Görsel ekle', 'A SECOND PAIR OF EYES': 'İKİNCİ BİR GÖZ', 'Your voice stays yours.': 'Sesiniz sizin kalır.',
-  'For now, a small pause:': 'Şimdilik küçük bir mola:', 'Is the opening yours?': 'Açılış sizin mi?', 'Is there a detail only you noticed?': 'Yalnızca sizin fark ettiğiniz bir ayrıntı var mı?', 'Does the ending need to explain?': 'Sonun açıklama yapması gerekiyor mu?',
-  'Review mode (Ctrl 2) underlines spelling, checked on this computer. Sources and AI search live in Research (Ctrl Alt R). Nothing here changes your text.': 'İncele modu (Ctrl 2) yazım hatalarının altını çizer; denetim bu bilgisayarda yapılır. Kaynaklar ve yapay zekâ araması Araştırma’dadır (Ctrl Alt R). Burada hiçbir şey metninizi değiştirmez.',
-  'No AI request is made.': 'Hiçbir yapay zekâ isteği yapılmaz.',
+  '＋ Add images': '＋ Görsel ekle', 
+  
+  
+  
   'Loading image…': 'Görsel yükleniyor…', 'Insert in text': 'Metne ekle', 'Move to trash': 'Çöp kutusuna taşı', 'Move {name} to trash': '{name} görselini çöp kutusuna taşı',
 
   // Idea box, images, trash
@@ -154,7 +154,7 @@ export const tr: Record<string, string> = {
   'if billed (free-tier keys are not charged; search charges excluded)': 'faturalanırsa (ücretsiz katman anahtarlarından ücret alınmaz; arama ücretleri hariç)', 'over your monthly limit': 'aylık sınırınızın üzerinde', 'this month about {cost}': 'bu ay yaklaşık {cost}',
 
   // Research drawer
-  'RESEARCH': 'ARAŞTIRMA', 'Close research': 'Araştırmayı kapat', 'Research tabs': 'Araştırma sekmeleri', 'Web address to save, or a topic to search': 'Kaydedilecek web adresi ya da aranacak konu',
+  'Research tabs': 'Araştırma sekmeleri', 'Web address to save, or a topic to search': 'Kaydedilecek web adresi ya da aranacak konu',
   'Paste a link, or type a topic': 'Bir bağlantı yapıştırın ya da bir konu yazın', 'Add': 'Ekle', 'Search': 'Ara', 'Search this with AI': 'Bunu yapay zekâyla ara',
   'Not a web address, so it will be searched as a topic.': 'Bu bir web adresi değil; konu olarak aranacak.', 'Not a web address.': 'Bu bir web adresi değil.', 'Turn on AI in Settings to search': 'Aramak için Ayarlar’da yapay zekâyı açın', ', or press Search to save a request.': ' ya da istek kaydetmek için Ara’ya basın.',
   'Already saved: {title}': 'Zaten kayıtlı: {title}', 'Saved a readable copy: {title}': 'Okunabilir bir kopya kaydedildi: {title}',

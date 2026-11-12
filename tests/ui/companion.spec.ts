@@ -72,4 +72,4 @@ test('in a narrow window Focus keeps the companion one hover or one shortcut awa
   await edge.hover(); await expect(edge).toHaveCSS('opacity', '1'); await edge.click(); await expect(companion).toBeVisible()
   expect((await companion.boundingBox())!.y).toBeLessThan(40)
   await page.keyboard.press('Escape'); await expect(companion).toBeHidden(); await expect(page.locator('.app')).toHaveClass(/focus-mode/)
-})
+})

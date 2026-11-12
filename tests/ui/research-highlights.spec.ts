@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { select } from './research-helpers'
+import { select, openResearch } from './research-helpers'
 import { mkdir, writeFile, readdir, readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 
@@ -13,8 +13,8 @@ test('highlights and notes stay on the source across restarts and edits to the s
   const research = join('.tmp/yazi-preview/projects', id, 'research')
   await mkdir(join(research, 'inbox'), { recursive: true })
   await writeFile(join(research, 'inbox', 'iskele.md'), `---\ntitle: İskele notları\ntype: blog\n---\n${body}`)
-  await page.getByRole('button', { name: /^Research/ }).click()
-  const drawer = page.getByRole('complementary', { name: 'Research' })
+  await openResearch(page)
+  const drawer = page.locator('.research-tab')
   await drawer.getByRole('button', { name: /İskele notları/ }).click({ timeout: 10000 })
   const reader = drawer.getByRole('article'), popover = page.getByRole('dialog', { name: 'Highlight selection' })
   await expect(reader).toContainText('Son vapur 23:30.')
@@ -34,7 +34,7 @@ test('highlights and notes stay on the source across restarts and edits to the s
   await expect(popover).toContainText('overlaps a highlight')
   await page.keyboard.press('Escape'); await expect(popover).toHaveCount(0); await expect(reader).toBeVisible()
 
-  await page.reload(); await page.getByRole('button', { name: /^Research/ }).click()
+  await page.reload(); await openResearch(page)
   await drawer.getByRole('button', { name: /İskele notları/ }).click()
   await expect(reader.locator('mark')).toHaveText(['ilk vapur 06:10', 'Martılar ışıktan önce'])
   const index = JSON.parse(await readFile(join(research, 'research.json'), 'utf8'))

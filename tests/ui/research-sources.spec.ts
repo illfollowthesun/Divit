@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test'
+import { openResearch } from './research-helpers'
 import { createServer } from 'node:http'
 import type { AddressInfo } from 'node:net'
 import { mkdir, writeFile, readdir, readFile } from 'node:fs/promises'
@@ -23,9 +24,9 @@ test('Add URL keeps a readable offline copy; the list filters, dedupes and shows
 
   await page.goto('/'); await page.evaluate(() => localStorage.clear()); await page.reload()
   await page.getByRole('button', { name: /New writing/ }).click()
-  const toggle = page.getByRole('button', { name: /^Research/ })
+  const toggle = page.getByRole('tab', { name: /^Research/ })
   await toggle.click()
-  const drawer = page.getByRole('complementary', { name: 'Research' })
+  const drawer = page.locator('.research-tab')
   await expect(drawer.getByLabel('Web address to save')).toBeFocused()
   await drawer.getByLabel('Web address to save').fill(`${base}/go`)
   await drawer.getByRole('button', { name: 'Add', exact: true }).click()
@@ -59,7 +60,7 @@ test('Add URL keeps a readable offline copy; the list filters, dedupes and shows
 
   await mkdir(join(research, 'inbox'), { recursive: true })
   await writeFile(join(research, 'inbox', 'tarife.md'), '---\ntitle: Winter timetable\nurl: https://example.com/tarife\nsite: Example News\ntype: news\n---\nFirst ferry 06:10.')
-  await expect(drawer.locator('.research-new')).toHaveText('1 new', { timeout: 10000 })
+  await expect(toggle.locator('.research-count')).toHaveText('1 new', { timeout: 10000 })
   await expect(toggle).toHaveText('Research1 new')
   await drawer.getByLabel('Source type').selectOption('news')
   await expect(drawer.locator('.source-row')).toHaveCount(1); await expect(drawer.locator('.source-row')).toContainText('Winter timetable')
@@ -67,11 +68,10 @@ test('Add URL keeps a readable offline copy; the list filters, dedupes and shows
   await expect(drawer.locator('.source-row')).toHaveCount(1); await expect(drawer.locator('.source-row')).toContainText('Karaköy iskelesi')
   await drawer.getByLabel('Find a source').fill(''); await drawer.getByRole('button', { name: /Winter timetable/ }).click()
   await expect(drawer.getByRole('article')).toContainText('First ferry 06:10.')
-  await expect(drawer.locator('.research-new')).toHaveCount(0); await expect(toggle).toHaveText('Research')
+  await expect(toggle.locator('.research-count')).toHaveCount(0); await expect(toggle).toHaveText('Research')
 
-  await page.keyboard.press('Escape'); await page.keyboard.press('Escape')
-  await expect(drawer).toHaveCount(0); await expect(toggle).toBeFocused()
-  await page.keyboard.press('Control+Alt+r'); await expect(drawer).toBeVisible()
-  await page.keyboard.press('Control+Alt+r'); await expect(drawer).toHaveCount(0)
+  await page.keyboard.press('Escape'); await expect(drawer.getByRole('article')).toHaveCount(0) // Escape closes the reader first
+  await page.keyboard.press('Control+Alt+r'); await expect(drawer).toHaveCount(0); await expect(page.getByRole('tab', { name: 'Preview' })).toHaveAttribute('aria-selected', 'true')
+  await page.keyboard.press('Control+Alt+r'); await expect(drawer).toBeVisible(); await expect(toggle).toHaveAttribute('aria-selected', 'true')
   expect(requests).toEqual([]) // The page never loads anything remote; only the bridge fetched the URL.
 })

@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test'
 import { startMenu } from './shell-helpers'
 import { readFile } from 'node:fs/promises'
-import { select, projectId, dropSource } from './research-helpers'
+import { select, projectId, dropSource, openResearch } from './research-helpers'
 
 test('Export can end with a Sources list built from the sources actually quoted', async ({ page }) => {
   await page.goto('/'); await page.evaluate(() => localStorage.clear()); await page.reload()
@@ -17,14 +17,14 @@ test('Export can end with a Sources list built from the sources actually quoted'
   await expect(page.getByText('Add a Sources list at the end (no sources quoted yet)')).toBeVisible()
   await page.getByRole('button', { name: 'Close dialog', exact: true }).click()
 
-  await page.getByRole('button', { name: /^Research/ }).click()
-  const drawer = page.getByRole('complementary', { name: 'Research' })
+  await openResearch(page)
+  const drawer = page.locator('.research-tab')
   await drawer.getByRole('button', { name: /İskele notları/ }).click({ timeout: 10000 })
   await expect(drawer.locator('.source-text')).toContainText('Martılar')
   await select(page, 'Martılar ışıktan önce geliyor.')
   await page.getByRole('dialog', { name: 'Highlight selection' }).getByRole('button', { name: 'Insert quote' }).click()
   await expect(drawer.getByRole('status')).toHaveText('Quote inserted with its source.')
-  await page.keyboard.press('Escape'); await page.keyboard.press('Escape'); await expect(drawer).toHaveCount(0)
+  await page.keyboard.press('Escape'); await page.keyboard.press('Control+Alt+r'); await expect(drawer).toHaveCount(0)
 
   await page.getByRole('button', { name: 'Export', exact: true }).click(); await page.getByLabel('Export format').selectOption('markdown')
   const option = page.getByLabel(/Add a Sources list/)

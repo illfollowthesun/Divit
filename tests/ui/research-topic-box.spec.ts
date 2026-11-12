@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test'
+import { openResearch } from './research-helpers'
 import { randomUUID } from 'node:crypto'
 import { newProject } from '../../src/shared/types'
 import { desktopBridge, nativeCalls } from './desktop-bridge'
@@ -7,8 +8,8 @@ const project = () => ({ ...newProject('Ferry notes'), id: randomUUID(), mode: '
 async function openDrawer(page: import('@playwright/test').Page) {
   await page.goto('/')
   await page.getByRole('button', { name: /Ferry notes/ }).click()
-  await page.getByRole('button', { name: /^Research/ }).click()
-  return page.getByRole('complementary', { name: 'Research' })
+  await openResearch(page)
+  return page.locator('.research-tab')
 }
 
 test('a topic typed into the Sources box is never fetched; with AI on it offers Search this with AI', async ({ page }) => {

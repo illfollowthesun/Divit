@@ -1,4 +1,4 @@
-import type { Page } from '@playwright/test'
+import { expect, type Page } from '@playwright/test'
 import { mkdir, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 
@@ -21,4 +21,11 @@ export const projectId = (page: Page): Promise<string> => page.evaluate(() => JS
 export const researchFolder = (id: string) => join('.tmp/yazi-preview/projects', id, 'research')
 export async function dropSource(id: string, name: string, file: string) {
   const inbox = join(researchFolder(id), 'inbox'); await mkdir(inbox, { recursive: true }); await writeFile(join(inbox, name), file)
+}
+// Shows the dock on its Research tab (Ctrl+Alt+R, unless it is already there) and returns that tab's content.
+export async function openResearch(page: Page) {
+  const panel = page.locator('.research-tab')
+  if (!(await panel.isVisible())) await page.keyboard.press('Control+Alt+r')
+  await expect(panel).toBeVisible()
+  return panel
 }

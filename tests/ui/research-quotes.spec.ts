@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test'
 import { startMenu } from './shell-helpers'
 import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
-import { select, projectId, researchFolder, dropSource } from './research-helpers'
+import { select, projectId, researchFolder, dropSource, openResearch } from './research-helpers'
 
 const long = Array.from({ length: 12 }, (_, i) => `Cümle ${i + 1} vapurun sesini anlatıyor.`).join(' ') // 60 words
 const file = `---\ntitle: İskele notları\nsite: Şehir Günlüğü\npublished: 2026-10-20\nurl: https://example.com/iskele\ntype: blog\n---\nİlk vapur 06:10 kalkıyor.\n\n${long}`
@@ -21,12 +21,12 @@ test('old Notebook research notes are copied once into Research notes; the origi
   await page.getByRole('tab', { name: 'Notebook', exact: true }).click()
   await expect(page.locator('.notebook-tabs').getByRole('button')).toHaveText(['Timeline', 'Writing log'])
   await expect(page.locator('.project-notes')).toContainText('Departure')
-  await page.getByRole('button', { name: /^Research/ }).click()
-  const drawer = page.getByRole('complementary', { name: 'Research' })
+  await openResearch(page)
+  const drawer = page.locator('.research-tab')
   await drawer.getByRole('tab', { name: 'Notes' }).click()
   await expect(drawer.locator('.research-note')).toHaveCount(1)
   await expect(drawer.locator('.research-note')).toContainText('from the NotebookFerry routesCheck the winter timetable.')
-  await page.reload(); await page.getByRole('button', { name: /^Research/ }).click(); await drawer.getByRole('tab', { name: 'Notes' }).click()
+  await page.reload(); await openResearch(page); await drawer.getByRole('tab', { name: 'Notes' }).click()
   await expect(drawer.locator('.research-note')).toHaveCount(1)
   expect((await stored(page)).notes.map((n: { id: string }) => n.id)).toEqual(['old-1', 'old-2'])
 })
@@ -37,8 +37,8 @@ test('Insert quote always carries the citation, as a quote block or footnote, wa
   const editor = page.getByRole('textbox', { name: 'Markdown text' })
   await editor.fill('My opening line.')
   const id = await projectId(page); await dropSource(id, 'iskele.md', file)
-  await page.getByRole('button', { name: /^Research/ }).click()
-  const drawer = page.getByRole('complementary', { name: 'Research' })
+  await openResearch(page)
+  const drawer = page.locator('.research-tab')
   await drawer.getByRole('button', { name: /İskele notları/ }).click({ timeout: 10000 })
   await expect(drawer.locator('.source-text')).toContainText('Cümle 12')
   await select(page, 'İlk vapur 06:10')

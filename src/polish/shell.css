@@ -17,13 +17,10 @@
 .document-toolbar{flex-wrap:nowrap}
 .toolbar-start{min-width:0;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:7px;white-space:nowrap}
 
-/* Research: on wide windows the drawer is a column that pushes the text (which re-wraps) and takes the
-   companion's place; below 1100 px it stays an overlay with its close button. */
-@media(min-width:1101px){
-  .research-drawer{position:static;flex:0 0 min(440px,34vw);height:auto;box-shadow:none;border-left:1px solid var(--line);z-index:auto;width:auto}
-  .research-open .side-panel{display:none}
-}
-.research-close{min-width:32px;min-height:32px;font-size:20px}
+/* The dock is 340 px for its tabs and 440 px while Research is showing. */
+.side-panel{transition:width .16s ease}
+.side-panel.dock-research{width:440px}
+@media(prefers-reduced-motion:reduce){.side-panel{transition:none}}
 
 /* Library: New writing with a small menu for stories, books and imports; search right below it. */
 .new-split{display:flex;align-items:stretch;margin-bottom:10px}

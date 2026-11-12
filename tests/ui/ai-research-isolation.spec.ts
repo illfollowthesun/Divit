@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test'
+import { openResearch } from './research-helpers'
 import { settingsTab } from './shell-helpers'
 import { randomUUID } from 'node:crypto'
 import { desktopBridge, nativeCalls } from './desktop-bridge'
@@ -14,8 +15,8 @@ test('switching projects removes the previous project AI candidates', async ({ p
   await desktopBridge(page, { config: { enabled: true }, projects, keys: { gemini: true }, search: found })
   await page.goto('/')
   await page.getByRole('button', { name: /^Isolation A/ }).click()
-  await page.getByRole('button', { name: /^Research/ }).click()
-  const drawer = page.getByRole('complementary', { name: 'Research' })
+  await openResearch(page)
+  const drawer = page.locator('.research-tab')
   await drawer.getByRole('button', { name: 'Search about this topic' }).click()
   await drawer.getByRole('button', { name: 'Search with AI', exact: true }).click()
   await expect(drawer.locator('.ai-candidate')).toContainText('Candidate from A')
@@ -29,8 +30,8 @@ test('reopening the search form uses AI settings saved while the research drawer
   const project = { ...newProject('Settings refresh'), id: randomUUID(), mode: 'normal' }
   await desktopBridge(page, { config: { enabled: false }, projects: [project], keys: { gemini: true }, search: found })
   await page.goto('/')
-  await page.getByRole('button', { name: /^Research/ }).click()
-  const drawer = page.getByRole('complementary', { name: 'Research' })
+  await openResearch(page)
+  const drawer = page.locator('.research-tab')
   await drawer.getByRole('button', { name: 'Search about this topic' }).click()
   await expect(drawer.getByRole('button', { name: 'Search with AI', exact: true })).toHaveCount(0)
   await drawer.getByRole('button', { name: 'Cancel', exact: true }).click()
@@ -48,8 +49,8 @@ test('turning AI off while a search form is open prevents the pending search', a
   const project = { ...newProject('Disable while open'), id: randomUUID(), mode: 'normal' }
   await desktopBridge(page, { config: { enabled: true }, projects: [project], keys: { gemini: true }, search: found })
   await page.goto('/')
-  await page.getByRole('button', { name: /^Research/ }).click()
-  const drawer = page.getByRole('complementary', { name: 'Research' })
+  await openResearch(page)
+  const drawer = page.locator('.research-tab')
   await drawer.getByRole('button', { name: 'Search about this topic' }).click()
   await expect(drawer.getByRole('button', { name: 'Search with AI', exact: true })).toBeVisible()
   await page.getByRole('button', { name: 'Open settings' }).click(); await settingsTab(page, 'AI')

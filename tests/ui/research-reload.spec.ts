@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { select, projectId, dropSource } from './research-helpers'
+import { select, projectId, dropSource, openResearch } from './research-helpers'
 
 test('a delayed research load cannot replace a newly saved highlight', async ({ page }) => {
   let release!: () => void, captured!: () => void
@@ -9,8 +9,8 @@ test('a delayed research load cannot replace a newly saved highlight', async ({ 
   await page.getByRole('button', { name: /New writing/ }).click()
   const id = await projectId(page)
   await dropSource(id, 'reload.md', '---\ntitle: Reload isolation\ntype: other\n---\nİlk vapur sabah kalkıyor.')
-  await page.getByRole('button', { name: /^Research/ }).click()
-  const drawer = page.getByRole('complementary', { name: 'Research' })
+  await openResearch(page)
+  const drawer = page.locator('.research-tab')
   await expect(drawer.getByRole('button', { name: /Reload isolation/ })).toBeVisible()
   let held = false
   await page.route('**/__yazi/research', async route => {

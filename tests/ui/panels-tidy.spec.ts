@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test'
 import { newProject } from '../../src/shared/types'
 import { randomUUID } from 'node:crypto'
 import { desktopBridge } from './desktop-bridge'
-import { select } from './research-helpers'
+import { select, openResearch } from './research-helpers'
 
 for (const viewport of [{ width: 1440, height: 900 }, { width: 960, height: 700 }]) {
   test(`Settings component keeps drafts, keyboard tabs and footer at ${viewport.width}`, async ({ page }) => {
@@ -39,8 +39,8 @@ for (const viewport of [{ width: 1440, height: 900 }, { width: 960, height: 700 
     }, project.id)
     await page.reload()
     await expect(page.getByLabel('Title', { exact: true })).toHaveValue('The morning crossing')
-    await page.getByRole('button', { name: /^Research/ }).click()
-    const drawer = page.getByRole('complementary', { name: 'Research', exact: true })
+    await openResearch(page)
+    const drawer = page.locator('.research-tab')
     await drawer.getByRole('button', { name: /The morning crossing/ }).click()
     await expect(drawer.locator('.source-text')).toContainText('Regular passengers')
     await expect(drawer.locator('.source-ai-details p')).toBeHidden()

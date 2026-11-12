@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test'
 import { readdir, readFile } from 'node:fs/promises'
 import { join, resolve } from 'node:path'
-import { projectId, researchFolder, dropSource } from './research-helpers'
+import { projectId, researchFolder, dropSource, openResearch } from './research-helpers'
 
 test('Search about this topic saves a request file, copies a ready prompt and waits for inbox sources', async ({ page, context }) => {
   await context.grantPermissions(['clipboard-read', 'clipboard-write'])
@@ -10,8 +10,8 @@ test('Search about this topic saves a request file, copies a ready prompt and wa
   await page.getByLabel('Title').fill('Son Vapur')
   const editor = page.getByRole('textbox', { name: 'Markdown text' })
   await editor.fill('Kış vapur tarifesi değişti.'); await editor.press('Control+a')
-  await page.getByRole('button', { name: /^Research/ }).click()
-  const drawer = page.getByRole('complementary', { name: 'Research' })
+  await openResearch(page)
+  const drawer = page.locator('.research-tab')
   await drawer.getByRole('button', { name: 'Search about this topic' }).click()
   const form = drawer.getByRole('form', { name: 'Search about this topic' })
   await expect(form.getByLabel('Topic')).toHaveValue('Kış vapur tarifesi değişti.') // the selection wins over the title

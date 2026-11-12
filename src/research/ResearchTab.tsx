@@ -20,7 +20,7 @@ type Tab = typeof tabs[number]
 export type InsertQuote = (kind: 'quote' | 'footnote', quote: string, source: ResearchSource) => boolean
 export const newInboxCount = (research: Research | null) => research?.sources.filter(s => s.origin === 'inbox' && s.status === 'unread').length ?? 0
 
-export function ResearchDrawer({ projectId, projectTitle, language, suggestTopic, research, reload, saveAnnotations, close, insert, sectionId, placeName, openSettings }: { projectId: string; projectTitle: string; language: 'en' | 'tr'; suggestTopic: () => string; research: Research | null; reload: () => Promise<unknown>; saveAnnotations: (change: (current: Annotations) => Partial<Annotations>) => Promise<void>; close: () => void; insert: InsertQuote; sectionId: string | null; placeName: (sectionId: string | null) => string; openSettings: () => void }) {
+export function ResearchTab({ projectId, projectTitle, language, suggestTopic, research, reload, saveAnnotations, focusSignal, insert, sectionId, placeName, openSettings }: { projectId: string; projectTitle: string; language: 'en' | 'tr'; suggestTopic: () => string; research: Research | null; reload: () => Promise<unknown>; saveAnnotations: (change: (current: Annotations) => Partial<Annotations>) => Promise<void>; focusSignal: number; insert: InsertQuote; sectionId: string | null; placeName: (sectionId: string | null) => string; openSettings: () => void }) {
   const [tab, setTab] = useState<Tab>('Sources'), [insertAs, setInsertAs] = useState<'quote' | 'footnote'>('quote')
   const [url, setUrl] = useState(''), [working, setWorking] = useState(false), [problem, setProblem] = useState(''), [notice, setNotice] = useState('')
   const [query, setQuery] = useState(''), [type, setType] = useState('all'), [status, setStatus] = useState('all')
@@ -31,7 +31,8 @@ export function ResearchDrawer({ projectId, projectTitle, language, suggestTopic
   const address = asUrl(url), isTopic = !!url.trim() && !address
   // Asked again each time the box turns into a topic: Settings may have changed meanwhile.
   useEffect(() => { if (isTopic && desktop) void ai.status().then(status => setAiOn(status.config.enabled)).catch(() => setAiOn(false)) }, [isTopic])
-  useEffect(() => { field.current?.focus() }, [])
+  // The box takes focus when the writer opens Research (Ctrl+Alt+R or the tab), not when the dock merely restores it.
+  useEffect(() => { if (focusSignal) field.current?.focus() }, [focusSignal])
   useEffect(() => { setOpenId(null); setPending(null) }, [projectId])
   const sources = research?.sources ?? [], open = sources.find(s => s.id === openId)
   const shown = sources.filter(s => (type === 'all' || s.type === type) && (status === 'all' || s.status === status) && (!query.trim() || [s.title, s.site, s.summary, s.topic, s.author].some(v => v?.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase())))).sort((a, b) => b.addedAt.localeCompare(a.addedAt))
@@ -60,9 +61,7 @@ export function ResearchDrawer({ projectId, projectTitle, language, suggestTopic
     try { await api.research(projectId, 'update-source', { sourceId: source.id, patch: { addUse: { sectionId, at: new Date().toISOString(), highlightId } } }); await reload() }
     catch (error) { setProblem(t('The quote is in your text, but marking the source as quoted failed: {reason}', { reason: message(error) })) }
   }
-  const fresh = newInboxCount(research)
-  return <aside id="research-drawer" className="research-drawer" aria-label={t('Research')} onKeyDown={event => { if (event.key === 'Escape') { event.stopPropagation(); if (pending) setPending(null); else if (open) setOpenId(null); else close() } }}>
-    <div className="research-head"><div className="section-label">{t('RESEARCH')} <span>{sources.length}</span></div>{fresh > 0 && <span className="research-new">{t('{n} new', { n: fresh })}</span>}<button className="research-close" onClick={close} aria-label={t('Close research')}>×</button></div>
+  return <div className="research-tab" onKeyDown={event => { if (event.key === 'Escape' && (pending || open)) { event.stopPropagation(); if (pending) setPending(null); else setOpenId(null) } }}>
     {pending && <div className="long-quote" role="alert"><p>{t('This quote is {n} words. Quoting this much may need the author’s permission.', { n: pending.words })}</p><div><button className="outline-button" onClick={() => void requestInsert(pending.quote, pending.source, pending.highlightId, true)}>{t('Insert anyway')}</button><button onClick={() => setPending(null)}>{t('Cancel')}</button></div></div>}
     {problem && <p className="research-problem" role="alert">{problem}</p>}
     <p className="research-notice" role="status">{notice}</p>
@@ -85,5 +84,5 @@ export function ResearchDrawer({ projectId, projectTitle, language, suggestTopic
         {tab === 'Notes' && research && <NotesTab research={research} save={saveAnnotations} openHighlight={id => { const h = research.highlights.find(item => item.id === id); if (h) openSource(h.sourceId, h.id) }}/>}
       </div>
     </>}
-  </aside>
+  </div>
 }

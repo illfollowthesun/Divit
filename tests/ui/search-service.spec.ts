@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test'
+import { openResearch } from './research-helpers'
 import type { Page } from '@playwright/test'
 import { randomUUID } from 'node:crypto'
 import { newProject } from '../../src/shared/types'
@@ -11,8 +12,8 @@ const local = { enabled: true, provider: 'local', model: 'llama3.2', baseUrl: 'h
 async function search(page: Page) {
   await page.goto('/')
   await page.getByRole('button', { name: /Ferry notes/ }).click()
-  await page.getByRole('button', { name: /^Research/ }).click()
-  const drawer = page.getByRole('complementary', { name: 'Research' })
+  await openResearch(page)
+  const drawer = page.locator('.research-tab')
   await drawer.getByRole('button', { name: 'Search about this topic' }).click()
   await drawer.getByLabel('Topic', { exact: true }).fill('Winter ferries')
   return drawer

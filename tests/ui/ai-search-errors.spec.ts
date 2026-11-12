@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test'
+import { openResearch } from './research-helpers'
 import { randomUUID } from 'node:crypto'
 import { newProject } from '../../src/shared/types'
 import { desktopBridge, nativeCalls } from './desktop-bridge'
@@ -10,8 +11,8 @@ async function searchFails(page: import('@playwright/test').Page, searchError: s
   await desktopBridge(page, { config: { enabled: true }, keys: { gemini: true }, searchError, answer: { answer: 'Ferries have run across the Bosphorus since 1851.\n- Look for: city archives', usage }, projects: [{ ...newProject('Ferry notes'), id: randomUUID(), mode: 'normal' }] })
   await page.goto('/')
   await page.getByRole('button', { name: /Ferry notes/ }).click()
-  await page.getByRole('button', { name: /^Research/ }).click()
-  const drawer = page.getByRole('complementary', { name: 'Research' })
+  await openResearch(page)
+  const drawer = page.locator('.research-tab')
   await drawer.getByRole('button', { name: 'Search about this topic' }).click()
   await drawer.getByLabel('Topic', { exact: true }).fill('Bosphorus ferries')
   await drawer.getByRole('button', { name: 'Search with AI' }).click()

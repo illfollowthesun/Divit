@@ -44,3 +44,25 @@ test('the side panel icon shows and hides the dock', async ({ page }) => {
   await icon.click(); await expect(dock).toBeHidden(); await expect(icon).toHaveAttribute('aria-pressed', 'false')
   await icon.click(); await expect(dock).toBeVisible()
 })
+
+test('Research is a tab of the dock: Ctrl+Alt+R shows it, again returns to the previous tab, and the tab is remembered per project type', async ({ page }) => {
+  await start(page)
+  const dock = page.getByRole('complementary', { name: 'Writing companion' }), tab = (name: string) => dock.getByRole('tab', { name, exact: true })
+  await expect(dock.getByRole('tab')).toHaveText(['Preview', 'Research', 'Images'])
+  await expect(row(page).getByRole('button', { name: 'Research' })).toHaveCount(0)
+  await tab('Images').click(); await expect(tab('Images')).toHaveAttribute('aria-selected', 'true')
+  await page.keyboard.press('Control+Alt+r')
+  await expect(tab('Research')).toHaveAttribute('aria-selected', 'true'); await expect(page.locator('.research-tab')).toBeVisible()
+  await expect(page.getByLabel('Web address to save')).toBeFocused()
+  await expect(page.locator('.research-tab').getByText('RESEARCH', { exact: true })).toHaveCount(0) // the tab is the header
+  await page.keyboard.press('Control+Alt+r'); await expect(tab('Images')).toHaveAttribute('aria-selected', 'true')
+  // The last tab is kept for the next visit, separately for each project type.
+  await tab('Research').click(); await page.reload()
+  await expect(page.getByRole('textbox', { name: 'Markdown text' })).toBeVisible()
+  await expect(tab('Research')).toHaveAttribute('aria-selected', 'true'); await expect(page.getByLabel('Web address to save')).not.toBeFocused()
+  await page.getByRole('button', { name: 'More ways to start' }).click()
+  await page.getByRole('menu', { name: 'More ways to start' }).getByText('New story or book', { exact: true }).click()
+  await page.getByLabel('Project type').selectOption('book'); await page.getByRole('button', { name: 'Create project', exact: true }).click()
+  await expect(dock.getByRole('tab')).toHaveText(['Preview', 'Cards', 'Notebook', 'Research', 'Images'])
+  await expect(tab('Preview')).toHaveAttribute('aria-selected', 'true')
+})

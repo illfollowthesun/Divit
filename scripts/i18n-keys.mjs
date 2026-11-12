@@ -6,7 +6,7 @@ import { pathToFileURL } from 'node:url'
 
 // Values shown through t(variable): tab names, stages, source types, statuses, kinds, providers and labels.
 export const DYNAMIC = [
-  'Preview', 'Cards', 'Notes', 'Check', 'Reflection', 'Notebook', 'Images', 'Sources', 'Highlights', 'Write', 'Review', 'Normal', 'Only the text, Esc to leave', 'Spelling underlines and the issue list', 'Everything',
+  'Preview', 'Cards', 'Notes', 'Notebook', 'Images', 'Sources', 'Highlights', 'Write', 'Review', 'Normal', 'Only the text, Esc to leave', 'Spelling underlines and the issue list', 'Everything',
   'Idea', 'Research', 'Draft', 'Published', 'news', 'article', 'blog', 'paper', 'other', 'draft', 'to-fix', 'done',
   'projects', 'ideas', 'images', 'STORY', 'BOOK', 'CHAPTER', 'SCENE', 'Sand', 'Sage', 'Sky', 'Rose',
   'All changes saved', 'Saving…', 'Unsaved changes', 'Not saved — your text is still here',
