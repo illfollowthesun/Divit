@@ -13,7 +13,7 @@ test('Word and PDF exports work with no extra tools and say which path made them
   await page.getByRole('textbox', { name: 'Markdown text' }).fill('Vapur **erken** kalktı; martılar *ışıktan önce* geldi.[^1]\n\n[^1]: Şehir Hatları, 2026.')
   await page.getByRole('button', { name: 'Export', exact: true }).click()
   const dialog = page.getByRole('dialog', { name: 'A finished copy' })
-  await expect(dialog.getByLabel('Export format')).toHaveValue('docx')
+  await expect(dialog.getByRole('radio', { name: 'Word' })).toBeChecked()
   await expect(dialog).toContainText('No extra tools are needed.')
 
   let pending = page.waitForEvent('download')
@@ -26,7 +26,7 @@ test('Word and PDF exports work with no extra tools and say which path made them
   expect(xml).not.toContain('[^1]')
   await expect(dialog.locator('.export-result')).toContainText('Made with the built-in exporter.')
 
-  await dialog.getByLabel('Export format').selectOption('pdf')
+  await dialog.getByRole('radio', { name: 'PDF' }).check()
   pending = page.waitForEvent('download')
   await dialog.getByRole('button', { name: 'Export manuscript' }).click()
   download = await pending
@@ -35,6 +35,6 @@ test('Word and PDF exports work with no extra tools and say which path made them
   expect(pdf.subarray(0, 5).toString()).toBe('%PDF-'); expect(pdf.length).toBeGreaterThan(5000)
   expect(download.suggestedFilename()).toMatch(/\.pdf$/)
 
-  await dialog.getByLabel('Export format').selectOption('epub')
+  await dialog.getByRole('radio', { name: 'EPUB' }).check()
   await expect(dialog).toContainText(/EPUB (needs Pandoc|is made with)/)
 })

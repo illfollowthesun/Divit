@@ -24,6 +24,11 @@ export const api = {
     if (!desktop) { window.open(url, '_blank', 'noopener'); return }
     const { openUrl } = await import('@tauri-apps/plugin-opener'); await openUrl(url)
   },
+  // Opens the folder that holds a finished export, with the file selected.
+  revealInFolder: async (path: string) => {
+    if (!desktop) return
+    const { revealItemInDir } = await import('@tauri-apps/plugin-opener'); await revealItemInDir(path)
+  },
   backup: async (reason: 'status' | 'daily' | 'close' | 'manual'): Promise<BackupInfo> => {
     if (desktop) return invoke('backup_action', { reason })
     if (reason === 'manual') throw new Error(t('Backups use the Documents folder in the desktop app.'))

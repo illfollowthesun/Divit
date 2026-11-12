@@ -91,3 +91,27 @@ test('the Research tab: one input row whose button follows the input, a Search a
   await expect(row).toContainText('Harbour Notes'); await expect(row.locator('.type-chip')).toBeVisible(); await expect(row.locator('small .unread-dot')).toHaveCount(1) // the dot belongs to the meta line
   server.close()
 })
+
+test('the export dialog says what is exported, lists formats as radio rows and swaps the button for the file name', async ({ page }) => {
+  await start(page)
+  await page.getByLabel('Title').fill('The Last Ferry'); await page.getByRole('textbox', { name: 'Markdown text' }).fill('The first boat leaves at six.')
+  await row(page).getByRole('button', { name: 'Export', exact: true }).click()
+  const dialog = page.getByRole('dialog', { name: 'A finished copy' })
+  await expect(dialog.locator('.export-what')).toHaveText('The Last Ferry') // a blog post has no chapters to count
+  await expect(dialog.locator('select')).toHaveCount(0); await expect(dialog.locator('.export-summary')).toHaveCount(0)
+  await expect(dialog.getByRole('radio')).toHaveCount(4)
+  await expect(dialog.getByRole('radio', { name: 'Word' })).toBeChecked()
+  for (const name of ['Word', 'PDF', 'Markdown']) await expect(dialog.getByRole('radio', { name })).toHaveAccessibleDescription('Made by Divit itself. No extra tools are needed.')
+  await expect(dialog.getByRole('radio', { name: 'EPUB' })).toHaveAccessibleDescription(/Checking local export tools|EPUB is made with|EPUB needs Pandoc/)
+  // The Sources option lines up with the rows and says why it is off.
+  const sources = dialog.getByRole('checkbox', { name: /Add a Sources list/ })
+  await expect(sources).toBeDisabled(); await expect(sources).toHaveAccessibleDescription('No sources quoted yet')
+  const left = (locator: ReturnType<typeof dialog.locator>) => locator.evaluate(el => el.getBoundingClientRect().left)
+  expect(Math.abs(await left(dialog.getByRole('radio', { name: 'Word' })) - await left(sources))).toBeLessThan(2)
+  // One primary button; after exporting, the file name and Show in folder take its place.
+  await dialog.getByRole('radio', { name: 'Markdown' }).check()
+  const download = page.waitForEvent('download'); await dialog.getByRole('button', { name: 'Export manuscript' }).click(); await download
+  await expect(dialog.getByRole('button', { name: 'Export manuscript' })).toHaveCount(0)
+  await expect(dialog.locator('.export-result')).toContainText(/\.md/); await expect(dialog.locator('.export-result')).toContainText('Copy ready')
+  await dialog.getByRole('radio', { name: 'PDF' }).check(); await expect(dialog.getByRole('button', { name: 'Export manuscript' })).toBeVisible()
+})

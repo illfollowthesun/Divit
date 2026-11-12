@@ -12,9 +12,9 @@ test('Export can end with a Sources list built from the sources actually quoted'
   await dropSource(id, 'quoted.md', '---\ntitle: İskele notları\nsite: Şehir Günlüğü\npublished: 2026-10-20\nurl: https://example.com/iskele\n---\nMartılar ışıktan önce geliyor.')
   await dropSource(id, 'unused.md', '---\ntitle: Okunmuş ama alıntılanmamış\nurl: https://example.com/other\n---\nBaşka bir metin.')
 
-  await page.getByRole('button', { name: 'Export', exact: true }).click(); await page.getByLabel('Export format').selectOption('markdown')
+  await page.getByRole('button', { name: 'Export', exact: true }).click(); await page.getByRole('radio', { name: 'Markdown' }).check()
   await expect(page.getByLabel(/Add a Sources list/)).toBeDisabled()
-  await expect(page.getByText('Add a Sources list at the end (no sources quoted yet)')).toBeVisible()
+  await expect(page.getByText('No sources quoted yet')).toBeVisible()
   await page.getByRole('button', { name: 'Close dialog', exact: true }).click()
 
   await openResearch(page)
@@ -26,9 +26,9 @@ test('Export can end with a Sources list built from the sources actually quoted'
   await expect(drawer.getByRole('status')).toHaveText('Quote inserted with its source.')
   await page.keyboard.press('Escape'); await page.keyboard.press('Control+Alt+r'); await expect(drawer).toHaveCount(0)
 
-  await page.getByRole('button', { name: 'Export', exact: true }).click(); await page.getByLabel('Export format').selectOption('markdown')
+  await page.getByRole('button', { name: 'Export', exact: true }).click(); await page.getByRole('radio', { name: 'Markdown' }).check()
   const option = page.getByLabel(/Add a Sources list/)
-  await expect(page.getByText('Add a Sources list at the end (1 quoted source)')).toBeVisible()
+  await expect(page.getByText('1 quoted source', { exact: true })).toBeVisible()
   await expect(option).not.toBeChecked(); await option.check()
   const download = page.waitForEvent('download'); await page.getByRole('button', { name: 'Export manuscript', exact: true }).click()
   const markdown = await readFile(await (await download).path(), 'utf8')

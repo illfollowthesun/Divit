@@ -116,7 +116,7 @@ test('browser preview exports a real Markdown download with the built-in exporte
   await page.getByRole('button', { name: '+ Scene', exact: true }).click()
   await page.getByLabel('Section title').fill('The crossing')
   await page.getByRole('textbox', { name: 'Markdown text' }).fill('The ferry left before the city woke.')
-  await page.getByRole('button', { name: 'Export', exact: true }).click(); await page.getByLabel('Export format').selectOption('markdown')
+  await page.getByRole('button', { name: 'Export', exact: true }).click(); await page.getByRole('radio', { name: 'Markdown' }).check()
   const pending = page.waitForEvent('download')
   await page.getByRole('button', { name: 'Export manuscript', exact: true }).click()
   const download = await pending, content = await readFile((await download.path())!, 'utf8')
