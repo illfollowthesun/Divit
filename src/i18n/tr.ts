@@ -248,7 +248,7 @@ export const tr: Record<string, string> = {
   'This item changed in another tab. Copy your text before reloading.': 'Bu öğe başka bir sekmede değişti. Yeniden yüklemeden önce metninizi kopyalayın.', 'Item not found': 'Öğe bulunamadı', 'An item already uses this location.': 'Bu konumu zaten başka bir öğe kullanıyor.',
   'Use images under 3 MB in browser preview. Desktop supports 100 MB.': 'Tarayıcı önizlemesinde 3 MB’tan küçük görseller kullanın. Masaüstü 100 MB’a kadar destekler.',
   // Explanations (items 4-12)
-  'Side panel': 'Yan panel', 'Side panel: preview, cards, notebook (Ctrl+Alt+P)': 'Yan panel: önizleme, kartlar, defter (Ctrl+Alt+P)', 'Close side panel': 'Yan paneli kapat',
+  'Side panel': 'Yan panel', 'Side panel: preview, cards, notebook, research (Ctrl+Alt+P)': 'Yan panel: önizleme, kartlar, defter, araştırma (Ctrl+Alt+P)', 'Saved': 'Kaydedildi', 'Library (Ctrl+Alt+L)': 'Kitaplık (Ctrl+Alt+L)', 'Close side panel': 'Yan paneli kapat',
   'Keep the line you are writing at the same height (Ctrl+Alt+T)': 'Yazdığınız satırı hep aynı yükseklikte tutar (Ctrl+Alt+T)',
   'Hide the library and the bars; move the mouse to the top to bring them back (Ctrl+.)': 'Kitaplığı ve çubukları gizler; geri getirmek için fareyi üste götürün (Ctrl+.)',
   'Mode': 'Mod', 'Normal: everything. Write: only the text, Esc to leave. Review: spelling underlines and the issue list.': 'Normal: her şey. Yaz: yalnızca metin, çıkmak için Esc. İncele: yazım altçizgileri ve sorun listesi.',

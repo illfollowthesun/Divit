@@ -8,7 +8,6 @@
 .review-panel ul{list-style:none;padding:0}.review-panel p{font-size:12px;line-height:1.6}.review-issue{padding:16px 0;border-bottom:1px solid var(--line)}
 .review-issue small{font-size:10px;color:var(--muted)}.review-issue>div{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.review-issue button{font-size:11px;color:var(--accent);padding:4px 0;text-align:left}.review-issue .issue-location{font:22px Newsreader,serif}
 @media(max-width:650px){.mode-review .workspace{flex-direction:column}.review-panel{width:100%;max-height:30vh;border-left:0;border-top:1px solid var(--line);padding:15px}.mode-review .writing-area{min-height:0;flex:1}}
-.document-toolbar select[aria-label="Writing mode"]{font-size:12px;padding:5px;color:var(--muted);background:var(--paper);border:0}
 
 /* Review contents: visible actions and desktop click targets. */
 .review-panel .section-label{font-size:12px;color:var(--text)}

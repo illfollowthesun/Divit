@@ -6,7 +6,7 @@ async function book(page: Page) {
   await startMenu(page, 'New story or book'); await page.getByLabel('Project type').selectOption('book'); await page.getByLabel('Project title').fill('Explain test')
   await page.getByRole('button', { name: 'Create project', exact: true }).click()
 }
-const saved = (page: Page) => page.keyboard.press('Control+s').then(() => expect(page.locator('.editor-footer [role=status]')).toHaveText('All changes saved'))
+const saved = (page: Page) => page.keyboard.press('Control+s').then(() => expect(page.locator('.save-state')).toHaveText('Saved'))
 
 test('the chosen chapter or scene is remembered after a reload', async ({ page }) => {
   await book(page)
@@ -63,7 +63,7 @@ test('the quiet-screen controls say what they do, and the More menu explains its
   await page.getByRole('button', { name: /New writing/ }).click()
   await expect(page.getByRole('button', { name: 'Focus', exact: true })).toHaveAttribute('title', /Hide the library and the bars.*\(Ctrl\+\.\)/)
   await expect(page.getByRole('button', { name: 'Typewriter', exact: true })).toHaveAttribute('title', /same height \(Ctrl\+Alt\+T\)/)
-  await expect(page.getByRole('button', { name: 'Side panel', exact: true })).toHaveAttribute('title', /preview, cards, notebook \(Ctrl\+Alt\+P\)/)
+  await expect(page.getByRole('button', { name: 'Side panel', exact: true })).toHaveAttribute('title', /preview, cards, notebook, research \(Ctrl\+Alt\+P\)/)
   await expect(page.locator('.mode-picker')).toContainText('Mode')
   await page.getByRole('button', { name: 'More actions' }).click()
   const menu = page.getByRole('menu', { name: 'More actions' })

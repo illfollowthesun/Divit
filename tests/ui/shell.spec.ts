@@ -81,11 +81,11 @@ test('the sidebar starts with New writing and search; stories, books and imports
 test('the status bar shows words, reading time and save state, without the Focus hint; Focus shows its state', async ({ page }) => {
   await book(page)
   const footer = page.locator('.editor-footer')
-  await expect(footer).toContainText('0 words'); await expect(footer).toContainText('1 min read'); await expect(footer.getByRole('status')).toBeVisible()
+  await expect(footer).toContainText('0 words'); await expect(footer).toContainText('1 min read'); await expect(page.locator('.save-state')).toBeVisible()
   await expect(footer.getByRole('button')).toHaveCount(0)
-  const focus = page.locator('.top-actions').getByRole('button', { name: 'Focus', exact: true })
+  const focus = page.locator('.document-toolbar').getByRole('button', { name: 'Focus', exact: true })
   await expect(focus).toHaveAttribute('aria-pressed', 'false'); await focus.click()
-  await expect(page.locator('.top-actions').getByRole('button', { name: 'Leave focus' })).toHaveAttribute('aria-pressed', 'true')
+  await expect(page.locator('.document-toolbar').getByRole('button', { name: 'Leave focus' })).toHaveAttribute('aria-pressed', 'true')
 })
 
 test('Settings opens on side tabs with Save and Cancel always in view; Save turns on with a change', async ({ page }) => {

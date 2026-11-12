@@ -23,7 +23,7 @@ test('modes preserve editor, selection and history; Write hides chrome and escap
   expect(await page.evaluate(() => (window as any).modeEditor === document.querySelector('.cm-content'))).toBe(true)
   await page.keyboard.press('Control+z'); await expect(editor).not.toContainText('More text')
   await page.keyboard.press('Control+2'); await page.keyboard.press('Control+s')
-  await expect(page.locator('.editor-footer [role=status]')).toHaveText('All changes saved')
+  await expect(page.locator('.save-state')).toHaveText('Saved')
   await page.reload(); await expect(page.locator('.app')).toHaveClass(/mode-review/)
 })
 
@@ -34,7 +34,7 @@ test('Normal underlines are an explicit persisted choice', async ({ page }) => {
   const menu = page.getByRole('button', { name: 'More actions' }), toggle = page.getByRole('menuitemcheckbox', { name: 'Underlines' })
   await menu.click(); await expect(toggle).toHaveAttribute('aria-checked', 'false')
   await toggle.click(); await expect(page.locator('.cm-misspelled')).toBeVisible()
-  await page.keyboard.press('Control+s'); await expect(page.locator('.editor-footer [role=status]')).toHaveText('All changes saved')
+  await page.keyboard.press('Control+s'); await expect(page.locator('.save-state')).toHaveText('Saved')
   await page.reload(); await menu.click(); await expect(toggle).toHaveAttribute('aria-checked', 'true')
 })
 
@@ -78,7 +78,7 @@ test('ignore once follows one occurrence; persistent ignores and dictionaries re
   await panel.locator('li').filter({ has: page.getByRole('button', { name: 'misspelld', exact: true }) }).getByRole('button', { name: 'Add to dictionary', exact: true }).click()
   await expect(panel.locator('li')).toHaveCount(0)
   await page.keyboard.press('Control+s')
-  await expect(page.locator('.editor-footer [role=status]')).toHaveText('All changes saved')
+  await expect(page.locator('.save-state')).toHaveText('Saved')
   await page.reload(); await expect(panel.locator('li')).toHaveCount(0)
   await details(page); await page.getByRole('combobox', { name: 'LANGUAGE', exact: true }).selectOption('tr')
   await expect(zorpex).toHaveCount(2, { timeout: 15000 })

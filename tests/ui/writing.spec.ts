@@ -13,7 +13,7 @@ test('writing survives switching and reload; preview and word count reflect text
   await page.getByRole('textbox', { name: 'Title', exact: true }).fill('İstanbul günlüğü')
   await page.getByRole('textbox', { name: 'Markdown text' }).fill('Merhaba dünya.\n\n## Bir sokak\n\nYağmurdan sonra.')
   await page.keyboard.press('Control+s')
-  await expect(page.getByRole('status')).toHaveText('All changes saved')
+  await expect(page.locator('.save-state')).toHaveText('Saved')
   await expect(page.locator('.prose h2')).toHaveText('Bir sokak')
   await page.getByRole('button', { name: /New writing/ }).click()
   await page.getByRole('textbox', { name: 'Title', exact: true }).fill('İkinci sayfa')

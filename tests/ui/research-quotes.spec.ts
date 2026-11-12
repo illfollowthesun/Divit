@@ -11,7 +11,7 @@ const stored = (page: import('@playwright/test').Page) => page.evaluate(() => JS
 test('old Notebook research notes are copied once into Research notes; the originals stay in the project', async ({ page }) => {
   await page.goto('/'); await page.evaluate(() => localStorage.clear()); await page.reload()
   await startMenu(page, 'New story or book'); await page.getByRole('button', { name: 'Create project', exact: true }).click()
-  await page.keyboard.press('Control+s'); await expect(page.getByRole('status').first()).toHaveText('All changes saved')
+  await page.keyboard.press('Control+s'); await expect(page.locator('.save-state')).toHaveText('Saved')
   await page.evaluate(() => {
     const lib = JSON.parse(localStorage.getItem('yazi-browser-preview-v1')!)
     lib.projects[0].notes = [{ id: 'old-1', kind: 'research', title: 'Ferry routes', body: 'Check the winter timetable.', when: '' }, { id: 'old-2', kind: 'timeline', title: 'Departure', body: 'First ferry.', when: 'Day 1' }]
@@ -56,7 +56,7 @@ test('Insert quote always carries the citation, as a quote block or footnote, wa
   await page.getByRole('dialog', { name: 'Highlight selection' }).getByRole('button', { name: 'Insert quote' }).click()
   await expect(drawer.getByRole('alert')).toContainText('This quote is 60 words.')
   await drawer.getByRole('button', { name: 'Cancel', exact: true }).click()
-  await page.keyboard.press('Control+s'); await expect(page.locator('.editor-footer [role=status]')).toHaveText('All changes saved')
+  await page.keyboard.press('Control+s'); await expect(page.locator('.save-state')).toHaveText('Saved')
   expect((await stored(page)).body).toBe('My opening line.\n\n> Cümle 1 vapurun sesini anlatıyor.\n>\n> — İskele notları, Şehir Günlüğü (2026-10-20), https://example.com/iskele\n\n')
 
   // From the Highlights tab, as a footnote.
@@ -73,7 +73,7 @@ test('Insert quote always carries the citation, as a quote block or footnote, wa
   })
   await drawer.getByRole('button', { name: /^Insert quote: İlk vapur/ }).click()
   await expect(drawer.getByRole('status')).toHaveText('Quote inserted with its source as a footnote.')
-  await page.keyboard.press('Control+s'); await expect(page.locator('.editor-footer [role=status]')).toHaveText('All changes saved')
+  await page.keyboard.press('Control+s'); await expect(page.locator('.save-state')).toHaveText('Saved')
   const body: string = (await stored(page)).body
   expect(body).toContain('“İlk vapur 06:10”[^1]')
   expect(body.endsWith('\n\n[^1]: İskele notları, Şehir Günlüğü (2026-10-20), https://example.com/iskele')).toBe(true)

@@ -9,6 +9,6 @@ test('ISO date, a thin accessible goal and key chips remain consistent',async({p
   await date.fill('2026-11-03');await page.getByRole('textbox',{name:'Markdown text'}).fill('One quiet morning.')
   await expect(page.getByRole('progressbar',{name:'Words written today',exact:true})).toHaveAttribute('value','3')
   await expect(page.locator('.new-button kbd')).toBeVisible(); await expect(page.locator('.editor-footer kbd')).toHaveCount(0) // the Focus hint lives in the shortcut sheet
-  await page.keyboard.press('Control+s');await expect(page.getByRole('status')).toHaveText('All changes saved')
+  await page.keyboard.press('Control+s');await expect(page.locator('.save-state')).toHaveText('Saved')
   await page.reload();await details(page);await expect(date).toHaveValue('2026-11-03')
 })

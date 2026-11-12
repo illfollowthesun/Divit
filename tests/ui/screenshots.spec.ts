@@ -27,7 +27,7 @@ test('capture the Phase 2 browser preview and verify the compact writing desk', 
   await page.getByLabel('Role / first impression').fill('A keeper of small things')
   await page.getByLabel('Details', { exact: true }).fill('Keeps old ferry tickets in her notebook.\n\nCounts the ropes before every departure.\n\nShe knows the city best from the water.')
   await page.getByRole('button', { name: 'Save card', exact: true }).click()
-  await page.keyboard.press('Control+s'); await expect(page.getByRole('status')).toHaveText('All changes saved')
+  await page.keyboard.press('Control+s'); await expect(page.locator('.save-state')).toHaveText('Saved')
   await page.evaluate(() => document.fonts.ready.then(() => undefined))
   await page.screenshot({ path: `${root}/screenshots/${prefix}-1440.png` })
 

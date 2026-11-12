@@ -11,6 +11,6 @@ test('outline has readable targets, live chapter counts and persistent scene sta
   expect(await row.locator('.outline-node').evaluate(el=>getComputedStyle(el).fontSize)).toBe('13px')
   await page.locator('.scene-status').click();await expect(page.locator('.scene-status')).toHaveAttribute('data-status','to-fix')
   await page.locator('.scene-status').press('Enter');await expect(page.locator('.scene-status')).toHaveAttribute('data-status','done')
-  await page.keyboard.press('Control+s');await expect(page.getByRole('status')).toHaveText('All changes saved')
+  await page.keyboard.press('Control+s');await expect(page.locator('.save-state')).toHaveText('Saved')
   await page.reload();await expect(page.locator('.scene-status')).toHaveAttribute('data-status','done')
 })

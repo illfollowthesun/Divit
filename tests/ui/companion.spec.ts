@@ -11,12 +11,12 @@ const paragraphs = Array.from({ length: 35 }, (_, i) => `Paragraph ${i + 1}. A l
 test('the companion can be put away at full width, keeps the text readable and is remembered', async ({ page }) => {
   await book(page)
   const companion = page.getByRole('complementary', { name: 'Writing companion' })
-  const toggle = page.locator('.top-actions').getByRole('button', { name: 'Side panel', exact: true })
+  const toggle = page.locator('.document-toolbar').getByRole('button', { name: 'Side panel', exact: true })
   await expect(companion).toBeVisible(); await expect(toggle).toHaveAttribute('aria-pressed', 'true')
   await toggle.click()
   await expect(companion).toBeHidden(); await expect(toggle).toHaveAttribute('aria-pressed', 'false')
   expect((await page.locator('.markdown-editor').boundingBox())!.width).toBeLessThanOrEqual(800)
-  await page.keyboard.press('Control+s'); await expect(page.locator('.editor-footer [role=status]')).toHaveText('All changes saved')
+  await page.keyboard.press('Control+s'); await expect(page.locator('.save-state')).toHaveText('Saved')
   await page.reload(); await expect(page.getByRole('textbox', { name: 'Markdown text' })).toBeVisible(); await expect(companion).toBeHidden()
   await page.keyboard.press('Control+Alt+k')
   await expect(companion).toBeVisible(); await expect(page.getByRole('button', { name: '+ Character', exact: true })).toBeVisible()
@@ -27,7 +27,7 @@ test('Focus starts with the page alone; the companion returns on request and Esc
   await book(page)
   const editor = page.getByRole('textbox', { name: 'Markdown text' }), companion = page.getByRole('complementary', { name: 'Writing companion' })
   await editor.fill('A first line.')
-  await page.locator('.top-actions').getByRole('button', { name: 'Focus', exact: true }).click(); await page.mouse.move(600, 500)
+  await page.locator('.document-toolbar').getByRole('button', { name: 'Focus', exact: true }).click(); await page.mouse.move(600, 500)
   await expect(companion).toBeHidden(); await expect(page.getByRole('complementary', { name: 'Writing library' })).toBeHidden(); await expect(editor).toBeFocused()
   await page.keyboard.press('Control+Alt+p'); await expect(companion).toBeVisible()
   const area = (await page.locator('.writing-area').boundingBox())!, text = (await page.locator('.markdown-editor').boundingBox())!
