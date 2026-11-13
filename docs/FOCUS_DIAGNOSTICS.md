@@ -1,5 +1,9 @@
 # Odak / beyaz ekran — SIS-268 (13 Kasım 2026)
 
+14 Kasım SIS-273 devamı: yeni native matris geçti; beyaz ekran tekrarlanmadı,
+varsayımsal uygulama yaması yapılmadı. Sunucusuz yerel release ve güncel kanıtlar
+için [LOCAL_BUILD.md](LOCAL_BUILD.md) dosyasına bakın.
+
 ## Kanıt ve sınır
 
 - Başlangıç: `ui/focus-companion`, `392965d`, temiz çalışma ağacı, `0.1.0-beta.2`.
