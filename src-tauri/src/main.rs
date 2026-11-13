@@ -318,16 +318,19 @@ fn main() {
             let config = app.path().app_config_dir()?;
             let mut problem = None;
             // A folder chosen before the rename keeps being used where it is.
-            let pointer = location::chosen(&config).or_else(|| {
+            // Debug runs can use an isolated library without touching the writer's folder pointer.
+            let isolated = if cfg!(debug_assertions) { std::env::var_os("DIVIT_TEST_LIBRARY").map(PathBuf::from) } else { None };
+            if isolated.as_ref().is_some_and(|path| !path.is_absolute()) { return Err("DIVIT_TEST_LIBRARY must be absolute".into()); }
+            let pointer = if isolated.is_some() { None } else { location::chosen(&config).or_else(|| {
                 let chosen = location::chosen(&dirs::config_dir()?.join(OLD_IDENTIFIER))?;
                 let _ = location::remember(&config, &chosen);
                 Some(chosen)
-            });
-            let root = match pointer {
+            }) };
+            let root = if let Some(root) = isolated { root } else { match pointer {
                 Some(chosen) if chosen.is_dir() => chosen,
                 Some(chosen) => { problem = Some(format!("Your library folder {} is not available, so the one in Documents is open. Reconnect the drive or let your sync app finish, then restart.", chosen.display())); documents_root(&mut problem)? }
                 None => documents_root(&mut problem)?,
-            };
+            } };
             app.manage(AppState(Arc::new(Mutex::new(Store::new(root).map_err(std::io::Error::other)?))));
             app.manage(LibraryNote(Mutex::new(problem)));
             if let Some(window) = app.get_webview_window("main") {

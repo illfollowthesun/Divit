@@ -5,6 +5,7 @@ import enDic from '../../node_modules/dictionary-en-gb/index.dic?url'
 import trAff from '../../node_modules/dictionary-tr/index.aff?url'
 import trDic from '../../node_modules/dictionary-tr/index.dic?url'
 import type { SpellLanguage } from './words'
+import { recordRuntime } from '../shared/runtime-diagnostics'
 
 const files = { en: { aff: enAff, dic: enDic }, tr: { aff: trAff, dic: trDic } }
 const verdicts = { en: new Map<string, boolean>(), tr: new Map<string, boolean>() }
@@ -15,6 +16,8 @@ let worker: Worker | null = null, nextId = 0
 function call<T>(language: SpellLanguage, request: { words?: string[]; suggest?: string }): Promise<T> {
   if (!worker) {
     worker = new Worker(new URL('./spell-worker.ts', import.meta.url), { type: 'module' })
+    worker.addEventListener('error', () => recordRuntime('worker-error'))
+    worker.addEventListener('messageerror', () => recordRuntime('worker-message-error'))
     worker.onmessage = (event: MessageEvent<{ id: number; result?: never; error?: string }>) => {
       const waiting = pending.get(event.data.id); pending.delete(event.data.id)
       if (event.data.error) waiting?.reject(new Error(event.data.error)); else waiting?.resolve(event.data.result!)

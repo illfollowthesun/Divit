@@ -47,7 +47,7 @@ export class DraftSession {
   edit(patch: Partial<Project>, touch = true): void {
     if (!this.current) return
     this.current = { ...this.current, ...patch, ...(touch ? { updatedAt: new Date().toISOString() } : {}) }
-    this.events.changed(this.current, 'Unsaved changes')
+    this.events.changed(this.current, this.dirty ? 'Unsaved changes' : 'All changes saved')
   }
 
   flush(): Promise<void> {

@@ -11,10 +11,10 @@
 .app .side-panel.right-drawer{position:absolute;inset:0 0 0 auto;z-index:81;width:min(340px,calc(100vw - 40px));box-shadow:-12px 0 35px #2222;visibility:hidden;transform:translateX(105%);pointer-events:none;transition:transform .16s ease,visibility .16s ease}
 .app .side-panel.right-drawer.dock-research{width:min(440px,calc(100vw - 40px))}
 .app .side-panel.right-drawer.drawer-open{visibility:visible;transform:none;pointer-events:auto}
+.right-drawer .drawer-close{display:block;align-self:flex-end;margin:7px 12px;font-size:11px;min-height:32px}
+.drawer-scrim{display:block;position:fixed;inset:0;z-index:80;background:#24251e44}
 @media(max-width:1100px){
   .drawer-toggle.right-edge{display:block;position:fixed;right:0;top:45%;z-index:78;writing-mode:vertical-rl;min-width:32px;padding:14px 8px;background:var(--paper);border:1px solid var(--line);border-radius:4px 0 0 4px;font-size:11px;color:var(--muted)}
-  .right-drawer .drawer-close{display:block;align-self:flex-end;margin:7px 12px;font-size:11px;min-height:32px}
-  .drawer-scrim{display:block;position:fixed;inset:0;z-index:80;background:#24251e44}
   .app.focus-mode .right-edge{opacity:0;transition:opacity .16s ease}
   .app.focus-mode .right-edge:hover,.app.focus-mode .right-edge:focus-visible,.app.focus-mode .right-edge[aria-expanded=true]{opacity:1}
   .app:not(.focus-mode) .paper{padding-right:52px} /* keep text and the language menu clear of the edge button */

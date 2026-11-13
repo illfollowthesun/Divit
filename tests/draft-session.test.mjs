@@ -6,6 +6,21 @@ const draft = () => ({ schemaVersion: 1, id: 'draft-1', type: 'blog', title: 'İ
 function deferred() { let resolve; const promise = new Promise(yes => { resolve = yes }); return { promise, resolve } }
 function events() { return { changes: [], writes: [], failures: [], changed(project, status) { this.changes.push({ project, status }) }, saved(project) { this.writes.push(project) }, failed(error) { this.failures.push(error) } } }
 
+test('selecting the saved mode again does not leave a false unsaved indicator', async () => {
+  const observed = events(); let calls = 0
+  const session = new DraftSession(async project => { calls++; return project }, observed)
+  session.select({ ...draft(), mode: 'normal' })
+  session.edit({ mode: 'normal' }, false)
+  await session.flush()
+  assert.equal(session.dirty, false)
+  assert.equal(calls, 0)
+  assert.equal(observed.changes.at(-1).status, 'All changes saved')
+  session.edit({ body: 'Still unsaved text' })
+  session.edit({ mode: 'normal' }, false)
+  assert.equal(session.dirty, true)
+  assert.equal(observed.changes.at(-1).status, 'Unsaved changes')
+})
+
 test('a flush saves newer edits made during an in-flight write with the new revision', async () => {
   const started = deferred(); const release = deferred(); const snapshots = []; const observed = events()
   const session = new DraftSession(async project => {

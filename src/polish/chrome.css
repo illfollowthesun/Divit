@@ -10,6 +10,7 @@
 .app.distraction-mode.chrome-visible .topbar,.app.distraction-mode .topbar:has(:focus-visible){transform:translateY(0)}
 .app.distraction-mode.chrome-visible .document-toolbar,.app.distraction-mode .document-toolbar:has(:focus-visible){transform:translateY(0);opacity:1;pointer-events:auto}
 .chrome-hotspot{display:none}
+.focus-exit,.mode-write > .focus-exit{display:block!important;position:fixed;right:12px;bottom:12px;z-index:79;min-height:44px;padding:8px 14px;background:var(--paper);color:var(--muted);border:1px solid var(--line);border-radius:6px}
 .distraction-mode .chrome-hotspot{display:block;position:fixed;inset:0 0 auto;height:10px;z-index:72}
 .app.typewriter-mode .paper{padding-top:calc(49px + var(--typewriter-leading,0px))}
 .typewriter-mode .markdown-editor .cm-content{padding-top:0;padding-bottom:45vh}
